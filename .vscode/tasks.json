@@ -3,7 +3,6 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
-        // Host Windows x86_64
         {
             "label": "Build Debug",
             "type": "shell",
@@ -82,7 +81,6 @@
                 "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSGnuEABI.cmake"
             ]
         },
-        // valid for all plattforms
         {
             "label": "Cleanup Environment",
             "type": "shell",
