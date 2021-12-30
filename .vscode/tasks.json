@@ -69,6 +69,19 @@
                 "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuEABI.cmake"
             ]
         },
+        {
+            "label": "Setup Environment MacOS",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-G",
+                "Ninja Multi-Config",
+                ".",
+                "-B",
+                "build",
+                "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSGnuEABI.cmake"
+            ]
+        },
         // valid for all plattforms
         {
             "label": "Cleanup Environment",
