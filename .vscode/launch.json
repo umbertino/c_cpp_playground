@@ -23,17 +23,17 @@
       "launchCompleteCommand": "exec-run",
       "program": "${workspaceFolder}/build/Debug/playground",
       "windows": {
-        "targetArchitecture": "x64",
+        "targetArchitecture": "x86_64",
         "MIMode": "gdb",
         "miDebuggerPath": "C:\\Programs\\MinGW\\bin\\gdb.exe"
       },
       "linux": {
-        "targetArchitecture": "x64",
+        "targetArchitecture": "x86_64",
         "MIMode": "gdb",
         "miDebuggerPath": "/usr/bin/gdb"
       },
       "osx": {
-        "targetArchitecture": "x64",
+        "targetArchitecture": "86_x64",
         "MIMode": "lldb",
       },
       "preLaunchTask": "Build Debug"
