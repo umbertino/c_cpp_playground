@@ -53,7 +53,7 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/**"
+                "/usr/local/include/**"
             ],
             "defines": [
                 "_DEBUG",
