@@ -43,43 +43,39 @@
             "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
         },
         {
-            "label": "Setup Environment Windows",
+            "label": "Setup Environment",
             "type": "shell",
             "command": "cmake",
-            "args": [
-                "-G",
-                "Ninja Multi-Config",
-                ".",
-                "-B",
-                "build",
-                "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64Win32MinGW.cmake"
-            ]
-        },
-        {
-            "label": "Setup Environment Linux",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "-G",
-                "Ninja Multi-Config",
-                ".",
-                "-B",
-                "build",
-                "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
-            ]
-        },
-        {
-            "label": "Setup Environment MacOS",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "-G",
-                "Ninja Multi-Config",
-                ".",
-                "-B",
-                "build",
-                "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
-            ]
+            "windows": {
+                "args": [
+                    "-G",
+                    "Ninja Multi-Config",
+                    ".",
+                    "-B",
+                    "build",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64Win32MinGW.cmake"
+                ]
+            },
+            "linux": {
+                "args": [
+                    "-G",
+                    "Ninja Multi-Config",
+                    ".",
+                    "-B",
+                    "build",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
+                ]
+            },
+            "osx": {
+                "args": [
+                    "-G",
+                    "Ninja Multi-Config",
+                    ".",
+                    "-B",
+                    "build",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
+                ]
+            }
         },
         {
             "label": "Cleanup Environment",
