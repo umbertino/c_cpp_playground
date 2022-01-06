@@ -40,20 +40,20 @@ Visual Debugging is supported, too. Press `F5` and you should see the preparatio
 ## Code formatting
 
 This project contains a `.clang-format` file that specifies a set of rules according to the current state of the art. To benefit from it you need to have `clang-format` installed which comes with the LLVM bundle. VSCode can ease your life if you apply some configurations to your `settings.json`.
-```
-    // files settings
-    "files.autoSave": "afterDelay",
-    "files.autoSaveDelay": 1200,
-    // editor settings
-    "editor.autoIndent": "advanced",
-    "editor.renderWhitespace": "all",
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnType": true,
-    // C/C++ settings
-    "C_Cpp.intelliSenseEngine": "Default",
-    "C_Cpp.clang_format_path": "/usr/bin/clang-format", // adjust according to your system
-```
-With these configurations saving your file explicitly (Strg + s, Cmd + s) will also format your code.
 
+```json
+// files settings
+"files.autoSave": "afterDelay",
+"files.autoSaveDelay": 1200,
+// editor settings
+"editor.autoIndent": "advanced",
+"editor.renderWhitespace": "all",
+"editor.formatOnPaste": true,
+"editor.formatOnSave": true,
+"editor.formatOnType": true,
+// C/C++ settings
+"C_Cpp.intelliSenseEngine": "Default",
+"C_Cpp.clang_format_path": "/usr/bin/clang-format", // adjust according to your system
+```
 
+With these configurations saving your file explicitly (`Strg + s`, `Cmd + s`) will also format your code.
