@@ -33,7 +33,7 @@
         "miDebuggerPath": "/usr/bin/gdb"
       },
       "osx": {
-        "targetArchitecture": "86_x64",
+        "targetArchitecture": "x64",
         "MIMode": "lldb",
       },
       "preLaunchTask": "Build Debug"
