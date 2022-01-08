@@ -29,7 +29,7 @@ You can now open, if not yet done, the VSCode workspace specified in `workspace.
 
 You can find them in the integrated VSCode marketplace.
 
-In the side panel you should see the Task Explorer which will list a set of useful tasks that can be launched by clicking. The very first task that must be launched is the `Setup Environment <Linux|Windows|MacOS>` which configures everything CMake-related in order to get you started. As long as you do not need to change anything build-related like the `CMakeLists.txt` file or the toolchain files located in the `toolchains`-directory you do not need to run this task any more. In case you need to, please first call `Cleanup Environment` after you altered your build system and the re-run `Setup Environment  <Linux|Windows|MacOS>`.
+In the side panel you should see the Task Explorer which will list a set of useful tasks that can be launched by clicking. The very first task that must be launched is the `Setup Environment` which configures everything CMake-related in order to get you started. As long as you do not need to change anything build-related like the `CMakeLists.txt` file or the toolchain files located in the `toolchains`-directory you do not need to run this task any more. In case you need to, please first call `Cleanup Environment` after you altered your build system and the re-run `Setup Environment`.
 
 The next step is to build your application. For this purpose there are three Build- and three Clean-Tasks. Chose the one that fits your needs and you'll find your application binary in the `build/<Debug|Release|RelWithDebInfo>`-directory.
 
