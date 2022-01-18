@@ -12,19 +12,25 @@ bool prime(unsigned int num)
     switch (num)
     {
         case 0:
-
+        {
             isPrime = false;
             break;
+        }
 
         case 1:
+        {
             isPrime = false;
             break;
+        }
 
         case 2:
+        {
             isPrime = true;
             break;
+        }
 
         default:
+        {
             isPrime = true;
 
             unsigned int end = (unsigned int)(ceil(sqrt(num)));
@@ -39,6 +45,7 @@ bool prime(unsigned int num)
             }
 
             break;
+        }
     } // switch (num)
 
     return (isPrime);
