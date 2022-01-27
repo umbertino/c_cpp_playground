@@ -1,7 +1,6 @@
 #include "ScopeGuard.h"
 #include <iostream>
 
-
 ScopeGuard::ScopeGuard()
 {
     // do whatever you need to do to set up this scope
