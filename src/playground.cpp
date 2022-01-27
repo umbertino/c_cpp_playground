@@ -14,9 +14,9 @@ int main(void)
                 throw std::invalid_argument( "received negative value" );
         )
     }
-    catch(const std::invalid_argument& e)
+    catch(...)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr << "Exception caught" << std::endl;
     }
 
     unsigned int number = 18;
