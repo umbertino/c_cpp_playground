@@ -29,8 +29,18 @@
             "name": "linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/**"
+                "/usr/include/**",
+                "/home/umberto/Development/boost/**"
             ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**",
+                    "/usr/include/**",
+                    "/home/umberto/Development/boost/**"
+                ],
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": ""
+            },
             "defines": [
                 "_DEBUG",
                 "UNICODE",
@@ -39,13 +49,6 @@
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "browse": {
-                "path": [
-                    "${workspaceFolder}"
-                ],
-                "limitSymbolsToIncludedHeaders": false,
-                "databaseFilename": ""
-            },
             "intelliSenseMode": "${default}",
             "configurationProvider": "ms-vscode.cmake-tools"
         },
