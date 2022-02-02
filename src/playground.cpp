@@ -9,11 +9,9 @@ int main(void)
 
     try
     {
-        SUPPRESS_LOGGING(false, true, false,
-                         {
-                             std::cout << "Scoped output" << std::endl;
-                             throw std::invalid_argument("received negative value");
-                         })
+        SUPPRESS_LOGGING(
+            std::cout << "Scoped output" << std::endl;
+            throw std::invalid_argument("received negative value");)
     }
     catch (...)
     {
