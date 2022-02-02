@@ -7,13 +7,14 @@ class ScopeGuard
 private:
     /* data */
 public:
-    ScopeGuard();
+    ScopeGuard(bool error, bool warning, bool info);
     ~ScopeGuard();
 };
 
-#define SUPPRESS_LOGGING(...) \
+// pass parameters
+#define SUPPRESS_LOGGING(error, warning, info, ...) \
     { \
-        const std::unique_ptr<ScopeGuard> scope = std::make_unique<ScopeGuard>(); \
+        const std::unique_ptr<ScopeGuard> scope(new ScopeGuard(error, warning, info)); \
         __VA_ARGS__ \
     }
 
