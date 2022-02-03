@@ -2,14 +2,22 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "prime.h"
+#include "Prime.h"
 
-bool prime(unsigned int num)
+Prime::Prime()
+{
+}
+
+Prime::~Prime()
+{
+}
+
+bool Prime::prime(unsigned int number)
 {
     unsigned int i;
     bool isPrime;
 
-    switch (num)
+    switch (number)
     {
         case 0:
         {
@@ -33,11 +41,11 @@ bool prime(unsigned int num)
         {
             isPrime = true;
 
-            unsigned int end = (unsigned int)(ceil(sqrt(num)));
+            unsigned int end = (unsigned int)(ceil(sqrt(number)));
 
             for (i = 2; i <= end; i++)
             {
-                if ((num % i) == 0)
+                if ((number % i) == 0)
                 {
                     isPrime = false;
                     break;
@@ -46,7 +54,12 @@ bool prime(unsigned int num)
 
             break;
         }
-    } // switch (num)
+    } // switch (number)
 
     return (isPrime);
+}
+
+bool Prime::factorize(unsigned long number, vector<unsigned long>& primeFactors)
+{
+    return false;
 }

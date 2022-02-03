@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Programs/MinGW/include/**",
-                "C:/Programs/MinGW/lib/**"
+                "C:/Programs/MinGW/lib/**",
+                "C:/Programs/boost/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -17,7 +18,10 @@
             "cppStandard": "c++17",
             "browse": {
                 "path": [
-                    "${workspaceFolder}"
+                    "${workspaceFolder}/**",
+                    "C:/Programs/MinGW/include/**",
+                    "C:/Programs/MinGW/lib/**",
+                    "C:/Programs/boost/**"
                 ],
                 "limitSymbolsToIncludedHeaders": false,
                 "databaseFilename": ""

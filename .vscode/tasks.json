@@ -7,9 +7,9 @@
             "label": "Build Debug",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config Debug -v",
-            // "problemMatcher": [
-            //     "$gcc"
-            // ]
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "Clean Debug",
@@ -19,29 +19,29 @@
         {
             "label": "Build Release",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Release -v"
-            // "problemMatcher": [
-            //     "$gcc"
-            // ]
+            "command": "cmake --build ${workspaceFolder}/build --config Release -v",
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "Clean Release",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
         },
-        {
-            "label": "Build RelWithDebInfo",
-            "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo -v",
-            // "problemMatcher": [
-            //     "$gcc"
-            // ]
-        },
-        {
-            "label": "Clean RelWithDebInfo",
-            "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
-        },
+        // {
+        //     "label": "Build RelWithDebInfo",
+        //     "type": "shell",
+        //     "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo -v",
+        //     // "problemMatcher": [
+        //     //     "$gcc"
+        //     // ]
+        // },
+        // {
+        //     "label": "Clean RelWithDebInfo",
+        //     "type": "shell",
+        //     "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
+        // },
         {
             "label": "Setup Environment",
             "type": "shell",

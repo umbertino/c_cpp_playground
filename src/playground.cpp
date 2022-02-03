@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept>
-#include "prime.h"
+#include "Prime.h"
 #include "ScopeGuard.h"
 
 int main(void)
@@ -9,9 +9,11 @@ int main(void)
 
     try
     {
-        SUPPRESS_LOGGING(
+        SUPPRESS_LOGGING(true, false, true,
+        {
             std::cout << "Scoped output" << std::endl;
             throw std::invalid_argument("received negative value");)
+        }
     }
     catch (...)
     {
@@ -20,7 +22,7 @@ int main(void)
 
     unsigned int number = 18;
 
-    bool isPrime = prime(number);
+    bool isPrime = Prime::prime(number);
 
     if (isPrime)
     {
