@@ -12,7 +12,7 @@ private:
     ~Prime();
 
 public:
-    static bool prime(unsigned int number);
-    static bool factorize(unsigned long number, vector<unsigned long>& primeFactors);
+    static bool primeCheck(unsigned long number);
+    static bool primeGetRange(unsigned long from, unsigned long to, vector<unsigned long>& listOfPrimes);
+    static bool primeFactorize(unsigned long number, vector<unsigned long>& primeFactors);
 };
-

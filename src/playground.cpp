@@ -1,13 +1,13 @@
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 #include "Prime.h"
 #include "ScopeGuard.h"
 #include <boost/scoped_ptr.hpp>
+#include <boost/container/vector.hpp>
 
 // switches to activate / deactivate examples
-#define BASIC_EXAMPLE 0
-#define SCOPE_GUARD_EXAMPLE 1
+#define PRIME_EXAMPLE 1
+#define SCOPE_GUARD_EXAMPLE 0
 
 int main(void)
 {
@@ -15,10 +15,10 @@ int main(void)
 
     std::cout << std::endl;
 
-#if BASIC_EXAMPLE
+#if PRIME_EXAMPLE
     unsigned int number = 18;
 
-    bool isPrime = Prime::prime(number);
+    bool isPrime = Prime::primeCheck(number);
 
     if (isPrime)
     {
@@ -29,6 +29,18 @@ int main(void)
         std::cout << number << " is not a prime number!" << std::endl;
     }
 
+    boost::container::vector<unsigned long> primeList;
+
+    if (Prime::primeGetRange(5, 80, primeList))
+    {
+        std::cout << "Found " << primeList.size() << " prime numbers: ";
+
+        for (auto i : primeList)
+        {
+            std::cout << i << " ";
+        }
+    }
+    
     std::cout << std::endl;
 #endif
 
@@ -46,7 +58,7 @@ int main(void)
     }
     catch (const std::invalid_argument& e)
     {
-        std::cerr << "Exception caught: " << e.what() << std::endl;
+        std::cerr << "Std-Exception caught: " << e.what() << std::endl;
     }
 
     std::cout << std::endl;
@@ -57,15 +69,15 @@ int main(void)
         { // this is the start of the scope
             const boost::scoped_ptr<ScopeGuard> scopeGuard(new ScopeGuard(true, false, true));
 
-            std::vector<int> myvector(10);
+            boost::container::vector<int> myvector(10);
 
             myvector.at(20) = 100; // vector::at throws an out-of-range
 
         } // this is the end of the scope
     }
-    catch (const std::out_of_range& e)
+    catch (const boost::container::out_of_range& e)
     {
-        std::cerr << "Exception caught: " << e.what() << std::endl;
+        std::cerr << "Boost-Exception caught: " << e.what() << std::endl;
     }
 
     std::cout << std::endl;
