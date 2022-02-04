@@ -57,7 +57,16 @@
 			"tuple": "cpp",
 			"type_traits": "cpp",
 			"utility": "cpp",
-			"initializer_list": "cpp"
-		}
+			"initializer_list": "cpp",
+			"chrono": "cpp",
+			"condition_variable": "cpp",
+			"iomanip": "cpp",
+			"mutex": "cpp",
+			"ratio": "cpp",
+			"thread": "cpp"
+		},
+		"cSpell.words": [
+			"myvector"
+		]
 	}
 }

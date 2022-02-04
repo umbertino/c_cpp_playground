@@ -61,5 +61,7 @@ bool Prime::prime(unsigned int number)
 
 bool Prime::factorize(unsigned long number, vector<unsigned long>& primeFactors)
 {
+    primeFactors.clear();
+
     return false;
 }
