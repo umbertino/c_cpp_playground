@@ -67,7 +67,7 @@ bool Prime::primeGetRange(unsigned long from, unsigned long to, vector<unsigned 
 
     for (auto i = from; i <= to; i++)
     {
-        if (primeCheck(i))
+        if (Prime::primeCheck(i))
         {
             listOfPrimes.push_back(i);
         }
