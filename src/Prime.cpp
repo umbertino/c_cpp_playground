@@ -102,9 +102,12 @@ bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFac
         primeFactors.clear();
 
         // now reverse iterate the primeDeviders vector and make test divisions
-        for (auto i = end; i >= start; i--)
+        for (vector<unsigned long>::reverse_iterator i = primeDeviders.rbegin(); i != primeDeviders.rend(); i++)
         {
+            std::cout << *i << " ";
         }
+
+        return true;
     }
     else
     {

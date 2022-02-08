@@ -47,6 +47,8 @@ int main(void)
     }
 
     std::cout << std::endl;
+
+    Prime::primeFactorize(39, primeList);
 #endif
 
 #if SCOPE_GUARD_EXAMPLE
