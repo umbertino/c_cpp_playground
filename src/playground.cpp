@@ -29,18 +29,23 @@ int main(void)
         std::cout << number << " is not a prime number!" << std::endl;
     }
 
+    unsigned long start = 0, end = 100;
     boost::container::vector<unsigned long> primeList;
 
-    if (Prime::primeGetRange(5, 80, primeList))
+    if (Prime::primeGetRange(start, end, primeList))
     {
-        std::cout << "Found " << primeList.size() << " prime numbers: ";
+        std::cout << "Found " << primeList.size() << " prime numbers in the range [" << start << "," << end << "]: ";
 
         for (auto i : primeList)
         {
             std::cout << i << " ";
         }
     }
-    
+    else
+    {
+        std::cout << "No prime numbers found in the range [" << start << "," << end << "]: ";
+    }
+
     std::cout << std::endl;
 #endif
 
