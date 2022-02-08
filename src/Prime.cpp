@@ -43,7 +43,7 @@ bool Prime::primeCheck(unsigned long number)
             isPrime = true;
 
             // we do not need to check up to number, just until the square root of number
-            unsigned int end = (unsigned int)(ceil(sqrt(number)));
+            unsigned long end = (unsigned long)(ceil(sqrt(number)));
 
             for (i = 2; i <= end; i++)
             {
@@ -85,7 +85,29 @@ bool Prime::primeGetRange(unsigned long from, unsigned long to, vector<unsigned 
 
 bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFactors)
 {
-    primeFactors.clear();
+    if (Prime::primeCheck(number))
+    {
+        // a prime number cannot be factorized.
+        return false;
+    }
 
-    return false;
+    // determine prime deviders in range from 2 to square root of number to factorize
+    unsigned long start = 2, end = (unsigned long)(ceil(sqrt(number)));
+    vector<unsigned long> primeDeviders;
+
+    if (Prime::primeGetRange(start, end, primeDeviders))
+    {
+        // okay, there are potential prime deviders for the number to factorize
+        // first clear the vector we want to add our prime factors
+        primeFactors.clear();
+
+        // now reverse iterate the primeDeviders vector and make test divisions
+        for (auto i = end; i >= start; i--)
+        {
+        }
+    }
+    else
+    {
+        return false;
+    }
 }
