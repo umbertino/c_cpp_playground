@@ -15,10 +15,10 @@ int main(void)
               << std::endl;
 
 #if PRIME_EXAMPLE
-    unsigned int number = 18;
+    unsigned int number = 17;
 
     // simple prime check of a number
-    bool isPrime = Prime::primeCheck(number);
+    bool isPrime = Prime::checkForPrime(number);
 
     if (isPrime)
     {
@@ -30,16 +30,16 @@ int main(void)
     }
 
     // determine all prime numbers in a specified range
-    unsigned long start = 0, end = 100;
+    unsigned long start = 0, end = 105000;
     boost::container::vector<unsigned long> primeList;
 
-    if (Prime::primeGetRange(start, end, primeList))
+    if (Prime::getRangeOfPrimes(start, end, primeList))
     {
         std::cout << "Found " << primeList.size() << " prime numbers in the range [" << start << "," << end << "]: ";
 
         for (auto i : primeList)
         {
-            std::cout << i << " ";
+            std::cout << i << ", ";
         }
     }
     else
@@ -50,7 +50,7 @@ int main(void)
     std::cout << std::endl;
 
     // factorize a number
-    number = 8;
+    number = 999999999;
 
     if (Prime::primeFactorize(number, primeList))
     {
