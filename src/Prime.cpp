@@ -1,5 +1,5 @@
-// prime.cc
 #include <iostream>
+#include <boost/range/adaptor/reversed.hpp>
 #include <math.h>
 #include "Prime.h"
 
@@ -85,29 +85,53 @@ bool Prime::primeGetRange(unsigned long from, unsigned long to, vector<unsigned 
 
 bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFactors)
 {
+    primeFactors.clear();
+
     if (Prime::primeCheck(number))
     {
-        // a prime number cannot be factorized.
-        return false;
+        // a prime number cannot be factorized. Anyway it is its one and only factor
+        primeFactors.push_back(number);
+
+        return true;
     }
 
     // determine prime deviders in range from 2 to square root of number to factorize
-    unsigned long start = 2, end = (unsigned long)(ceil(sqrt(number)));
+    unsigned long start = 2, end = number;
     vector<unsigned long> primeDeviders;
 
     if (Prime::primeGetRange(start, end, primeDeviders))
     {
         // okay, there are potential prime deviders for the number to factorize
         // first clear the vector we want to add our prime factors
-        primeFactors.clear();
+
+        unsigned long remainder = number;
 
         // now reverse iterate the primeDeviders vector and make test divisions
-        for (vector<unsigned long>::reverse_iterator i = primeDeviders.rbegin(); i != primeDeviders.rend(); i++)
+        for (auto i : boost::adaptors::reverse(primeDeviders))
         {
-            std::cout << *i << " ";
+            while ((remainder % i) == 0)
+            {
+                primeFactors.push_back(i);
+                remainder = remainder / i;
+            }
         }
 
-        return true;
+        // cross check
+        unsigned long crossCheckNumber = 1;
+
+        for (auto i : primeFactors)
+        {
+            crossCheckNumber = crossCheckNumber * i;
+        }
+
+        if (crossCheckNumber == number)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {

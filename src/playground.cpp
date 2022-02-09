@@ -1,9 +1,9 @@
 #include <iostream>
 #include <stdexcept>
-#include "Prime.h"
-#include "ScopeGuard.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/container/vector.hpp>
+#include "Prime.h"
+#include "ScopeGuard.h"
 
 // switches to activate / deactivate examples
 #define PRIME_EXAMPLE 1
@@ -11,24 +11,25 @@
 
 int main(void)
 {
-    std::cout << "Hello C++ playground" << std::endl;
-
-    std::cout << std::endl;
+    std::cout << "Hello, this is a C++ playground" << std::endl
+              << std::endl;
 
 #if PRIME_EXAMPLE
     unsigned int number = 18;
 
+    // simple prime check of a number
     bool isPrime = Prime::primeCheck(number);
 
     if (isPrime)
     {
-        std::cout << number << " is a prime number!" << std::endl;
+        std::cout << number << " is a prime number." << std::endl;
     }
     else
     {
-        std::cout << number << " is not a prime number!" << std::endl;
+        std::cout << number << " is not a prime number." << std::endl;
     }
 
+    // determine all prime numbers in a specified range
     unsigned long start = 0, end = 100;
     boost::container::vector<unsigned long> primeList;
 
@@ -48,7 +49,26 @@ int main(void)
 
     std::cout << std::endl;
 
-    Prime::primeFactorize(39, primeList);
+    // factorize a number
+    number = 8;
+
+    if (Prime::primeFactorize(number, primeList))
+    {
+        std::cout << "Prime factors for " << number << " are: ";
+
+        for (auto i : primeList)
+        {
+            std::cout << i << " ";
+        }
+
+        std::cout << std::endl;
+    }
+    else
+    {
+        std::cout << "Could not factorize " << number << std::endl;
+    }
+
+    std::cout << std::endl;
 #endif
 
 #if SCOPE_GUARD_EXAMPLE
