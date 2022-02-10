@@ -8,11 +8,13 @@ file(GLOB all_srcs "${srcdir}/*.cpp" "${srcdir}/*.c")
 file(GLOB all_hdrs "${incdir}/*.h" "${incdir}/*.hpp")
 
 set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
+set(CMAKE_CXX_STANDARD 17)
 
-find_package(Boost 1.74.0 REQUIRED)
+find_package(Boost 1.78.0 REQUIRED)
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS} ${incdir})
     #target_link_libraries(playground ${Boost_LIBRARIES})
     add_executable(playground ${all_srcs})
 endif()
+
