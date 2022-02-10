@@ -12,7 +12,7 @@ private:
     Prime();
     ~Prime();
     static unsigned long SIZE_OF_PRIME_TABLE;
-    static set<unsigned long> primeTable;
+    static const set<unsigned long> primeTable;
 
 public:
     static bool checkForPrime(unsigned long number);

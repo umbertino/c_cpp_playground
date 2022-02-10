@@ -83,7 +83,7 @@ bool Prime::getRangeOfPrimes(unsigned long from, unsigned long to, vector<unsign
     {
         listOfPrimes.clear();
 
-        for (auto i = from; i <= to; i++)
+        for (unsigned int i = from; i <= to; i++)
         {
             if (Prime::checkForPrime(i))
             {
@@ -121,7 +121,7 @@ bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFac
     unsigned long remainder = number;
 
     // now iterate over the table of prime number make test divisions
-    for (auto i : Prime::primeTable)
+    for (const unsigned long& i : Prime::primeTable)
     {
         while ((remainder % i) == 0)
         {
@@ -152,7 +152,7 @@ bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFac
     // cross check
     unsigned long crossCheckNumber = 1;
 
-    for (auto i : primeFactors)
+    for (const unsigned long& i : primeFactors)
     {
         crossCheckNumber = crossCheckNumber * i;
     }
@@ -213,7 +213,7 @@ unsigned long Prime::getNthPrime(unsigned long n)
     }
 }
 
-set<unsigned long> Prime::primeTable =
+const set<unsigned long> Prime::primeTable =
     {
         2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139,
         149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293,
