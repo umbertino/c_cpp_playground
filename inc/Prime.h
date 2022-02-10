@@ -13,6 +13,7 @@ private:
     ~Prime();
     static unsigned long SIZE_OF_PRIME_TABLE;
     static const set<unsigned long> primeTable;
+    static unsigned long calcCrossSum(unsigned long number);
 
 public:
     static bool checkForPrime(unsigned long number);
