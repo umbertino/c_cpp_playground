@@ -15,7 +15,7 @@ int main(void)
               << std::endl;
 
 #if PRIME_EXAMPLE
-    unsigned int number = 999999999;
+    unsigned int number = 987654321;
 
     // simple prime check of a number
     bool isPrime = Prime::checkForPrime(number);
@@ -30,7 +30,7 @@ int main(void)
     }
 
     // determine all prime numbers in a specified range
-    unsigned long start = 0, end = 500000;
+    unsigned long start = 0, end = 1000;
     boost::container::vector<unsigned long> primeList;
 
     if (Prime::getRangeOfPrimes(start, end, primeList))

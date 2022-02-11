@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "C:/Programs/MinGW/include/**",
                 "C:/Programs/MinGW/lib/**",
-                "C:/Programs/boost/**"
+                "C:/Programs/boost/**",
+                "C:/Program Files (x86)/googletest-distribution/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -21,7 +22,8 @@
                     "${workspaceFolder}/**",
                     "C:/Programs/MinGW/include/**",
                     "C:/Programs/MinGW/lib/**",
-                    "C:/Programs/boost/**"
+                    "C:/Programs/boost/**",
+                    "C:/Program Files (x86)/googletest-distribution/**"
                 ],
                 "limitSymbolsToIncludedHeaders": false,
                 "databaseFilename": ""

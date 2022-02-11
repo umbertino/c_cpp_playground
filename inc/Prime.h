@@ -14,6 +14,12 @@ private:
     static unsigned long SIZE_OF_PRIME_TABLE;
     static const set<unsigned long> primeTable;
     static unsigned long calcCrossSum(unsigned long number);
+    static unsigned long getLastDigit(unsigned long number);
+    static unsigned long getLast2Digits(unsigned long number);
+    static bool canBeDevidedBy2(unsigned long number);
+    static bool canBeDevidedBy3(unsigned long number);
+    static bool canBeDevidedBy5(unsigned long number);
+    static bool canBeDevidedBy10(unsigned long number);
 
 public:
     static bool checkForPrime(unsigned long number);

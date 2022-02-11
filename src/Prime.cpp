@@ -25,10 +25,38 @@ unsigned long Prime::calcCrossSum(unsigned long number)
     return sum;
 }
 
+unsigned long Prime::getLastDigit(unsigned long number)
+{
+    return number % 10;
+}
+
+unsigned long Prime::getLast2Digits(unsigned long number)
+{
+    return (number % 100);
+}
+
+bool Prime::canBeDevidedBy2(unsigned long number)
+{
+    return false;
+}
+
+bool Prime::canBeDevidedBy3(unsigned long number)
+{
+    return false;
+}
+
+bool Prime::canBeDevidedBy5(unsigned long number)
+{
+    return false;
+}
+
+bool Prime::canBeDevidedBy10(unsigned long number)
+{
+    return false;
+}
+
 bool Prime::checkForPrime(unsigned long number)
 {
-    bool isPrime;
-
     // if we cannot quickly check the table of primes we
     // need to do the work
     if (number > *Prime::primeTable.rbegin())
@@ -39,26 +67,24 @@ bool Prime::checkForPrime(unsigned long number)
         {
             case 0:
             {
-                isPrime = false;
+                return false;
                 break;
             }
 
             case 1:
             {
-                isPrime = false;
+                return false;
                 break;
             }
 
             case 2:
             {
-                isPrime = true;
+                return true;
                 break;
             }
 
             default:
             {
-                isPrime = true;
-
                 // we do not need to check up to number, just until the square root of number
                 unsigned long end = (unsigned long)(ceil(sqrt(number)));
 
@@ -66,11 +92,12 @@ bool Prime::checkForPrime(unsigned long number)
                 {
                     if ((number % i) == 0)
                     {
-                        isPrime = false;
+                        return false;
                         break;
                     }
                 }
 
+                return true;
                 break;
             }
         } // switch (number)
@@ -79,15 +106,13 @@ bool Prime::checkForPrime(unsigned long number)
     {
         if (Prime::primeTable.find(number) == Prime::primeTable.end())
         {
-            isPrime = false;
+            return false;
         }
         else
         {
-            isPrime = true;
+            return true;
         }
     }
-
-    return isPrime;
 }
 
 bool Prime::getRangeOfPrimes(unsigned long from, unsigned long to, vector<unsigned long>& listOfPrimes)
