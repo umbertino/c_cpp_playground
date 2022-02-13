@@ -16,22 +16,20 @@ file(GLOB app_srcs "${srcdir}/*.cpp" "${srcdir}/*.c")
 file(GLOB tst_srcs "${tstdir}/*.cpp" "${tstdir}/*.c")
 file(GLOB app_hdrs "${incdir}/*.h" "${incdir}/*.hpp")
 
-set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -DGTEST_IS_THREADSAFE" )
+set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations" )
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Boost 1.78.0 REQUIRED)
+find_package(GTest 1.11.0 REQUIRED)
+
+enable_testing()
 
 include_directories(${Boost_INCLUDE_DIRS} ${incdir})
 #target_link_libraries(playground ${Boost_LIBRARIES})
 add_executable(${APP_BIN_NAME} ${app_srcs})
 
-find_package(GTest REQUIRED)
-enable_testing()
-
 #TestPrime-Class
 include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${incdir})
 add_executable(Prime_${TST_BIN_NAME} ${tst_srcs})
-target_link_libraries(Prime_${TST_BIN_NAME} gtest gtest_main)
+target_link_libraries(Prime_${TST_BIN_NAME} gmock gtest pthread gtest_main)
 add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
-
-
