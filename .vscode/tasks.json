@@ -53,7 +53,7 @@
                     ".",
                     "-B",
                     "build",
-                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64Win32MinGW.cmake"
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64WinMSVC.cmake"
                 ]
             },
             "linux": {

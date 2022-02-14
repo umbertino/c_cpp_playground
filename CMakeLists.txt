@@ -8,28 +8,30 @@ set(TST_BIN_NAME ${PROJECT_NAME}_tst)
 set(GTEST_INCLUDE_DIR $ENV{GTEST_ROOT}/include)
 set(GTEST_LIBRARY_DIR $ENV{GTEST_ROOT}/lib)
 
-set(incdir inc)
-set(srcdir src)
-set(tstdir test)
+set(INC_DIR inc)
+set(SRC_DIR src)
+set(TST_DIR test)
 
-file(GLOB app_srcs "${srcdir}/*.cpp" "${srcdir}/*.c")
-file(GLOB tst_srcs "${tstdir}/*.cpp" "${tstdir}/*.c")
-file(GLOB app_hdrs "${incdir}/*.h" "${incdir}/*.hpp")
+file(GLOB APP_INCS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
+file(GLOB APP_SRCS "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.c")
+file(GLOB TST_SRCS "${TST_DIR}/*.cpp" "${TST_DIR}/*.c")
 
-set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations" )
+#set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations" )
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(Threads)
 find_package(Boost 1.78.0 REQUIRED)
+
+
+add_executable(${APP_BIN_NAME} ${APP_SRCS})
+include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
+target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES})
+
+
+# TestPrime-Class
 find_package(GTest 1.11.0 REQUIRED)
-
 enable_testing()
-
-include_directories(${Boost_INCLUDE_DIRS} ${incdir})
-#target_link_libraries(playground ${Boost_LIBRARIES})
-add_executable(${APP_BIN_NAME} ${app_srcs})
-
-#TestPrime-Class
-include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${incdir})
-add_executable(Prime_${TST_BIN_NAME} ${tst_srcs})
-target_link_libraries(Prime_${TST_BIN_NAME} gmock gtest pthread gtest_main)
-add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
+add_executable(Prime_${TST_BIN_NAME} ${TST_SRCS})
+include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
+target_link_libraries(Prime_${TST_BIN_NAME}  gtest gtest_main gmock gmock_main)
+ add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
