@@ -19,7 +19,7 @@ file(GLOB TST_SRCS "${TST_DIR}/*.cpp" "${TST_DIR}/*.c")
 #set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations" )
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Threads)
+find_package(Threads REQUIRED)
 find_package(Boost 1.78.0 REQUIRED)
 
 
@@ -33,5 +33,5 @@ find_package(GTest 1.11.0 REQUIRED)
 enable_testing()
 add_executable(Prime_${TST_BIN_NAME} ${TST_SRCS})
 include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
-target_link_libraries(Prime_${TST_BIN_NAME}  gtest gtest_main gmock gmock_main)
- add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
+target_link_libraries(Prime_${TST_BIN_NAME}  ${CMAKE_THREAD_LIBS_INIT} gtest gtest_main gmock gmock_main)
+add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
