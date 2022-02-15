@@ -6,7 +6,7 @@
   "configurations": [
     {
       "type": "cppdbg",
-      "name": "Debug",
+      "name": "Debug application",
       "request": "launch",
       "args": [],
       "stopAtEntry": true,
@@ -20,7 +20,39 @@
           "ignoreFailures": true
         }
       ],
-      "program": "${workspaceFolder}/build/Debug/playground_app",
+      "program": "${workspaceFolder}/build/RelWithDebInfo/playground_app",
+      "windows": {
+        "type": "cppvsdbg",
+        "targetArchitecture": "x86_64",
+      },
+      "linux": {
+        "targetArchitecture": "x86_64",
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb"
+      },
+      "osx": {
+        "targetArchitecture": "x64",
+        "MIMode": "lldb",
+      },
+      "preLaunchTask": "Build Debug"
+    },
+    {
+      "type": "cppdbg",
+      "name": "Debug tests",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "program": "${workspaceFolder}/build/Debug/Prime_playground_tst",
       "windows": {
         "type": "cppvsdbg",
         "targetArchitecture": "x86_64",
