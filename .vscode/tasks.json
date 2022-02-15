@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Debug",
+            "label": "Build Release with Debug Info",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target application -v",
             "problemMatcher": [
@@ -12,7 +12,7 @@
             ]
         },
         {
-            "label": "Clean Debug",
+            "label": "Clean Release with Debug Info",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
         },
@@ -30,7 +30,7 @@
             "command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
         },
         {
-            "label": "Build and run tests",
+            "label": "Build and run tests in Debug",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config Debug --target tests -v && ctest --test-dir ${workspaceFolder}/build",
             "problemMatcher": [
