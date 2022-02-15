@@ -24,14 +24,17 @@ find_package(Boost 1.78.0 REQUIRED)
 
 
 add_executable(${APP_BIN_NAME} ${APP_SRCS})
+add_custom_target(application DEPENDS ${APP_BIN_NAME})
 include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
 target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES})
 
 
 # TestPrime-Class
 find_package(GTest 1.11.0 REQUIRED)
+include(GoogleTest)
 enable_testing()
 add_executable(Prime_${TST_BIN_NAME} ${TST_SRCS})
+add_custom_target(tests DEPENDS Prime_${TST_BIN_NAME})
 include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
 target_link_libraries(Prime_${TST_BIN_NAME}  ${CMAKE_THREAD_LIBS_INIT} gtest gtest_main gmock gmock_main)
-add_test(Prime_${TST_BIN_NAME} Prime_${TST_BIN_NAME} )
+gtest_discover_tests(Prime_${TST_BIN_NAME})

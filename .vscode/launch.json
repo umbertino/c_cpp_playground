@@ -5,8 +5,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug",
       "type": "cppdbg",
+      "name": "Debug",
       "request": "launch",
       "args": [],
       "stopAtEntry": true,
@@ -20,11 +20,10 @@
           "ignoreFailures": true
         }
       ],
-      "program": "${workspaceFolder}/build/Debug/playground",
+      "program": "${workspaceFolder}/build/Debug/playground_app",
       "windows": {
+        "type": "cppvsdbg",
         "targetArchitecture": "x86_64",
-        "MIMode": "gdb",
-        "miDebuggerPath": "C:\\Programs\\MinGW\\bin\\gdb.exe"
       },
       "linux": {
         "targetArchitecture": "x86_64",
