@@ -68,6 +68,10 @@ int main(void)
         std::cout << "Could not factorize " << number << std::endl;
     }
 
+    number = 1;
+
+    std::cout << "The " << number << ". prime number is " << Prime::getNthPrime(number);
+
     std::cout << std::endl;
 #endif
 

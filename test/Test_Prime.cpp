@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
-TEST(HelloTest, BasicAssertions)
+#include "Prime.h"
+
+TEST(PrimeTestsuite, ithPrime)
 {
-    // Expect two strings not to be equal.
-    EXPECT_STRNE("hello", "world");
-    // Expect equality.
-    EXPECT_EQ(7 * 6, 42);
+    EXPECT_EQ(Prime::getNthPrime(1), 2);
 }

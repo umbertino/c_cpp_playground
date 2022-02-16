@@ -247,7 +247,10 @@ unsigned long Prime::getNthPrime(unsigned long n)
     }
     else // retrieve the nth prime from the table of primes
     {
-        return *(Prime::primeTable.find(n - 1));
+        set<unsigned long>::const_iterator it = Prime::primeTable.begin();
+        iterator_advance(it, n - 1);
+
+        return *it;
     }
 }
 
