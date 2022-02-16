@@ -9,12 +9,20 @@
             "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target application -v",
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Setup Environment"
+            ],
+            "presentation": {
+                "focus": true
+            },
         },
         {
             "label": "Clean Release with Debug Info",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
+            //"command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
+            "command": "rm -r ${workspaceFolder}/build/RelWithDebInfo/*",
         },
         {
             "label": "Build Release",
@@ -22,12 +30,23 @@
             "command": "cmake --build ${workspaceFolder}/build --config Release --target application -v",
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Setup Environment"
+            ],
+            "presentation": {
+                "focus": true
+            },
         },
         {
             "label": "Clean Release",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
+            //"command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
+            "command": "rm -r ${workspaceFolder}/build/Release/*",
+            "presentation": {
+                "focus": true
+            },
         },
         {
             "label": "Build and run tests in Debug",
@@ -35,16 +54,34 @@
             "command": "cmake --build ${workspaceFolder}/build --config Debug --target tests -v && ctest --test-dir ${workspaceFolder}/build",
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Setup Environment"
+            ],
+            "presentation": {
+                "focus": true
+            },
         },
         {
-            "label": "Clean tests",
+            "label": "Clean test build",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build/ --config Debug --target clean -v",
+            //"command": "cmake --build ${workspaceFolder}/build/ --config Debug --target clean -v",
+            "command": "rm -r ${workspaceFolder}/build/Debug/*",
+            "presentation": {
+                "focus": true
+            },
         },
         {
             "label": "Setup Environment",
             "type": "shell",
+            "presentation": {
+                "echo": false,
+                "revealProblems": "onProblem",
+                "showReuseMessage": true,
+                "focus": true,
+                "clear": true,
+            },
             "command": "cmake",
             "windows": {
                 "args": [
@@ -80,7 +117,14 @@
         {
             "label": "Cleanup Environment",
             "type": "shell",
-            "command": "rm -r build",
+            "command": "rm -r ${workspaceFolder}/build",
+            "presentation": {
+                "focus": false,
+                "echo": true,
+                "reveal": "always",
+                "showReuseMessage": false,
+                "close": true
+            },
         },
     ]
 }
