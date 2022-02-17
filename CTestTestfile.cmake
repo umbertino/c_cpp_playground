@@ -1,8 +1,5 @@
 cmake_minimum_required (VERSION 3.22)
 
-project (playground)
-
-set(APP_BIN_NAME ${PROJECT_NAME}_app)
 set(TST_BIN_NAME ${PROJECT_NAME}_tst)
 
 set(GTEST_INCLUDE_DIR $ENV{GTEST_ROOT}/include)
@@ -31,12 +28,16 @@ add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
 target_link_libraries(prime ${Boost_LIBRARIES})
 
 # build Scopeguard-Library
-add_library(scopeguard STATIC ${SRC_DIR}/Prime.cpp)
+add_library(scopeguard STATIC ${SRC_DIR}/Scopeguard.cpp)
 target_link_libraries(scopeguard ${Boost_LIBRARIES})
 
-# The main playground executable
-add_executable(${APP_BIN_NAME} ${SRC_DIR}/playground.cpp)
-add_custom_target(application DEPENDS ${APP_BIN_NAME})
-add_dependencies(${APP_BIN_NAME} prime)
-include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
-target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard)
+# Test Prime-Class
+find_package(GTest 1.11.0 REQUIRED)
+include(GoogleTest)
+enable_testing()
+add_executable(${TST_BIN_NAME} ${TST_SRCS})
+add_custom_target(tests DEPENDS ${TST_BIN_NAME})
+add_dependencies(${TST_BIN_NAME} prime)
+include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
+target_link_libraries(${TST_BIN_NAME}  ${CMAKE_THREAD_LIBS_INIT} gtest gtest_main gmock gmock_main prime)
+gtest_discover_tests(${TST_BIN_NAME})
