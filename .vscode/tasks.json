@@ -4,25 +4,25 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Release with Debug Info",
+            "label": "Build Debug",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target application -v",
+            "command": "cmake --build ${workspaceFolder}/build --config Debug --target application -v",
             "problemMatcher": [
                 "$gcc"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "Setup Environment"
+                "Setup Build Environment"
             ],
             "presentation": {
                 "focus": true
             },
         },
         {
-            "label": "Clean Release with Debug Info",
+            "label": "Clean Debug",
             "type": "shell",
             //"command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
-            "command": "rm -r ${workspaceFolder}/build/RelWithDebInfo/*",
+            "command": "rm -r ${workspaceFolder}/build/Debug/*",
         },
         {
             "label": "Build Release",
@@ -33,7 +33,7 @@
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "Setup Environment"
+                "Setup Build Environment"
             ],
             "presentation": {
                 "focus": true
@@ -51,13 +51,13 @@
         {
             "label": "Build and run tests in Debug",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Debug --target tests -v && ctest --test-dir ${workspaceFolder}/build",
+            "command": "cmake --build ${workspaceFolder}/test --config Debug --target tests -v && ctest -N --test-dir ${workspaceFolder}/test",
             "problemMatcher": [
                 "$gcc"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "Setup Environment"
+                "Setup Test Environment"
             ],
             "presentation": {
                 "focus": true
@@ -67,13 +67,13 @@
             "label": "Clean test build",
             "type": "shell",
             //"command": "cmake --build ${workspaceFolder}/build/ --config Debug --target clean -v",
-            "command": "rm -r ${workspaceFolder}/build/Debug/*",
+            "command": "rm -r ${workspaceFolder}/test/*",
             "presentation": {
                 "focus": true
             },
         },
         {
-            "label": "Setup Environment",
+            "label": "Setup Build Environment",
             "type": "shell",
             "presentation": {
                 "echo": false,
@@ -115,9 +115,63 @@
             }
         },
         {
-            "label": "Cleanup Environment",
+            "label": "Setup Test Environment",
+            "type": "shell",
+            "presentation": {
+                "echo": false,
+                "revealProblems": "onProblem",
+                "showReuseMessage": true,
+                "focus": true,
+                "clear": true,
+            },
+            "command": "cmake",
+            "windows": {
+                "args": [
+                    "-G",
+                    "Ninja",
+                    ".",
+                    "-B",
+                    "test",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64WinMSVC.cmake"
+                ]
+            },
+            "linux": {
+                "args": [
+                    "-G",
+                    "Ninja",
+                    ".",
+                    "-B",
+                    "test",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
+                ]
+            },
+            "osx": {
+                "args": [
+                    "-G",
+                    "Ninja",
+                    ".",
+                    "-B",
+                    "test",
+                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
+                ]
+            }
+        },
+        {
+            "label": "Cleanup Build Environment",
             "type": "shell",
             "command": "rm -r ${workspaceFolder}/build",
+            "presentation": {
+                "focus": false,
+                "echo": true,
+                "reveal": "always",
+                "showReuseMessage": false,
+                "close": true
+            },
+        },
+        {
+            "label": "Cleanup Test Environment",
+            "type": "shell",
+            "command": "rm -r ${workspaceFolder}/test",
             "presentation": {
                 "focus": false,
                 "echo": true,

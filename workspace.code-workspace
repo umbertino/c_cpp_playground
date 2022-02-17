@@ -63,7 +63,13 @@
 			"iomanip": "cpp",
 			"mutex": "cpp",
 			"ratio": "cpp",
-			"thread": "cpp"
+			"thread": "cpp",
+			"any": "cpp",
+			"list": "cpp",
+			"map": "cpp",
+			"set": "cpp",
+			"unordered_set": "cpp",
+			"variant": "cpp"
 		},
 		"cSpell.words": [
 			"myvector"

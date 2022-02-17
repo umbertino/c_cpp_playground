@@ -15,7 +15,7 @@ int main(void)
               << std::endl;
 
 #if PRIME_EXAMPLE
-    unsigned int number = 987654321;
+    unsigned long number = 987654321;
 
     // simple prime check of a number
     bool isPrime = Prime::checkForPrime(number);
@@ -68,9 +68,11 @@ int main(void)
         std::cout << "Could not factorize " << number << std::endl;
     }
 
-    number = 1;
+    number = 15000;
 
-    std::cout << "The " << number << ". prime number is " << Prime::getNthPrime(number);
+    std::cout << "The " << number << ". prime number is " << Prime::getNthPrime(number) << std::endl;
+
+    std::cout << "The next prime number right from " << number << " is " << Prime::getNextPrime(number) << std::endl;
 
     std::cout << std::endl;
 #endif

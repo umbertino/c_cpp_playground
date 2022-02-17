@@ -1,4 +1,5 @@
 #include <iostream>
+#include <boost/next_prior.hpp>
 #include <math.h>
 #include "Prime.h"
 
@@ -207,12 +208,14 @@ bool Prime::primeFactorize(unsigned long number, vector<unsigned long>& primeFac
 
 unsigned long Prime::getNextPrime(unsigned long start)
 {
-    while (!Prime::checkForPrime(start + 1))
+    unsigned long i = start + 1;
+
+    while (!Prime::checkForPrime(i))
     {
-        start++;
+        i++;
     }
 
-    return start;
+    return i;
 }
 
 unsigned long Prime::getPrevPrime(unsigned long start)
@@ -223,12 +226,14 @@ unsigned long Prime::getPrevPrime(unsigned long start)
         return 0;
     }
 
-    while (!Prime::checkForPrime(start - 1))
+    unsigned long i = start - 1;
+
+    while (!Prime::checkForPrime(i))
     {
-        start--;
+        i--;
     }
 
-    return start;
+    return i;
 }
 
 unsigned long Prime::getNthPrime(unsigned long n)
@@ -238,19 +243,29 @@ unsigned long Prime::getNthPrime(unsigned long n)
         return 0;
     }
 
-    if (n > Prime::SIZE_OF_PRIME_TABLE)
+    if (n <= Prime::SIZE_OF_PRIME_TABLE)
     {
-        // determine the relative kth prime starting from the end of the table of primes
-        unsigned long k = n - Prime::SIZE_OF_PRIME_TABLE;
-
-        return Prime::getNextPrime(*Prime::primeTable.end());
-    }
-    else // retrieve the nth prime from the table of primes
-    {
+        // retrieve the nth prime directly from the table of primes
         set<unsigned long>::const_iterator it = Prime::primeTable.begin();
         iterator_advance(it, n - 1);
 
         return *it;
+    }
+    else
+    {
+        // determine the relative kth prime starting from the end of the table of primes
+        unsigned long k = Prime::SIZE_OF_PRIME_TABLE;
+        unsigned long nextNumberToCheck = Prime::lastPrimeInTable + 1;
+
+        while (k != n)
+        {
+            if (Prime::checkForPrime(nextNumberToCheck))
+            {
+                k++;
+            }
+        }
+
+        return nextNumberToCheck;
     }
 }
 
@@ -751,4 +766,6 @@ const set<unsigned long> Prime::primeTable =
         104381, 104383, 104393, 104399, 104417, 104459, 104471, 104473, 104479, 104491, 104513, 104527, 104537, 104543, 104549, 104551, 104561,
         104579, 104593, 104597, 104623, 104639, 104651, 104659, 104677, 104681, 104683, 104693, 104701, 104707, 104711, 104717, 104723, 104729};
 
-unsigned long Prime::SIZE_OF_PRIME_TABLE = Prime::primeTable.size();
+const unsigned long Prime::SIZE_OF_PRIME_TABLE = Prime::primeTable.size();
+
+const unsigned long Prime::lastPrimeInTable = *(boost::prior(Prime::primeTable.end()));

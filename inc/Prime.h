@@ -11,8 +11,9 @@ class Prime
 private:
     Prime();
     ~Prime();
-    static unsigned long SIZE_OF_PRIME_TABLE;
+    static const unsigned long SIZE_OF_PRIME_TABLE;
     static const set<unsigned long> primeTable;
+    static const unsigned long lastPrimeInTable;
     static unsigned long calcCrossSum(unsigned long number);
     static unsigned long getLastDigit(unsigned long number);
     static unsigned long getLast2Digits(unsigned long number);
