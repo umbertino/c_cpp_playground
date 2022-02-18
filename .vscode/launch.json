@@ -34,11 +34,11 @@
         "targetArchitecture": "x64",
         "MIMode": "lldb",
       },
-      "preLaunchTask": "Build Debug"
+      "preLaunchTask": "Build App"
     },
     {
       "type": "cppdbg",
-      "name": "Debug tests",
+      "name": "Debug UnitTests",
       "request": "launch",
       "args": [],
       "stopAtEntry": true,
@@ -52,7 +52,7 @@
           "ignoreFailures": true
         }
       ],
-      "program": "${workspaceFolder}/build/bin/Debug/playground_tst",
+      "program": "${workspaceFolder}/utest/bin/playground_tst",
       "windows": {
         "type": "cppvsdbg",
         "targetArchitecture": "x86_64",
@@ -66,7 +66,7 @@
         "targetArchitecture": "x64",
         "MIMode": "lldb",
       },
-      "preLaunchTask": "Build and run tests in Debug"
+      "preLaunchTask": "Build UnitTests"
     },
   ]
 }

@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Debug",
+            "label": "Build App",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Debug --target application -v",
+            "command": "cmake --build ${workspaceFolder}/build --config Release --target application -v && cmake --build ${workspaceFolder}/build --config Debug --target application -v && cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target application -v",
             "problemMatcher": [
                 "$gcc"
             ],
@@ -19,55 +19,49 @@
             },
         },
         {
-            "label": "Clean Debug",
-            "type": "shell",
-            //"command": "cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target clean -v",
-            "command": "rm -r ${workspaceFolder}/build/Debug/*",
-        },
-        {
-            "label": "Build Release",
-            "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Release --target application -v",
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Setup Build Environment"
-            ],
-            "presentation": {
-                "focus": true
-            },
-        },
-        {
-            "label": "Clean Release",
+            "label": "Clean App",
             "type": "shell",
             //"command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
-            "command": "rm -r ${workspaceFolder}/build/Release/*",
+            "command": "rm -r ${workspaceFolder}/build/bin/* && rm -r ${workspaceFolder}/build/lib/*",
             "presentation": {
                 "focus": true
             },
         },
         {
-            "label": "Build and run tests in Debug",
+            "label": "Build UnitTests",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/test --config Debug --target tests -v && ctest -N --test-dir ${workspaceFolder}/test",
+            "command": "cmake --build ${workspaceFolder}/utest --config Debug --target tests -v",
             "problemMatcher": [
                 "$gcc"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "Setup Test Environment"
+                "Setup UnitTest Environment"
             ],
             "presentation": {
                 "focus": true
             },
         },
         {
-            "label": "Clean test build",
+            "label": "Run UnitTests",
+            "type": "shell",
+            "command": "ctest --test-dir ${workspaceFolder}/utest",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build UnitTests"
+            ],
+            "presentation": {
+                "focus": true
+            },
+        },
+        {
+            "label": "Clean UnitTests",
             "type": "shell",
             //"command": "cmake --build ${workspaceFolder}/build/ --config Debug --target clean -v",
-            "command": "rm -r ${workspaceFolder}/test/*",
+            "command": "rm -r ${workspaceFolder}/utest/*",
             "presentation": {
                 "focus": true
             },
@@ -115,7 +109,7 @@
             }
         },
         {
-            "label": "Setup Test Environment",
+            "label": "Setup UnitTest Environment",
             "type": "shell",
             "presentation": {
                 "echo": false,
@@ -131,7 +125,7 @@
                     "Ninja",
                     ".",
                     "-B",
-                    "test",
+                    "utest",
                     "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64WinMSVC.cmake"
                 ]
             },
@@ -141,7 +135,7 @@
                     "Ninja",
                     ".",
                     "-B",
-                    "test",
+                    "utest",
                     "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
                 ]
             },
@@ -151,7 +145,7 @@
                     "Ninja",
                     ".",
                     "-B",
-                    "test",
+                    "utest",
                     "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
                 ]
             }
@@ -169,9 +163,9 @@
             },
         },
         {
-            "label": "Cleanup Test Environment",
+            "label": "Cleanup UnitTest Environment",
             "type": "shell",
-            "command": "rm -r ${workspaceFolder}/test",
+            "command": "rm -r ${workspaceFolder}/utest",
             "presentation": {
                 "focus": false,
                 "echo": true,
