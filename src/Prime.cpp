@@ -255,10 +255,12 @@ unsigned long Prime::getNthPrime(unsigned long n)
     {
         // determine the relative kth prime starting from the end of the table of primes
         unsigned long k = Prime::SIZE_OF_PRIME_TABLE;
-        unsigned long nextNumberToCheck = Prime::lastPrimeInTable + 1;
+        unsigned long nextNumberToCheck = Prime::lastPrimeInTable;
 
         while (k != n)
         {
+            nextNumberToCheck++;
+
             if (Prime::checkForPrime(nextNumberToCheck))
             {
                 k++;
