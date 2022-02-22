@@ -1,13 +1,44 @@
-#include <iostream>
-#include <stdexcept>
+// Boost-Includes
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/timer/timer.hpp>
+
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/settings_parser.hpp>
+#include <boost/log/utility/setup/from_stream.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+
 #include <boost/container/vector.hpp>
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/io_context.hpp>
+
+// Std-Includes
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <string>
+
+// Own Includes
 #include "Prime.h"
 #include "ScopeGuard.h"
+#include "Logger.h"
 
 // switches to activate / deactivate examples
-#define PRIME_EXAMPLE 1
+#define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
+#define BOOST_TIMER_EXAMPLE 0
+#define LOGGER_EXAMPLE 1
+#define BOOST_LOGGING_EXAMPLE 0
+
+void handler();
 
 int main(void)
 {
@@ -116,5 +147,79 @@ int main(void)
     std::cout << std::endl;
 #endif
 
+#if BOOST_TIMER_EXAMPLE
+    {
+        // boost::asio::io_context io_context;
+        // boost::asio::deadline_timer timer(io_context, boost::posix_time::seconds(10));
+        // timer.async_wait(handler);
+    }
+
+    std::cout << std::endl;
+#endif
+
+#if BOOST_LOGGING_EXAMPLE
+    // namespace logging = boost::log;
+    // namespace sinks = boost::log::sinks;
+    // namespace src = boost::log::sources;
+    // namespace expr = boost::log::expressions;
+    // namespace attrs = boost::log::attributes;
+    // namespace keywords = boost::log::keywords;
+    // namespace filters = boost::log::filters;
+
+    // Read logging settings from a file
+    // std::ifstream file("logging.ini", std::ifstream::in);
+    // auto settings = boost::log::parse_settings(file);
+    // boost::log::init_from_stream(file);
+
+    boost::log::sources::severity_logger<boost::log::trivial::severity_level> consoleLogger;
+    boost::log::sources::severity_logger<boost::log::trivial::severity_level> fileLogger;
+
+    // Set console-logging settings
+    boost::log::add_console_log(std::cout, boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
+
+    // Set file-logging settings
+    boost::log::add_file_log(
+        boost::log::keywords::file_name = "sample_%N.log",
+        boost::log::keywords::open_mode = std::ios_base::out | std::ios_base::app,
+        boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+        boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0, 0, 0),
+        boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
+
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+    boost::log::add_common_attributes();
+
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::trace) << "A trace severity message";
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::debug) << "A debug severity message";
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::info) << "An informational severity message";
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::warning) << "A warning severity message";
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::error) << "An error severity message";
+    BOOST_LOG_SEV(consoleLogger, boost::log::trivial::fatal) << "A fatal severity message";
+
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::trace) << "A trace severity message";
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::debug) << "A debug severity message";
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::info) << "An informational severity message";
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::warning) << "A warning severity message";
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::error) << "An error severity message";
+    BOOST_LOG_SEV(fileLogger, boost::log::trivial::fatal) << "A fatal severity message";
+
+    std::cout << std::endl;
+#endif
+
+#if LOGGER_EXAMPLE
+
+    Logger* myLogger(new Logger(std::clog));
+
+    myLogger->log(Logger::logLevel::TRACE, "This is a trace message");
+    myLogger->log(Logger::logLevel::DEBUG, "This is a debug message");
+    myLogger->log(Logger::logLevel::WARN, "This is a warning message");
+
+    std::cout << std::endl;
+#endif
+
     return 0;
+}
+
+void handler()
+{
+    std::cout << "Timer expired" << std::endl;
 }

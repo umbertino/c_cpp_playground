@@ -4,8 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/Programs/MinGW/include/**",
-                "C:/Programs/MinGW/lib/**",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.29.30133/include/**",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.29.30133/lib/x64/**",
                 "C:/Programs/boost/**",
                 "C:/Program Files (x86)/googletest-distribution/**"
             ],
@@ -14,14 +14,14 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:/Programs/MinGW/bin/g++.exe",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "browse": {
                 "path": [
                     "${workspaceFolder}/**",
-                    "C:/Programs/MinGW/include/**",
-                    "C:/Programs/MinGW/lib/**",
+                    "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.29.30133/include/**",
+                    "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.29.30133/lib/x64/**",
                     "C:/Programs/boost/**",
                     "C:/Program Files (x86)/googletest-distribution/**"
                 ],

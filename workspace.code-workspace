@@ -69,7 +69,15 @@
 			"map": "cpp",
 			"set": "cpp",
 			"unordered_set": "cpp",
-			"variant": "cpp"
+			"variant": "cpp",
+			"*.ipp": "cpp",
+			"strstream": "cpp",
+			"bitset": "cpp",
+			"codecvt": "cpp",
+			"complex": "cpp",
+			"csignal": "cpp",
+			"typeindex": "cpp",
+			"xstring": "cpp"
 		},
 		"cSpell.words": [
 			"myvector"
