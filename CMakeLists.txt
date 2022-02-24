@@ -30,7 +30,7 @@ add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
 target_link_libraries(prime ${Boost_LIBRARIES})
 
 # build Scopeguard-Library
-add_library(scopeguard STATIC ${SRC_DIR}/Scopeguard.cpp)
+add_library(scopeguard STATIC ${SRC_DIR}/ScopeGuard.cpp)
 target_link_libraries(scopeguard ${Boost_LIBRARIES})
 
 # build Logger-Library
