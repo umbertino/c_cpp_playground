@@ -1,11 +1,28 @@
 #pragma once
 
-#include <string>
+#include <ostream>
+#include <sstream>
+#include <filesystem>
 
 #include <boost/log/trivial.hpp>
-
+#include <boost/preprocessor/cat.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/container/map.hpp>
+
+
+// some convenience macros
+
+// make __FILE__ a string literal
+#define S(x) #x
+#define S_(x) S(x)
+#define __SLINE__ S_(__LINE__)
+
+#define __BASENAME__ (std::filesystem::path(__FILE__).filename().string()) // the file name without full path
+#define __FILE_EXT__ (std::filesystem::path(__FILE__).filename().extension().string()) // the extension of the file .xxx
+#define __LOCATION_B__ BOOST_PP_CAT(__BASENAME__, BOOST_PP_CAT(<<, ""))
+#define __LOCATION_B_F__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B__, BOOST_PP_CAT(<<, " ")), __FUNCTION__)
+#define __LOCATION_B_F_L__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B_F__, BOOST_PP_CAT(<<, " ")), __SLINE__)
+#define __LOCATION__ __LOCATION_B_F_L__ // a location string of the form __BASENAME__ __FUNCTION__ __LINE__
 
 class Logger
 {
@@ -21,11 +38,23 @@ public:
     } logLevel;
 
     Logger(std::ostream& strm);
-    Logger::Logger(std::ofstream& strm);
+    Logger(std::ofstream& strm);
     ~Logger();
-    void log(Logger::logLevel level, const std::string& message);
+    void log(Logger::logLevel level, const std::ostream& messageStream);
+    void trace(const std::ostream& messageStream);
+    void info(const std::ostream& messageStream);
+    void debug(const std::ostream& messageStream);
+    void warn(const std::ostream& messageStream);
+    void error(const std::ostream& messageStream);
+    void fatal(const std::ostream& messageStream);
+
+    void start();
+    void stop();
+    void resume();
+    void suppress();
 
 private:
-    //static const boost::container::map<Logger::logLevel, boost::log::trivial::severity_level> levelTranslator;
+    bool loggingSuppressed;
+    std::string message;
     boost::scoped_ptr<boost::log::sources::severity_logger<boost::log::trivial::severity_level>> boostLogger;
 };

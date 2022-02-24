@@ -4,9 +4,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build App",
+            "label": "Build All",
             "type": "shell",
             "command": "cmake --build ${workspaceFolder}/build --config Release --target application -v && cmake --build ${workspaceFolder}/build --config Debug --target application -v && cmake --build ${workspaceFolder}/build --config RelWithDebInfo --target application -v",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Setup Build Environment"
+            ],
+            "presentation": {
+                "focus": true
+            },
+        },
+        {
+            "label": "Build Debug",
+            "type": "shell",
+            "command": "cmake --build ${workspaceFolder}/build --config Debug --target application -v",
             "problemMatcher": [
                 "$gcc"
             ],

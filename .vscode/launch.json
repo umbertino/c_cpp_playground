@@ -34,7 +34,7 @@
         "targetArchitecture": "x64",
         "MIMode": "lldb",
       },
-      "preLaunchTask": "Build App"
+      "preLaunchTask": "Build Debug"
     },
     {
       "type": "cppdbg",

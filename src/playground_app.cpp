@@ -22,6 +22,7 @@
 
 // Std-Includes
 #include <iostream>
+#include <ostream>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -208,10 +209,32 @@ int main(void)
 #if LOGGER_EXAMPLE
 
     Logger* myLogger(new Logger(std::clog));
+    std::stringstream logStrm;
 
-    myLogger->log(Logger::logLevel::TRACE, "This is a trace message");
-    myLogger->log(Logger::logLevel::DEBUG, "This is a debug message");
-    myLogger->log(Logger::logLevel::WARN, "This is a warning message");
+    myLogger->start();
+
+    myLogger->log(Logger::logLevel::TRACE, logStrm << __BASENAME__ << " This is a trace message");
+    myLogger->log(Logger::logLevel::FATAL, logStrm << __FILE__ << " This is a trace message");
+    myLogger->log(Logger::logLevel::DEBUG, logStrm << __LINE__ << " This is a debug message");
+    myLogger->log(Logger::logLevel::WARN, logStrm << __FUNCTION__ << " This is a warning message");
+    myLogger->log(Logger::logLevel::ERR, logStrm << __FILE_EXT__ << " This is an error message");
+    myLogger->log(Logger::logLevel::INFO, logStrm << __LOCATION__ << " This is a fatal message");
+
+    std::cout << std::endl;
+
+    myLogger->suppress();
+
+    myLogger->trace(logStrm << __BASENAME__ << " This is a trace message");
+    myLogger->fatal(logStrm << __FILE__ << " This is a trace message");
+    myLogger->debug(logStrm << __LINE__ << " This is a debug message");
+    myLogger->warn(logStrm << __FUNCTION__ << " This is a warning message");
+
+    myLogger->resume();
+
+    myLogger->error(logStrm << __FILE_EXT__ << " This is an error message");
+    myLogger->info(logStrm << __LOCATION__ << " This is a fatal message");
+
+    myLogger->stop();
 
     std::cout << std::endl;
 #endif
