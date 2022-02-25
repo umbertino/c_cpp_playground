@@ -9,9 +9,6 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 
-#define STRINGIZE_DETAIL(x) #x
-#define STRINGIZE(x) STRINGIZE_DETAIL(x)
-
 Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>)
 {
     this->loggingSuppressed = true;

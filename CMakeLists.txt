@@ -22,10 +22,15 @@ file(GLOB TST_SRCS "${TST_DIR}/*.cpp" "${TST_DIR}/*.c")
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Threads REQUIRED)
-find_package(Boost 1.78.0 REQUIRED)
+SET(Boost_USE_STATIC_LIBS ON)
 
-# build Prime-Library
+find_package(Threads REQUIRED)
+find_package(Boost 1.78.0 COMPONENTS log log_setup REQUIRED)
+
+message(STATUS Boost_LIBRARIES: ${Boost_LIBRARIES})
+message(STATUS Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS})
+
+# build Prime-Libraryoost_INCLUDE_DIRS
 add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
 target_link_libraries(prime ${Boost_LIBRARIES})
 
@@ -35,7 +40,7 @@ target_link_libraries(scopeguard ${Boost_LIBRARIES})
 
 # build Logger-Library
 add_library(logger STATIC ${SRC_DIR}/Logger.cpp)
-target_link_libraries(logger ${Boost_LIBRARIES})
+target_link_libraries(logger ${Boost_LIBRARIES} stdc++fs)
 
 # The main playground executable
 add_executable(${APP_BIN_NAME} ${SRC_DIR}/playground_app.cpp)

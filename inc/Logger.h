@@ -17,12 +17,12 @@
 #define S_(x) S(x)
 #define __SLINE__ S_(__LINE__)
 
-#define __BASENAME__ (std::filesystem::path(__FILE__).filename().string()) // the file name without full path
-#define __FILE_EXT__ (std::filesystem::path(__FILE__).filename().extension().string()) // the extension of the file .xxx
-#define __LOCATION_B__ BOOST_PP_CAT(__BASENAME__, BOOST_PP_CAT(<<, ""))
-#define __LOCATION_B_F__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B__, BOOST_PP_CAT(<<, " ")), __FUNCTION__)
-#define __LOCATION_B_F_L__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B_F__, BOOST_PP_CAT(<<, " ")), __SLINE__)
-#define __LOCATION__ __LOCATION_B_F_L__ // a location string of the form __BASENAME__ __FUNCTION__ __LINE__
+#define __BASENAME__ (std::filesystem::path(__FILE__).filename().string())
+#define __FILE_EXT__ (std::filesystem::path(__FILE__).filename().extension().string())
+// #define __LOCATION_B__ BOOST_PP_CAT(__BASENAME__, BOOST_PP_CAT(<<, ""))
+// #define __LOCATION_B_F__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B__, BOOST_PP_CAT(<<, " ")), __FUNCTION__)
+// #define __LOCATION_B_F_L__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B_F__, BOOST_PP_CAT(<<, " ")), __SLINE__)
+// #define __LOCATION__ __LOCATION_B_F_L__
 
 class Logger
 {
