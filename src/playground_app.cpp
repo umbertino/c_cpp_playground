@@ -213,26 +213,26 @@ int main(void)
 
     myLogger->start();
 
-    myLogger->log(Logger::logLevel::TRACE, logStrm << __BASENAME__ << " This is a trace message");
-    myLogger->log(Logger::logLevel::FATAL, logStrm << __FILE__ << " This is a trace message");
-    myLogger->log(Logger::logLevel::DEBUG, logStrm << __LINE__ << " This is a debug message");
-    myLogger->log(Logger::logLevel::WARN, logStrm << __FUNCTION__ << " This is a warning message");
-    myLogger->log(Logger::logLevel::ERR, logStrm << __FILE_EXT__ << " This is an error message");
-    // myLogger->log(Logger::logLevel::INFO, logStrm << __LOCATION__ << " This is a fatal message");
+    myLogger->log(Logger::logLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
+    myLogger->log(Logger::logLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
+    myLogger->log(Logger::logLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
+    myLogger->log(Logger::logLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
+    myLogger->log(Logger::logLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
+    // myLogger->log(Logger::logLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
 
     std::cout << std::endl;
 
     myLogger->suppress();
 
-    myLogger->trace(logStrm << __BASENAME__ << " This is a trace message");
-    myLogger->fatal(logStrm << __FILE__ << " This is a trace message");
-    myLogger->debug(logStrm << __LINE__ << " This is a debug message");
-    myLogger->warn(logStrm << __FUNCTION__ << " This is a warning message");
+    myLogger->trace(logStrm << __BASENAME__ << " 7 This is a trace message");
+    myLogger->fatal(logStrm << __FILE__ << " 8 This is a trace message");
+    myLogger->debug(logStrm << __LINE__ << " 9 This is a debug message");
+    myLogger->warn(logStrm << __FUNCTION__ << " 10 This is a warning message");
 
     myLogger->resume();
 
-    myLogger->error(logStrm << __FILE_EXT__ << " This is an error message");
-    // myLogger->info(logStrm << __LOCATION__ << " This is a fatal message");
+    myLogger->error(logStrm << __FILE_EXT__ << " 11 This is an error message");
+    //myLogger->info(logStrm << __LOCATION__ << " 12 This is a fatal message");
 
     myLogger->stop();
 

@@ -38,7 +38,7 @@ public:
     } logLevel;
 
     Logger(std::ostream& strm);
-    Logger(std::ofstream& strm);
+    //Logger(std::ofstream& strm);
     ~Logger();
     void log(Logger::logLevel level, const std::ostream& messageStream);
     void trace(const std::ostream& messageStream);
@@ -54,7 +54,11 @@ public:
     void suppress();
 
 private:
+
+
+
     bool loggingSuppressed;
-    std::string message;
+    std::ostream& channel;
+    std::stringstream message;
     boost::scoped_ptr<boost::log::sources::severity_logger<boost::log::trivial::severity_level>> boostLogger;
 };
