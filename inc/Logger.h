@@ -2,12 +2,12 @@
 
 #include <ostream>
 #include <sstream>
-#include <filesystem>
 
 #include <boost/log/trivial.hpp>
 #include <boost/preprocessor/cat.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/container/map.hpp>
+#include <boost/filesystem/convenience.hpp>
 
 
 // some convenience macros
@@ -17,12 +17,15 @@
 #define S_(x) S(x)
 #define __SLINE__ S_(__LINE__)
 
-#define __BASENAME__ (std::filesystem::path(__FILE__).filename().string())
-#define __FILE_EXT__ (std::filesystem::path(__FILE__).filename().extension().string())
-// #define __LOCATION_B__ BOOST_PP_CAT(__BASENAME__, BOOST_PP_CAT(<<, ""))
-// #define __LOCATION_B_F__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B__, BOOST_PP_CAT(<<, " ")), __FUNCTION__)
-// #define __LOCATION_B_F_L__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B_F__, BOOST_PP_CAT(<<, " ")), __SLINE__)
+#define __BASENAME__ (boost::filesystem::path(__FILE__).filename().string())
+#define __FILE_EXT__ (boost::filesystem::path(__FILE__).filename().extension().string())
+
+// #define __LOCATION_B__ BOOST_PP_CAT(__BASENAME__, BOOST_PP_CAT(<<, ))
+// #define __LOCATION_B_F__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B__, BOOST_PP_CAT(<<, )), __FUNCTION__)
+// #define __LOCATION_B_F_L__ BOOST_PP_CAT(BOOST_PP_CAT(__LOCATION_B_F__, BOOST_PP_CAT(<<, )), __SLINE__)
 // #define __LOCATION__ __LOCATION_B_F_L__
+
+
 
 class Logger
 {
