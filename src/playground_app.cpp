@@ -208,33 +208,44 @@ int main(void)
 
 #if LOGGER_EXAMPLE
 
-    Logger* myLogger(new Logger(std::clog));
+    Logger myLogger(std::clog);//(new Logger(std::clog));
     std::stringstream logStrm;
 
-    myLogger->start();
+    myLogger.start();
 
-    myLogger->log(Logger::logLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
-    myLogger->log(Logger::logLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
-    myLogger->log(Logger::logLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
-    myLogger->log(Logger::logLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
-    myLogger->log(Logger::logLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
-    myLogger->log(Logger::logLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
+    myLogger.boostLog(Logger::LogLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
+    myLogger.boostLog(Logger::LogLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
+    myLogger.boostLog(Logger::LogLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
+    myLogger.boostLog(Logger::LogLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
+    myLogger.boostLog(Logger::LogLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
+    myLogger.boostLog(Logger::LogLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
 
     std::cout << std::endl;
 
-    myLogger->suppress();
+    myLogger.setLogLevel(Logger::LogLevel::INFO);
 
-    myLogger->trace(logStrm << __BASENAME__ << " 7 This is a trace message");
-    myLogger->fatal(logStrm << __FILE__ << " 8 This is a trace message");
-    myLogger->debug(logStrm << __LINE__ << " 9 This is a debug message");
-    myLogger->warn(logStrm << __FUNCTION__ << " 10 This is a warning message");
+    myLogger.log(Logger::LogLevel::TRACE) << __BASENAME__ << " 1 This is a trace message" << std::endl;
+    myLogger.log(Logger::LogLevel::FATAL) << __FILE__ << " 2 This is a fatal message" << std::endl;
+    myLogger.suppress();
+    myLogger.log(Logger::LogLevel::DEBUG) << __LINE__ << " 3 This is a debug message" << std::endl;
+    myLogger.log(Logger::LogLevel::WARN) << __FUNCTION__ << " 4 This is a warning message" << std::endl;
+    myLogger.resume();
+    myLogger.log(Logger::LogLevel::ERR) << __FILE_EXT__ << " 5 This is an error message" << std::endl;
+    myLogger.log(Logger::LogLevel::INFO) << __LOCATION__ << " 6 This is a fatal message" << std::endl;
 
-    myLogger->resume();
+    std::cout << std::endl;
 
-    myLogger->error(logStrm << __FILE_EXT__ << " 11 This is an error message");
-    myLogger->info(logStrm << __LOCATION__ << " 12 This is a fatal message");
+    Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
+    Logger::LOG_TRACE(myLogger) << __BASENAME__ << " 1 This is a trace message" << std::endl;
+    Logger::LOG_FATAL(myLogger) << __FILE__ << " 2 This is a fatal message" << std::endl;
+    Logger::LOG_SUPPRESS(myLogger);
+    Logger::LOG_DEBUG(myLogger) << __LINE__ << " 3 This is a debug message" << std::endl;
+    Logger::LOG_WARN(myLogger) << __FUNCTION__ << " 4 This is a warning message" << std::endl;
+    Logger::LOG_RESUME(myLogger);
+    Logger::LOG_ERROR(myLogger) << __FILE_EXT__ << " 5 This is an error message" << std::endl;
+    Logger::LOG_INFO(myLogger) << __LOCATION__ << " 6 This is a fatal message" << std::endl;
 
-    myLogger->stop();
+    myLogger.stop();
 
     std::cout << std::endl;
 #endif

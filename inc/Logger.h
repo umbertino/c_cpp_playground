@@ -4,16 +4,13 @@
 #include <sstream>
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/container/map.hpp>
-#include <boost/filesystem/convenience.hpp>
 #include <boost/log/trivial.hpp>
-
+#include <boost/filesystem/convenience.hpp>
 
 // some convenience macros
 #define __BASENAME__ (boost::filesystem::path(__FILE__).filename().string())
 #define __FILE_EXT__ (boost::filesystem::path(__FILE__).filename().extension().string())
-#define __LOCATION__ __BASENAME__ << ":" <<__FUNCTION__ <<":" << __LINE__ << ":"
-
+#define __LOCATION__ __BASENAME__ << ":" <<__FUNCTION__ <<":" << __LINE__
 
 class Logger
 {
@@ -26,30 +23,57 @@ public:
         WARN,
         ERR,
         FATAL
-    } logLevel;
+    } LogLevel;
+
+    typedef enum
+    {
+        ALL_OFF = 0x00,
+        LOG_COUNTER = 0x01,
+        TIME_STAMP = 0x02,
+        LOG_LEVEL = 0x04
+    } LogTag;
+
+
 
     Logger(std::ostream& strm);
     //Logger(std::ofstream& strm);
     ~Logger();
-    void log(Logger::logLevel level, const std::ostream& messageStream);
-    void trace(const std::ostream& messageStream);
-    void info(const std::ostream& messageStream);
-    void debug(const std::ostream& messageStream);
-    void warn(const std::ostream& messageStream);
-    void error(const std::ostream& messageStream);
-    void fatal(const std::ostream& messageStream);
+
+    static void LOG_START(Logger& instance);
+    static void LOG_STOP(Logger& instance);
+    static void LOG_RESUME(Logger& instance);
+    static void LOG_SUPPRESS(Logger& instance);
+    static void LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
+    static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
+    static std::ostream& LOG_TRACE(Logger& instance);
+    static std::ostream& LOG_DEBUG(Logger& instance);
+    static std::ostream& LOG_INFO(Logger& instance);
+    static std::ostream& LOG_WARN(Logger& instance);
+    static std::ostream& LOG_ERROR(Logger& instance);
+    static std::ostream& LOG_FATAL(Logger& instance);
+
+    void boostLog(Logger::LogLevel level, const std::ostream& messageStream);
+    std::ostream& log(Logger::LogLevel level);
 
     void start();
     void stop();
     void resume();
     void suppress();
 
+    void setLogLevel(Logger::LogLevel level);
+    Logger::LogLevel getLogLevel();
+
 private:
+    static std::ostream nirvana;
+    static std::string const logLevel2String[];
+    inline static std::string getCurrentTimeStr();
 
 
-
+    unsigned char logTags;
+    unsigned long logCounter;
+    Logger::LogLevel logLevel;
     bool loggingSuppressed;
-    std::ostream& channel;
+    std::ostream& logChannel;
     std::stringstream message;
     boost::scoped_ptr<boost::log::sources::severity_logger<boost::log::trivial::severity_level>> boostLogger;
 };
