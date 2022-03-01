@@ -1,7 +1,8 @@
+// own includes
 #include "Logger.h"
 
+// std includes
 #include <ostream>
-//#include <iostream>
 #include <sstream>
 #include <string>
 #include <chrono>
@@ -9,6 +10,7 @@
 #include <ratio>
 #include <iomanip>
 
+// boost includes
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/console.hpp>
@@ -45,7 +47,7 @@ Logger::~Logger()
 {
 }
 
-// static class-methods
+// static class members
 void Logger::LOG_START(Logger& instance)
 {
     instance.start();
@@ -63,7 +65,12 @@ void Logger::LOG_RESUME(Logger& instance)
 
 void Logger::LOG_SUPPRESS(Logger& instance)
 {
-    instance.resume();
+    instance.suppress();
+}
+
+void Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
+{
+    instance.setLogTags(logTags);
 }
 
 void Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
@@ -106,7 +113,24 @@ std::ostream& Logger::LOG_FATAL(Logger& instance)
     return instance.log(Logger::LogLevel::FATAL);
 }
 
-// instance methods
+std::string Logger::getCurrentTimeStr()
+{
+    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    time_t in_time_t = std::chrono::system_clock::to_time_t(today);
+    std::stringstream ss;
+    auto const now = boost::posix_time::microsec_clock::universal_time();
+    auto const t = now.time_of_day();
+    boost::format formater("%06d");
+    formater % (t.total_microseconds() % 1000000);
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << "." << formater.str();
+
+    return ss.str();
+}
+
+std::ostream Logger::nirvana(NULL);
+std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+
+// instance members
 void Logger::boostLog(Logger::LogLevel level, const std::ostream& messageStream)
 {
     this->message << messageStream.rdbuf();
@@ -167,14 +191,35 @@ std::ostream& Logger::log(Logger::LogLevel level)
 {
     if (!this->loggingSuppressed && level >= this->logLevel)
     {
-        return this->logChannel << std::string("\r") << "[" << std::setw(5) << std::setfill(' ') << ++this->logCounter << "]" << "[" << this->getCurrentTimeStr() << "]" << "[" << Logger::logLevel2String[level] << "] ";
+        this->logChannel << std::string("\r");
+
+        if (this->logTags & Logger::LogTag::LOG_COUNTER)
+        {
+            this->logChannel << "[" << std::setw(5) << std::setfill('0') << ++this->logCounter << "]";
+        }
+
+        if (this->logTags & Logger::LogTag::TIME_STAMP)
+        {
+            this->logChannel << "[" << this->getCurrentTimeStr() << "]";
+        }
+
+        if (this->logTags & Logger::LogTag::LOG_LEVEL)
+        {
+            this->logChannel << "[" << Logger::logLevel2String[level] << "]";
+        }
+
+        if (this->logTags != Logger::LogTag::ALL_OFF)
+        {
+            this->logChannel << " ";
+        }
+
+        return this->logChannel;
     }
     else
     {
         return Logger::nirvana;
     }
 }
-
 
 void Logger::start()
 {
@@ -195,6 +240,11 @@ void Logger::suppress()
     this->stop();
 }
 
+void Logger::setLogTags(unsigned char logTags)
+{
+    this->logTags = logTags;
+}
+
 void Logger::setLogLevel(Logger::LogLevel level)
 {
     this->logLevel = level;
@@ -204,20 +254,3 @@ Logger::LogLevel Logger::getLogLevel()
 {
     return this->logLevel;
 }
-
-std::string Logger::getCurrentTimeStr()
-{
-    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
-    time_t in_time_t = std::chrono::system_clock::to_time_t(today);
-    std::stringstream ss;
-    auto const now = boost::posix_time::microsec_clock::universal_time();
-    auto const t = now.time_of_day();
-    boost::format formater("%06d");
-    formater % (t.total_microseconds() % 1000000);
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << "." << formater.str();
-
-    return ss.str();
-}
-
-std::ostream Logger::nirvana(NULL);
-std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};

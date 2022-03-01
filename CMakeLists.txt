@@ -27,9 +27,6 @@ SET(Boost_USE_STATIC_LIBS ON)
 find_package(Threads REQUIRED)
 find_package(Boost 1.78.0 COMPONENTS filesystem log log_setup REQUIRED)
 
-message(STATUS Boost_LIBRARIES: ${Boost_LIBRARIES})
-message(STATUS Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS})
-
 # build Prime-Libraryoost_INCLUDE_DIRS
 add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
 target_link_libraries(prime ${Boost_LIBRARIES})

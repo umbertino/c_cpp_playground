@@ -235,6 +235,7 @@ int main(void)
 
     std::cout << std::endl;
 
+    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::LOG_COUNTER | Logger::LogTag::LOG_LEVEL | Logger::LogTag::TIME_STAMP);
     Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
     Logger::LOG_TRACE(myLogger) << __BASENAME__ << " 1 This is a trace message" << std::endl;
     Logger::LOG_FATAL(myLogger) << __FILE__ << " 2 This is a fatal message" << std::endl;

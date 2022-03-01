@@ -1,8 +1,12 @@
 #pragma once
 
+// own includes
+
+// std includes
 #include <ostream>
 #include <sstream>
 
+// boost includes
 #include <boost/scoped_ptr.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -33,16 +37,16 @@ public:
         LOG_LEVEL = 0x04
     } LogTag;
 
-
-
     Logger(std::ostream& strm);
     //Logger(std::ofstream& strm);
     ~Logger();
 
+    // static public class members
     static void LOG_START(Logger& instance);
     static void LOG_STOP(Logger& instance);
     static void LOG_RESUME(Logger& instance);
     static void LOG_SUPPRESS(Logger& instance);
+    static void LOG_SET_TAGS(Logger& instance, unsigned char logTags);
     static void LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
     static std::ostream& LOG_TRACE(Logger& instance);
@@ -52,6 +56,7 @@ public:
     static std::ostream& LOG_ERROR(Logger& instance);
     static std::ostream& LOG_FATAL(Logger& instance);
 
+    // public instance members
     void boostLog(Logger::LogLevel level, const std::ostream& messageStream);
     std::ostream& log(Logger::LogLevel level);
 
@@ -60,15 +65,17 @@ public:
     void resume();
     void suppress();
 
+    void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     Logger::LogLevel getLogLevel();
 
 private:
+    // private static members
     static std::ostream nirvana;
     static std::string const logLevel2String[];
     inline static std::string getCurrentTimeStr();
 
-
+    // private instance members
     unsigned char logTags;
     unsigned long logCounter;
     Logger::LogLevel logLevel;
