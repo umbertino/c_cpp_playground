@@ -3,6 +3,7 @@
 
 // std includes
 #include <ostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <chrono>
@@ -15,20 +16,35 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/sources/severity_logger.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/format.hpp>
 
-
-Logger::Logger(std::ostream& strm) :
-    boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>),
-    logChannel(strm),
-    logCounter(0),
-    logLevel(Logger::LogLevel::TRACE),
-    logTags(Logger::LogTag::ALL_OFF)
+Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>),
+                                     logChannel(&strm),
+                                     logCounter(0),
+                                     logLevel(Logger::LogLevel::INFO),
+                                     logTags(Logger::LogTag::ALL_OFF)
 {
     this->loggingSuppressed = true;
     boost::log::add_common_attributes();
-    boost::log::add_console_log(this->logChannel, boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
+    boost::log::add_console_log(*(this->logChannel), boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
+}
+
+Logger::Logger(const std::string& filename) : logCounter(0),
+                                              logTags(Logger::LogTag::ALL_OFF)
+{
+    std::error_condition error = this->parseConfigFile(filename);
+
+    if (error.value() != 0)
+    {
+        std::cerr << "Falling back to default console logger" << std::endl;
+        // fall back to a default console logger
+        this->logChannel = &std::clog;
+        this->logLevel = Logger::LogLevel::INFO;
+        this->logTags = Logger::LogTag::ALL_OFF;
+    }
 }
 
 // Logger::Logger(std::ofstream& strm) : boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>)
@@ -113,8 +129,9 @@ std::ostream& Logger::LOG_FATAL(Logger& instance)
     return instance.log(Logger::LogLevel::FATAL);
 }
 
-std::string Logger::getCurrentTimeStr()
+std::string Logger::getCurrentTimeStr(unsigned char properties)
 {
+    // Refactor
     std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
     time_t in_time_t = std::chrono::system_clock::to_time_t(today);
     std::stringstream ss;
@@ -184,36 +201,36 @@ void Logger::boostLog(Logger::LogLevel level, const std::ostream& messageStream)
     }
 
     this->message.str(std::string("\r"));
-    this->logChannel << this->message.str();
+    *(this->logChannel) << this->message.str();
 }
 
 std::ostream& Logger::log(Logger::LogLevel level)
 {
     if (!this->loggingSuppressed && level >= this->logLevel)
     {
-        this->logChannel << std::string("\r");
+        *(this->logChannel) << std::string("\r");
 
-        if (this->logTags & Logger::LogTag::LOG_COUNTER)
+        if (this->logTags & Logger::LogTag::COUNTER)
         {
-            this->logChannel << "[" << std::setw(5) << std::setfill('0') << ++this->logCounter << "]";
+            *(this->logChannel) << "[" << std::setw(5) << std::setfill('0') << ++this->logCounter << "]";
         }
 
         if (this->logTags & Logger::LogTag::TIME_STAMP)
         {
-            this->logChannel << "[" << this->getCurrentTimeStr() << "]";
+            *(this->logChannel) << "[" << this->getCurrentTimeStr(Logger::TimeStampProperty::QUIET) << "]";
         }
 
-        if (this->logTags & Logger::LogTag::LOG_LEVEL)
+        if (this->logTags & Logger::LogTag::LEVEL)
         {
-            this->logChannel << "[" << Logger::logLevel2String[level] << "]";
+            *(this->logChannel) << "[" << Logger::logLevel2String[level] << "]";
         }
 
         if (this->logTags != Logger::LogTag::ALL_OFF)
         {
-            this->logChannel << " ";
+            *(this->logChannel) << " ";
         }
 
-        return this->logChannel;
+        return *(this->logChannel);
     }
     else
     {
@@ -253,4 +270,213 @@ void Logger::setLogLevel(Logger::LogLevel level)
 Logger::LogLevel Logger::getLogLevel()
 {
     return this->logLevel;
+}
+
+std::error_condition Logger::parseConfigFile(const std::string& filename)
+{
+    std::error_condition errCond(0, std::generic_category());
+    std::ifstream ifs;
+
+    ifs.open(filename.c_str(), std::ifstream::in);
+
+    if (ifs.fail())
+    {
+        ifs.close();
+
+        errCond = std::errc::no_such_file_or_directory;
+    }
+    else
+    {
+        boost::property_tree::ptree iniTree;
+
+        try
+        {
+            boost::property_tree::read_ini(filename.c_str(), iniTree);
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error: " << e.what() << std::endl;
+
+            ifs.close();
+
+            return std::errc::invalid_seek;
+        }
+
+        // for (boost::property_tree::ptree::value_type& section : iniTree)
+        // {
+        //     std::cout << '[' << section.first << "]\n";
+
+        // for (auto& key : section.second)
+        // {
+        //     std::cout << key.first << "=" << key.second.get_value<std::string>() << "\n";
+        // }
+
+        //std::cout << std::endl;
+        // }
+
+        // boost::property_tree::ptree::const_assoc_iterator it = iniTree.find("BasicSetup");
+
+        // if (it == iniTree.not_found())
+        // {
+        //     std::cout << "BasicSetup not found" << std::endl;
+        // }
+        // else
+        // {
+        //     std::cout << "BasicSetup not found" << std::endl;
+        // }
+
+        // [BasicSetup] processing
+        try
+        {
+            std::string logType = iniTree.get<std::string>("BasicSetup.LogType");
+
+            if ("console" == logType)
+            {
+                this->logType = Logger::LogType::CONSOLE;
+            }
+            else if ("file" == logType)
+            {
+                this->logType = Logger::LogType::FILE;
+            }
+            else
+            {
+                std::cerr << "Configfile parse error: No feasible BasicSetup.LogType found" << std::endl;
+
+                ifs.close();
+
+                return std::errc::invalid_seek;
+            }
+
+            std::string logLevel = iniTree.get<std::string>("BasicSetup.LogLevel");
+
+            if ("trace" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::TRACE;
+            }
+            else if ("debug" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::DEBUG;
+            }
+            else if ("info" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::INFO;
+            }
+            else if ("warning" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::WARN;
+            }
+            else if ("error" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::ERR;
+            }
+            else if ("fatal" == logLevel)
+            {
+                this->logLevel = Logger::LogLevel::FATAL;
+            }
+            else
+            {
+                std::cerr << "Configfile parse error: No feasible BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
+
+                this->logLevel = Logger::LogLevel::INFO;
+            }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error: " << e.what() << std::endl;
+
+            ifs.close();
+
+            return std::errc::invalid_seek;
+        }
+
+        // [ConsoleLog] processing
+        if (this->logType == Logger::LogType::CONSOLE)
+        {
+            try
+            {
+                std::string logChannel = iniTree.get<std::string>("ConsoleLog.Channel");
+
+                if ("stdLog" == logChannel)
+                {
+                    this->logChannel = &std::clog;
+                }
+                else if ("stdErr" == logChannel)
+                {
+                    this->logChannel = &std::cerr;
+                }
+                else if ("stdOut" == logChannel)
+                {
+                    this->logChannel = &std::cout;
+                }
+                else
+                {
+                    std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
+
+                    this->logChannel = &std::clog;
+                }
+            }
+            catch (const boost::property_tree::ptree_error& e)
+            {
+                std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
+
+                this->logChannel = &std::clog;
+            }
+        }
+
+        // [FileLog] processing
+        if (this->logType == Logger::LogType::FILE)
+        {
+        }
+
+        // [LogTag] processing
+        try
+        {
+            std::string logTagCounter = iniTree.get<std::string>("LogTag.Counter");
+            std::string logTagTimeStamp = iniTree.get<std::string>("LogTag.TimeStamp");
+            std::string logTagLevel = iniTree.get<std::string>("LogTag.Level");
+
+            if ("yes" == logTagCounter)
+            {
+                this->logTags = this->logTags | Logger::LogTag::COUNTER;
+            }
+            else if ("no" != logTagCounter)
+            {
+                std::cerr << "Configfile parse error:  No feasible LogTag.Counter found. Defaulting to OFF " << std::endl;
+
+                this->logTags = this->logTags & ~Logger::LogTag::COUNTER;
+            }
+
+            if ("yes" == logTagTimeStamp)
+            {
+                this->logTags = this->logTags | Logger::LogTag::TIME_STAMP;
+            }
+            else if ("no" != logTagTimeStamp)
+            {
+                std::cerr << "Configfile parse error:  No feasible LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
+
+                this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
+            }
+
+            if ("yes" == logTagLevel)
+            {
+                this->logTags = this->logTags | Logger::LogTag::LEVEL;
+            }
+            else if ("no" != logTagLevel)
+            {
+                std::cerr << "Configfile parse error:  No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
+
+                this->logTags = this->logTags & ~Logger::LogTag::LEVEL;
+            }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error:  No feasible LogTag found. Defaulting to ALL_OFF " << std::endl;
+
+            this->logTags = Logger::LogTag::ALL_OFF;
+        }
+
+        ifs.close();
+    }
+
+    return errCond;
 }

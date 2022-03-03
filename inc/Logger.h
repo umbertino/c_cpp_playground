@@ -5,6 +5,8 @@
 // std includes
 #include <ostream>
 #include <sstream>
+#include <cerrno>
+#include <system_error>
 
 // boost includes
 #include <boost/scoped_ptr.hpp>
@@ -32,12 +34,29 @@ public:
     typedef enum
     {
         ALL_OFF = 0x00,
-        LOG_COUNTER = 0x01,
+        COUNTER = 0x01,
         TIME_STAMP = 0x02,
-        LOG_LEVEL = 0x04
+        LEVEL = 0x04
     } LogTag;
 
+    typedef enum
+    {
+        CONSOLE,
+        FILE
+    } LogType;
+
+    typedef enum
+    {
+        QUIET = 0x00,
+        DATE = 0x01,
+        TIME = 0x02,
+        MILISECS = 0x04,
+        MICROSEC = 0x08,
+        NANOSECS = 0x0F
+    } TimeStampProperty;
+
     Logger(std::ostream& strm);
+    Logger(const std::string& file);
     //Logger(std::ofstream& strm);
     ~Logger();
 
@@ -73,14 +92,18 @@ private:
     // private static members
     static std::ostream nirvana;
     static std::string const logLevel2String[];
-    inline static std::string getCurrentTimeStr();
+    inline static std::string getCurrentTimeStr(unsigned char properties);
 
     // private instance members
     unsigned char logTags;
     unsigned long logCounter;
     Logger::LogLevel logLevel;
+    Logger::LogType logType;
     bool loggingSuppressed;
-    std::ostream& logChannel;
+    std::ostream* logChannel;
+
     std::stringstream message;
     boost::scoped_ptr<boost::log::sources::severity_logger<boost::log::trivial::severity_level>> boostLogger;
+
+    std::error_condition parseConfigFile(const std::string& file);
 };

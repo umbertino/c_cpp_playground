@@ -1,24 +1,27 @@
 // Boost-Includes
-#include <boost/thread.hpp>
-#include <boost/chrono.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/timer/timer.hpp>
+// #include <boost/thread.hpp>
+// #include <boost/chrono.hpp>
+// #include <boost/scoped_ptr.hpp>
+// #include <boost/timer/timer.hpp>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/settings_parser.hpp>
-#include <boost/log/utility/setup/from_stream.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
+// #include <boost/log/core.hpp>
+// #include <boost/log/trivial.hpp>
+// #include <boost/log/expressions.hpp>
+// #include <boost/log/sinks/text_file_backend.hpp>
+// #include <boost/log/utility/setup/file.hpp>
+// #include <boost/log/utility/setup/common_attributes.hpp>
+// #include <boost/log/utility/setup/settings_parser.hpp>
+// #include <boost/log/utility/setup/from_stream.hpp>
+// #include <boost/log/utility/setup/console.hpp>
+// #include <boost/log/sources/severity_logger.hpp>
+// #include <boost/log/sources/record_ostream.hpp>
+
+// #include <boost/property_tree/ptree.hpp>
+// #include <boost/property_tree/ini_parser.hpp>
 
 #include <boost/container/vector.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/asio/io_context.hpp>
+// #include <boost/asio/deadline_timer.hpp>
+// #include <boost/asio/io_context.hpp>
 
 // Std-Includes
 #include <iostream>
@@ -38,6 +41,7 @@
 #define BOOST_TIMER_EXAMPLE 0
 #define LOGGER_EXAMPLE 1
 #define BOOST_LOGGING_EXAMPLE 0
+#define INI_FILE_PARSER 0
 
 void handler();
 
@@ -208,17 +212,19 @@ int main(void)
 
 #if LOGGER_EXAMPLE
 
-    Logger myLogger(std::clog);//(new Logger(std::clog));
-    std::stringstream logStrm;
+    Logger myLogger("logging.ini"); //(new Logger(std::clog));
+    //Logger myLogger2(std::clog);
+
+    //std::stringstream logStrm;
 
     myLogger.start();
-
-    myLogger.boostLog(Logger::LogLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
-    myLogger.boostLog(Logger::LogLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
-    myLogger.boostLog(Logger::LogLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
-    myLogger.boostLog(Logger::LogLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
-    myLogger.boostLog(Logger::LogLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
-    myLogger.boostLog(Logger::LogLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
+    //myLogger2.start();
+    // myLogger.boostLog(Logger::LogLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
+    // myLogger.boostLog(Logger::LogLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
+    // myLogger.boostLog(Logger::LogLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
+    // myLogger.boostLog(Logger::LogLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
+    // myLogger.boostLog(Logger::LogLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
+    // myLogger.boostLog(Logger::LogLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
 
     std::cout << std::endl;
 
@@ -235,7 +241,20 @@ int main(void)
 
     std::cout << std::endl;
 
-    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::LOG_COUNTER | Logger::LogTag::LOG_LEVEL | Logger::LogTag::TIME_STAMP);
+    // myLogger2.setLogLevel(Logger::LogLevel::INFO);
+
+    // myLogger2.log(Logger::LogLevel::TRACE) << __BASENAME__ << " 1 This is a trace message" << std::endl;
+    // myLogger2.log(Logger::LogLevel::FATAL) << __FILE__ << " 2 This is a fatal message" << std::endl;
+    // myLogger2.suppress();
+    // myLogger2.log(Logger::LogLevel::DEBUG) << __LINE__ << " 3 This is a debug message" << std::endl;
+    // myLogger2.log(Logger::LogLevel::WARN) << __FUNCTION__ << " 4 This is a warning message" << std::endl;
+    // myLogger2.resume();
+    // myLogger2.log(Logger::LogLevel::ERR) << __FILE_EXT__ << " 5 This is an error message" << std::endl;
+    // myLogger2.log(Logger::LogLevel::INFO) << __LOCATION__ << " 6 This is a fatal message" << std::endl;
+
+    std::cout << std::endl;
+
+    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::LEVEL | Logger::LogTag::TIME_STAMP);
     Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
     Logger::LOG_TRACE(myLogger) << __BASENAME__ << " 1 This is a trace message" << std::endl;
     Logger::LOG_FATAL(myLogger) << __FILE__ << " 2 This is a fatal message" << std::endl;
@@ -247,6 +266,49 @@ int main(void)
     Logger::LOG_INFO(myLogger) << __LOCATION__ << " 6 This is a fatal message" << std::endl;
 
     myLogger.stop();
+
+    std::cout << std::endl;
+#endif
+
+#if INI_FILE_PARSER
+    using boost::property_tree::ptree;
+
+    ptree pt;
+
+    std::cout << "The default error condition: ";
+    std::cout << std::error_condition().message() << '\n';
+
+    std::cout << "A condition constructed from errc: ";
+    std::cout << std::error_condition(std::errc::permission_denied).message() << '\n';
+
+    std::cout << "Some generic error conditions, by value:\n";
+
+    for (int i = 0; i < 50; ++i)
+    {
+        std::error_condition c(std::errc::no_such_file_or_directory);
+        std::cout << "\t#" << i << ": " << c.value() << " " << c.category().name() << " " << c.message() << std::endl;
+    }
+
+    // try
+    // {
+    //     read_ini("logging.ini", pt);
+    // }
+    // catch (...)
+    // {
+    //     std::cout << "EXCEPTION!!!\n";
+    // }
+
+    // for (auto& section : pt)
+    // {
+    //     std::cout << '[' << section.first << "]\n";
+
+    //     for (auto& key : section.second)
+    //     {
+    //         std::cout << key.first << "=" << key.second.get_value<std::string>() << "\n";
+    //     }
+
+    //     std::cout << std::endl;
+    // }
 
     std::cout << std::endl;
 #endif
