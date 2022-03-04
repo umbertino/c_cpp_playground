@@ -33,10 +33,11 @@ public:
 
     typedef enum
     {
-        ALL_OFF = 0x00,
+        ALL_TAGS_OFF = 0x00,
         COUNTER = 0x01,
         TIME_STAMP = 0x02,
-        LEVEL = 0x04
+        LEVEL = 0x04,
+        ALL_TAGS_ON = 0xFF
     } LogTag;
 
     typedef enum
@@ -47,12 +48,13 @@ public:
 
     typedef enum
     {
-        QUIET = 0x00,
+        ALL_PROPS_OFF = 0x00,
         DATE = 0x01,
         TIME = 0x02,
         MILISECS = 0x04,
-        MICROSEC = 0x08,
-        NANOSECS = 0x0F
+        MICROSECS = 0x08,
+        NANOSECS = 0x0F,
+        ALL_PROPS_ON = 0xFF
     } TimeStampProperty;
 
     Logger(std::ostream& strm);

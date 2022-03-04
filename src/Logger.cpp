@@ -25,7 +25,7 @@ Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severi
                                      logChannel(&strm),
                                      logCounter(0),
                                      logLevel(Logger::LogLevel::INFO),
-                                     logTags(Logger::LogTag::ALL_OFF)
+                                     logTags(Logger::LogTag::ALL_TAGS_OFF)
 {
     this->loggingSuppressed = true;
     boost::log::add_common_attributes();
@@ -33,7 +33,7 @@ Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severi
 }
 
 Logger::Logger(const std::string& filename) : logCounter(0),
-                                              logTags(Logger::LogTag::ALL_OFF)
+                                              logTags(Logger::LogTag::ALL_TAGS_OFF)
 {
     std::error_condition error = this->parseConfigFile(filename);
 
@@ -43,7 +43,7 @@ Logger::Logger(const std::string& filename) : logCounter(0),
         // fall back to a default console logger
         this->logChannel = &std::clog;
         this->logLevel = Logger::LogLevel::INFO;
-        this->logTags = Logger::LogTag::ALL_OFF;
+        this->logTags = Logger::LogTag::ALL_TAGS_OFF;
     }
 }
 
@@ -131,15 +131,58 @@ std::ostream& Logger::LOG_FATAL(Logger& instance)
 
 std::string Logger::getCurrentTimeStr(unsigned char properties)
 {
-    // Refactor
+    if (Logger::TimeStampProperty::ALL_PROPS_OFF == properties)
+    {
+        return "";
+    }
+
+    // the current time
     std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    // the current time as epoch time
+    std::chrono::system_clock::duration duration = today.time_since_epoch();
+
+    // get duration in different units
+    std::chrono::seconds durationSecs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    std::chrono::milliseconds durationMiliSecs = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    std::chrono::microseconds durationMicroSecs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+    std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+
+    // construct miliseconds, microseconds and nanoseconds
+    std::chrono::milliseconds msCurrSec = durationMiliSecs - std::chrono::duration_cast<std::chrono::milliseconds>(durationSecs);
+    std::chrono::microseconds usCurrSec = durationMicroSecs - std::chrono::duration_cast<std::chrono::microseconds>(durationMiliSecs);
+    std::chrono::nanoseconds nsCurrSec = durationNanosecs - std::chrono::duration_cast<std::chrono::nanoseconds>(durationMicroSecs);
+
+    // transform current time to time_t format
     time_t in_time_t = std::chrono::system_clock::to_time_t(today);
+
     std::stringstream ss;
-    auto const now = boost::posix_time::microsec_clock::universal_time();
-    auto const t = now.time_of_day();
-    boost::format formater("%06d");
-    formater % (t.total_microseconds() % 1000000);
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << "." << formater.str();
+
+    // return the time string like desired
+
+    if (properties & Logger::TimeStampProperty::DATE)
+    {
+        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
+    }
+
+    if (properties & Logger::TimeStampProperty::TIME)
+    {
+        ss << " " << std::put_time(std::localtime(&in_time_t), "%X"); // Time
+    }
+
+    if (properties & Logger::TimeStampProperty::MILISECS)
+    {
+        ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count(); // miliseconds
+    }
+
+    if (properties & Logger::TimeStampProperty::MICROSECS)
+    {
+        ss << "." << std::setw(3) << std::setfill('0') << usCurrSec.count(); // microseconds
+    }
+
+    if (properties & Logger::TimeStampProperty::NANOSECS)
+    {
+        ss << "." << std::setw(3) << std::setfill('0') << nsCurrSec.count(); // nanoseconds
+    }
 
     return ss.str();
 }
@@ -217,7 +260,7 @@ std::ostream& Logger::log(Logger::LogLevel level)
 
         if (this->logTags & Logger::LogTag::TIME_STAMP)
         {
-            *(this->logChannel) << "[" << this->getCurrentTimeStr(Logger::TimeStampProperty::QUIET) << "]";
+            *(this->logChannel) << "[" << this->getCurrentTimeStr(Logger::TimeStampProperty::ALL_PROPS_OFF) << "]";
         }
 
         if (this->logTags & Logger::LogTag::LEVEL)
@@ -225,7 +268,7 @@ std::ostream& Logger::log(Logger::LogLevel level)
             *(this->logChannel) << "[" << Logger::logLevel2String[level] << "]";
         }
 
-        if (this->logTags != Logger::LogTag::ALL_OFF)
+        if (this->logTags != Logger::LogTag::ALL_TAGS_OFF)
         {
             *(this->logChannel) << " ";
         }
@@ -302,29 +345,6 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
             return std::errc::invalid_seek;
         }
 
-        // for (boost::property_tree::ptree::value_type& section : iniTree)
-        // {
-        //     std::cout << '[' << section.first << "]\n";
-
-        // for (auto& key : section.second)
-        // {
-        //     std::cout << key.first << "=" << key.second.get_value<std::string>() << "\n";
-        // }
-
-        //std::cout << std::endl;
-        // }
-
-        // boost::property_tree::ptree::const_assoc_iterator it = iniTree.find("BasicSetup");
-
-        // if (it == iniTree.not_found())
-        // {
-        //     std::cout << "BasicSetup not found" << std::endl;
-        // }
-        // else
-        // {
-        //     std::cout << "BasicSetup not found" << std::endl;
-        // }
-
         // [BasicSetup] processing
         try
         {
@@ -346,7 +366,18 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
 
                 return std::errc::invalid_seek;
             }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error: " << e.what() << std::endl;
 
+            ifs.close();
+
+            return std::errc::invalid_seek;
+        }
+
+        try
+        {
             std::string logLevel = iniTree.get<std::string>("BasicSetup.LogLevel");
 
             if ("trace" == logLevel)
@@ -382,11 +413,9 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error: " << e.what() << std::endl;
+            std::cerr << "Configfile parse error: No feasible BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
 
-            ifs.close();
-
-            return std::errc::invalid_seek;
+            this->logLevel = Logger::LogLevel::INFO;
         }
 
         // [ConsoleLog] processing
@@ -424,16 +453,20 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
         }
 
         // [FileLog] processing
-        if (this->logType == Logger::LogType::FILE)
+        else if (this->logType == Logger::LogType::FILE)
         {
+        }
+        else
+        {
+            std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
+
+            this->logChannel = &std::clog;
         }
 
         // [LogTag] processing
         try
         {
             std::string logTagCounter = iniTree.get<std::string>("LogTag.Counter");
-            std::string logTagTimeStamp = iniTree.get<std::string>("LogTag.TimeStamp");
-            std::string logTagLevel = iniTree.get<std::string>("LogTag.Level");
 
             if ("yes" == logTagCounter)
             {
@@ -445,6 +478,17 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
 
                 this->logTags = this->logTags & ~Logger::LogTag::COUNTER;
             }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error:  No feasible LogTag.Counter found. Defaulting to OFF " << std::endl;
+
+            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
+        }
+
+        try
+        {
+            std::string logTagTimeStamp = iniTree.get<std::string>("LogTag.TimeStamp");
 
             if ("yes" == logTagTimeStamp)
             {
@@ -456,6 +500,17 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
 
                 this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
             }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse error:  No feasible LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
+
+            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
+        }
+
+        try
+        {
+            std::string logTagLevel = iniTree.get<std::string>("LogTag.Level");
 
             if ("yes" == logTagLevel)
             {
@@ -470,13 +525,13 @@ std::error_condition Logger::parseConfigFile(const std::string& filename)
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error:  No feasible LogTag found. Defaulting to ALL_OFF " << std::endl;
+            std::cerr << "Configfile parse error:  No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
 
-            this->logTags = Logger::LogTag::ALL_OFF;
+            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
         }
-
-        ifs.close();
     }
+
+    ifs.close();
 
     return errCond;
 }

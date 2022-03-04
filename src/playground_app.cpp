@@ -1,6 +1,6 @@
 // Boost-Includes
 // #include <boost/thread.hpp>
-// #include <boost/chrono.hpp>
+#include <boost/chrono.hpp>
 // #include <boost/scoped_ptr.hpp>
 // #include <boost/timer/timer.hpp>
 
@@ -20,8 +20,7 @@
 // #include <boost/property_tree/ini_parser.hpp>
 
 #include <boost/container/vector.hpp>
-// #include <boost/asio/deadline_timer.hpp>
-// #include <boost/asio/io_context.hpp>
+#include <boost/format.hpp>
 
 // Std-Includes
 #include <iostream>
@@ -29,6 +28,9 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 
 // Own Includes
 #include "Prime.h"
@@ -42,6 +44,7 @@
 #define LOGGER_EXAMPLE 1
 #define BOOST_LOGGING_EXAMPLE 0
 #define INI_FILE_PARSER 0
+
 
 void handler();
 
@@ -212,8 +215,8 @@ int main(void)
 
 #if LOGGER_EXAMPLE
 
-    Logger myLogger("logging.ini"); //(new Logger(std::clog));
-    //Logger myLogger2(std::clog);
+    //Logger myLogger("logging.ini"); //(new Logger(std::clog));
+    Logger myLogger(std::clog);
 
     //std::stringstream logStrm;
 
@@ -271,46 +274,31 @@ int main(void)
 #endif
 
 #if INI_FILE_PARSER
-    using boost::property_tree::ptree;
+    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    time_t in_time_t = std::chrono::system_clock::to_time_t(today);
 
-    ptree pt;
+    std::chrono::system_clock::duration duration = today.time_since_epoch();
 
-    std::cout << "The default error condition: ";
-    std::cout << std::error_condition().message() << '\n';
+    std::chrono::seconds durationSecs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    std::chrono::milliseconds durationMiliSecs = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    std::chrono::microseconds durationMicroSecs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+    std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
 
-    std::cout << "A condition constructed from errc: ";
-    std::cout << std::error_condition(std::errc::permission_denied).message() << '\n';
+    std::chrono::milliseconds msCurrSec = durationMiliSecs - std::chrono::duration_cast<std::chrono::milliseconds>(durationSecs);
+    std::chrono::microseconds usCurrSec = durationMicroSecs - std::chrono::duration_cast<std::chrono::microseconds>(durationMiliSecs);
+    std::chrono::nanoseconds nsCurrSec = durationNanosecs - std::chrono::duration_cast<std::chrono::nanoseconds>(durationMicroSecs);
 
-    std::cout << "Some generic error conditions, by value:\n";
+    //std::chrono::microseconds miliSecs = std::chrono::duration_cast<std::chrono::nanoseconds>(nsCurrSec);
 
-    for (int i = 0; i < 50; ++i)
-    {
-        std::error_condition c(std::errc::no_such_file_or_directory);
-        std::cout << "\t#" << i << ": " << c.value() << " " << c.category().name() << " " << c.message() << std::endl;
-    }
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
+    ss << " " << std::put_time(std::localtime(&in_time_t), "%X"); // Time
+    ss << "." << durationNanosecs.count();
+    ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count(); // miliseconds
+    ss << "." << std::setw(3) << std::setfill('0') << usCurrSec.count(); // microseconds
+    ss << "." << std::setw(3) << std::setfill('0') << nsCurrSec.count(); // nanoseconds
 
-    // try
-    // {
-    //     read_ini("logging.ini", pt);
-    // }
-    // catch (...)
-    // {
-    //     std::cout << "EXCEPTION!!!\n";
-    // }
-
-    // for (auto& section : pt)
-    // {
-    //     std::cout << '[' << section.first << "]\n";
-
-    //     for (auto& key : section.second)
-    //     {
-    //         std::cout << key.first << "=" << key.second.get_value<std::string>() << "\n";
-    //     }
-
-    //     std::cout << std::endl;
-    // }
-
-    std::cout << std::endl;
+    std::cout << ss.str() << std::endl;
 #endif
 
     return 0;
