@@ -25,15 +25,15 @@ Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severi
                                      logChannel(&strm),
                                      logCounter(0),
                                      logLevel(Logger::LogLevel::INFO),
-                                     logTags(Logger::LogTag::ALL_TAGS_OFF)
+                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
+                                     timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
     this->loggingSuppressed = true;
     boost::log::add_common_attributes();
     boost::log::add_console_log(*(this->logChannel), boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
 }
 
-Logger::Logger(const std::string& filename) : logCounter(0),
-                                              logTags(Logger::LogTag::ALL_TAGS_OFF)
+Logger::Logger(const std::string& filename) : logCounter(0)
 {
     std::error_condition error = this->parseConfigFile(filename);
 
@@ -44,6 +44,7 @@ Logger::Logger(const std::string& filename) : logCounter(0),
         this->logChannel = &std::clog;
         this->logLevel = Logger::LogLevel::INFO;
         this->logTags = Logger::LogTag::ALL_TAGS_OFF;
+        this->timeStampProps = Logger::TimeStampProperty::ALL_PROPS_OFF;
     }
 }
 
@@ -92,6 +93,11 @@ void Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
 void Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
 {
     instance.setLogLevel(level);
+}
+
+void Logger::LOG_SET_TIME_STAMP(Logger& instance, unsigned char properties)
+{
+    instance.setTimeStamp(properties);
 }
 
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
@@ -161,12 +167,12 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
 
     if (properties & Logger::TimeStampProperty::DATE)
     {
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
+        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d") << " "; // Date
     }
 
-    if (properties & Logger::TimeStampProperty::TIME)
+    if ((properties & Logger::TimeStampProperty::TIME))
     {
-        ss << " " << std::put_time(std::localtime(&in_time_t), "%X"); // Time
+        ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
     }
 
     if (properties & Logger::TimeStampProperty::MILISECS)
@@ -258,9 +264,10 @@ std::ostream& Logger::log(Logger::LogLevel level)
             *(this->logChannel) << "[" << std::setw(5) << std::setfill('0') << ++this->logCounter << "]";
         }
 
-        if (this->logTags & Logger::LogTag::TIME_STAMP)
+        if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
+            (this->timeStampProps != Logger::TimeStampProperty::ALL_PROPS_OFF))
         {
-            *(this->logChannel) << "[" << this->getCurrentTimeStr(Logger::TimeStampProperty::ALL_PROPS_OFF) << "]";
+            *(this->logChannel) << "[" << this->getCurrentTimeStr(this->timeStampProps) << "]";
         }
 
         if (this->logTags & Logger::LogTag::LEVEL)
@@ -308,6 +315,35 @@ void Logger::setLogTags(unsigned char logTags)
 void Logger::setLogLevel(Logger::LogLevel level)
 {
     this->logLevel = level;
+}
+
+void Logger::setTimeStamp(unsigned char properties)
+{
+    this->timeStampProps = properties;
+
+    // adjust time properties in case of missing but
+    // mandatory properties, e.g. if microseconds shall be
+    // set make sure that general time and milliseconds are set, too
+    if (Logger::TimeStampProperty::MILISECS & properties)
+    {
+        this->timeStampProps = this->timeStampProps |
+                               Logger::TimeStampProperty::TIME;
+    }
+
+    if (Logger::TimeStampProperty::MICROSECS & properties)
+    {
+        this->timeStampProps = this->timeStampProps |
+                               Logger::TimeStampProperty::TIME |
+                               Logger::TimeStampProperty::MILISECS;
+    }
+
+    if (Logger::TimeStampProperty::NANOSECS & properties)
+    {
+        this->timeStampProps = this->timeStampProps |
+                               Logger::TimeStampProperty::TIME |
+                               Logger::TimeStampProperty::MILISECS |
+                               Logger::TimeStampProperty::MICROSECS;
+    }
 }
 
 Logger::LogLevel Logger::getLogLevel()

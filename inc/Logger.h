@@ -16,7 +16,7 @@
 // some convenience macros
 #define __BASENAME__ (boost::filesystem::path(__FILE__).filename().string())
 #define __FILE_EXT__ (boost::filesystem::path(__FILE__).filename().extension().string())
-#define __LOCATION__ __BASENAME__ << ":" <<__FUNCTION__ <<":" << __LINE__
+#define __LOCATION__ __BASENAME__ << ":" << __FUNCTION__ << ":" << __LINE__
 
 class Logger
 {
@@ -49,11 +49,11 @@ public:
     typedef enum
     {
         ALL_PROPS_OFF = 0x00,
-        DATE = 0x01,
-        TIME = 0x02,
-        MILISECS = 0x04,
-        MICROSECS = 0x08,
-        NANOSECS = 0x0F,
+        DATE = 0x01, //YYYY-MM-DD
+        TIME = 0x02, //HH:MM:SS
+        MILISECS = 0x04, // HH:MM:SS.mmm
+        MICROSECS = 0x08, // HH:MM:SS.mmm.uuu
+        NANOSECS = 0x10, // HH:MM:SS.mmm.uuu.nnn
         ALL_PROPS_ON = 0xFF
     } TimeStampProperty;
 
@@ -69,6 +69,7 @@ public:
     static void LOG_SUPPRESS(Logger& instance);
     static void LOG_SET_TAGS(Logger& instance, unsigned char logTags);
     static void LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
+    static void LOG_SET_TIME_STAMP(Logger& instance, unsigned char properties);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
     static std::ostream& LOG_TRACE(Logger& instance);
     static std::ostream& LOG_DEBUG(Logger& instance);
@@ -88,6 +89,7 @@ public:
 
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
+    void setTimeStamp(unsigned char properties);
     Logger::LogLevel getLogLevel();
 
 private:
@@ -98,6 +100,7 @@ private:
 
     // private instance members
     unsigned char logTags;
+    unsigned char timeStampProps;
     unsigned long logCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;

@@ -45,7 +45,6 @@
 #define BOOST_LOGGING_EXAMPLE 0
 #define INI_FILE_PARSER 0
 
-
 void handler();
 
 int main(void)
@@ -221,17 +220,12 @@ int main(void)
     //std::stringstream logStrm;
 
     myLogger.start();
-    //myLogger2.start();
-    // myLogger.boostLog(Logger::LogLevel::TRACE, logStrm << __BASENAME__ << " 1 This is a trace message");
-    // myLogger.boostLog(Logger::LogLevel::FATAL, logStrm << __FILE__ << " 2 This is a fatal message");
-    // myLogger.boostLog(Logger::LogLevel::DEBUG, logStrm << __LINE__ << " 3 This is a debug message");
-    // myLogger.boostLog(Logger::LogLevel::WARN, logStrm << __FUNCTION__ << " 4 This is a warning message");
-    // myLogger.boostLog(Logger::LogLevel::ERR, logStrm << __FILE_EXT__ << " 5 This is an error message");
-    // myLogger.boostLog(Logger::LogLevel::INFO, logStrm << __LOCATION__ << " 6 This is a fatal message");
 
     std::cout << std::endl;
 
+    myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
     myLogger.setLogLevel(Logger::LogLevel::INFO);
+    myLogger.setTimeStamp(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
     myLogger.log(Logger::LogLevel::TRACE) << __BASENAME__ << " 1 This is a trace message" << std::endl;
     myLogger.log(Logger::LogLevel::FATAL) << __FILE__ << " 2 This is a fatal message" << std::endl;
@@ -244,21 +238,10 @@ int main(void)
 
     std::cout << std::endl;
 
-    // myLogger2.setLogLevel(Logger::LogLevel::INFO);
-
-    // myLogger2.log(Logger::LogLevel::TRACE) << __BASENAME__ << " 1 This is a trace message" << std::endl;
-    // myLogger2.log(Logger::LogLevel::FATAL) << __FILE__ << " 2 This is a fatal message" << std::endl;
-    // myLogger2.suppress();
-    // myLogger2.log(Logger::LogLevel::DEBUG) << __LINE__ << " 3 This is a debug message" << std::endl;
-    // myLogger2.log(Logger::LogLevel::WARN) << __FUNCTION__ << " 4 This is a warning message" << std::endl;
-    // myLogger2.resume();
-    // myLogger2.log(Logger::LogLevel::ERR) << __FILE_EXT__ << " 5 This is an error message" << std::endl;
-    // myLogger2.log(Logger::LogLevel::INFO) << __LOCATION__ << " 6 This is a fatal message" << std::endl;
-
-    std::cout << std::endl;
-
-    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::LEVEL | Logger::LogTag::TIME_STAMP);
+    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL);
     Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
+    Logger::LOG_SET_TIME_STAMP(myLogger, Logger::TimeStampProperty::TIME | Logger::TimeStampProperty::MICROSECS);
+
     Logger::LOG_TRACE(myLogger) << __BASENAME__ << " 1 This is a trace message" << std::endl;
     Logger::LOG_FATAL(myLogger) << __FILE__ << " 2 This is a fatal message" << std::endl;
     Logger::LOG_SUPPRESS(myLogger);
