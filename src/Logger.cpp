@@ -7,6 +7,7 @@
 // boost includes
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
 // constructors and destructors
@@ -303,6 +304,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string logType = iniTree.get<std::string>("BasicSetup.LogType");
+            boost::to_lower(logType);
 
             if ("console" == logType)
             {
@@ -334,6 +336,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string logLevel = iniTree.get<std::string>("BasicSetup.LogLevel");
+            boost::to_lower(logLevel);
 
             if ("trace" == logLevel)
             {
@@ -379,16 +382,17 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             try
             {
                 std::string logChannel = iniTree.get<std::string>("ConsoleLog.Channel");
+                boost::to_lower(logChannel);
 
-                if ("stdLog" == logChannel)
+                if ("stdlog" == logChannel)
                 {
                     this->logChannel = &std::clog;
                 }
-                else if ("stdErr" == logChannel)
+                else if ("stderr" == logChannel)
                 {
                     this->logChannel = &std::cerr;
                 }
-                else if ("stdOut" == logChannel)
+                else if ("stdout" == logChannel)
                 {
                     this->logChannel = &std::cout;
                 }
@@ -422,6 +426,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string logTagCounter = iniTree.get<std::string>("LogTag.Counter");
+            boost::to_lower(logTagCounter);
 
             if ("yes" == logTagCounter)
             {
@@ -445,6 +450,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string logTagTimeStamp = iniTree.get<std::string>("LogTag.TimeStamp");
+            boost::to_lower(logTagTimeStamp);
 
             if ("yes" == logTagTimeStamp)
             {
@@ -468,6 +474,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string logTagLevel = iniTree.get<std::string>("LogTag.Level");
+            boost::to_lower(logTagLevel);
 
             if ("yes" == logTagLevel)
             {
@@ -491,6 +498,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string timeStampDate = iniTree.get<std::string>("TimeStampFormat.Date");
+            boost::to_lower(timeStampDate);
 
             if ("yes" == timeStampDate)
             {
@@ -514,6 +522,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         try
         {
             std::string timeStampTime = iniTree.get<std::string>("TimeStampFormat.Time");
+            boost::to_lower(timeStampTime);
 
             if ("yes" == timeStampTime)
             {
@@ -540,6 +549,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             try
             {
                 std::string timeStampMiliSecs = iniTree.get<std::string>("TimeStampFormat.MiliSecs");
+                boost::to_lower(timeStampMiliSecs);
 
                 if ("yes" == timeStampMiliSecs)
                 {
@@ -562,14 +572,15 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             // [TimeStampFormat.MicroSec] processing
             try
             {
-                std::string timeStampMicroSec = iniTree.get<std::string>("TimeStampFormat.MicroSec");
+                std::string timeStampMicroSecs = iniTree.get<std::string>("TimeStampFormat.MicroSec");
+                boost::to_lower(timeStampMicroSecs);
 
-                if ("yes" == timeStampMicroSec)
+                if ("yes" == timeStampMicroSecs)
                 {
                     this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MICROSECS;
                     this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MILISECS; // ms is needed, too
                 }
-                else if ("no" != timeStampMicroSec)
+                else if ("no" != timeStampMicroSecs)
                 {
                     std::cerr << "Configfile parse error: No feasible TimeStampTime.MicroSec found. Defaulting to OFF " << std::endl;
 
@@ -587,6 +598,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             try
             {
                 std::string timeStampNanoSecs = iniTree.get<std::string>("TimeStampFormat.NanoSecs");
+                boost::to_lower(timeStampNanoSecs);
 
                 if ("yes" == timeStampNanoSecs)
                 {
