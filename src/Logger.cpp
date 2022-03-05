@@ -2,40 +2,26 @@
 #include "Logger.h"
 
 // std includes
-#include <ostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <chrono>
-#include <ctime>
-#include <ratio>
-#include <iomanip>
 
 // boost includes
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/sources/severity_logger.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
-#include <boost/format.hpp>
 
-Logger::Logger(std::ostream& strm) : boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>),
-                                     logChannel(&strm),
+// constructors and destructors
+Logger::Logger(std::ostream& strm) : logChannel(&strm),
                                      logCounter(0),
                                      logLevel(Logger::LogLevel::INFO),
                                      logTags(Logger::LogTag::ALL_TAGS_OFF),
                                      timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
     this->loggingSuppressed = true;
-    boost::log::add_common_attributes();
-    boost::log::add_console_log(*(this->logChannel), boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
 }
 
-Logger::Logger(const std::string& filename) : logCounter(0)
+Logger::Logger(const std::string& configFilename) : logCounter(0)
 {
-    std::error_condition error = this->parseConfigFile(filename);
+    std::error_condition error = this->parseConfigFile(configFilename);
 
     if (error.value() != 0)
     {
@@ -47,18 +33,6 @@ Logger::Logger(const std::string& filename) : logCounter(0)
         this->timeStampProps = Logger::TimeStampProperty::ALL_PROPS_OFF;
     }
 }
-
-// Logger::Logger(std::ofstream& strm) : boostLogger(new boost::log::sources::severity_logger<boost::log::trivial::severity_level>)
-// {
-//     this->loggingSuppressed = true;
-//     boost::log::add_common_attributes();
-//     boost::log::add_file_log(
-//         boost::log::keywords::file_name = "sample_%N.log",
-//         boost::log::keywords::open_mode = std::ios_base::out | std::ios_base::app,
-//         boost::log::keywords::rotation_size = 10 * 1024 * 1024,
-//         boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0, 0, 0),
-//         boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
-// }
 
 Logger::~Logger()
 {
@@ -164,7 +138,6 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
     std::stringstream ss;
 
     // return the time string like desired
-
     if (properties & Logger::TimeStampProperty::DATE)
     {
         ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d") << " "; // Date
@@ -197,67 +170,11 @@ std::ostream Logger::nirvana(NULL);
 std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
 
 // instance members
-void Logger::boostLog(Logger::LogLevel level, const std::ostream& messageStream)
-{
-    this->message << messageStream.rdbuf();
-
-    if (!this->loggingSuppressed)
-    {
-        switch (level)
-        {
-            case Logger::TRACE:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::trace) << this->message.str();
-                break;
-            }
-
-            case Logger::INFO:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::info) << this->message.str();
-                break;
-            }
-
-            case Logger::DEBUG:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::debug) << this->message.str();
-                break;
-            }
-
-            case Logger::WARN:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::warning) << this->message.str();
-                break;
-            }
-
-            case Logger::ERR:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::error) << this->message.str();
-                break;
-            }
-
-            case Logger::FATAL:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::fatal) << this->message.str();
-                break;
-            }
-
-            default:
-            {
-                BOOST_LOG_SEV(*(this->boostLogger), boost::log::trivial::info) << this->message.str();
-                break;
-            }
-        }
-    }
-
-    this->message.str(std::string("\r"));
-    *(this->logChannel) << this->message.str();
-}
-
 std::ostream& Logger::log(Logger::LogLevel level)
 {
     if (!this->loggingSuppressed && level >= this->logLevel)
     {
-        *(this->logChannel) << std::string("\r");
+        *(this->logChannel) << std::string("\n");
 
         if (this->logTags & Logger::LogTag::COUNTER)
         {

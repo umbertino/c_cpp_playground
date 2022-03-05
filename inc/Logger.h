@@ -4,13 +4,8 @@
 
 // std includes
 #include <ostream>
-#include <sstream>
-#include <cerrno>
-#include <system_error>
 
 // boost includes
-#include <boost/scoped_ptr.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem/convenience.hpp>
 
 // some convenience macros
@@ -58,8 +53,7 @@ public:
     } TimeStampProperty;
 
     Logger(std::ostream& strm);
-    Logger(const std::string& file);
-    //Logger(std::ofstream& strm);
+    Logger(const std::string& configFilename);
     ~Logger();
 
     // static public class members
@@ -79,7 +73,6 @@ public:
     static std::ostream& LOG_FATAL(Logger& instance);
 
     // public instance members
-    void boostLog(Logger::LogLevel level, const std::ostream& messageStream);
     std::ostream& log(Logger::LogLevel level);
 
     void start();
@@ -106,9 +99,6 @@ private:
     Logger::LogType logType;
     bool loggingSuppressed;
     std::ostream* logChannel;
-
-    std::stringstream message;
-    boost::scoped_ptr<boost::log::sources::severity_logger<boost::log::trivial::severity_level>> boostLogger;
 
     std::error_condition parseConfigFile(const std::string& file);
 };
