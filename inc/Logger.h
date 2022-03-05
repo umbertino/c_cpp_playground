@@ -100,5 +100,5 @@ private:
     bool loggingSuppressed;
     std::ostream* logChannel;
 
-    std::error_condition parseConfigFile(const std::string& file);
+    std::error_condition parseConfigFile(const std::string& configFilename);
 };
