@@ -610,7 +610,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         }
 
         ifs.close();
-
-        return errCond;
     }
+
+    return errCond;
 }
