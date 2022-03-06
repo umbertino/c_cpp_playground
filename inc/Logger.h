@@ -63,7 +63,7 @@ public:
     static void LOG_SUPPRESS(Logger& instance);
     static void LOG_SET_TAGS(Logger& instance, unsigned char logTags);
     static void LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
-    static void LOG_SET_TIME_STAMP(Logger& instance, unsigned char properties);
+    static void LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
     static std::ostream& LOG_TRACE(Logger& instance);
     static std::ostream& LOG_DEBUG(Logger& instance);
@@ -82,7 +82,7 @@ public:
 
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
-    void setTimeStamp(unsigned char properties);
+    void setTimeStampProperties(unsigned char properties);
     Logger::LogLevel getLogLevel();
 
 private:

@@ -146,7 +146,7 @@ int main(void)
 
     //myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
     //myLogger.setLogLevel(Logger::LogLevel::INFO);
-    //myLogger.setTimeStamp(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
+    //myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
     myLogger.log(Logger::LogLevel::TRACE) << __BASENAME__ << " 1 This is a trace message";
     myLogger.log(Logger::LogLevel::FATAL) << __FILE__ << " 2 This is a fatal message";

@@ -70,9 +70,9 @@ void Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
     instance.setLogLevel(level);
 }
 
-void Logger::LOG_SET_TIME_STAMP(Logger& instance, unsigned char properties)
+void Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
 {
-    instance.setTimeStamp(properties);
+    instance.setTimeStampProperties(properties);
 }
 
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
@@ -112,59 +112,75 @@ std::ostream& Logger::LOG_FATAL(Logger& instance)
 
 std::string Logger::getCurrentTimeStr(unsigned char properties)
 {
-    if (Logger::TimeStampProperty::ALL_PROPS_OFF == properties)
+    if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::TIME))
+    {
+        // the current time
+        std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+        // the current time as epoch time
+        std::chrono::system_clock::duration duration = today.time_since_epoch();
+
+        // get duration in different units
+        std::chrono::seconds durationSecs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        std::chrono::milliseconds durationMiliSecs = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        std::chrono::microseconds durationMicroSecs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+        std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+
+        // construct miliseconds, microseconds and nanoseconds
+        std::chrono::milliseconds msCurrSec = durationMiliSecs - std::chrono::duration_cast<std::chrono::milliseconds>(durationSecs);
+        std::chrono::microseconds usCurrSec = durationMicroSecs - std::chrono::duration_cast<std::chrono::microseconds>(durationMiliSecs);
+        std::chrono::nanoseconds nsCurrSec = durationNanosecs - std::chrono::duration_cast<std::chrono::nanoseconds>(durationMicroSecs);
+
+        // transform current time to time_t format
+        time_t in_time_t = std::chrono::system_clock::to_time_t(today);
+
+        std::stringstream ss;
+
+        // return the time string like desired
+        if (properties & Logger::TimeStampProperty::DATE)
+        {
+            ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
+        }
+
+        if ((properties & Logger::TimeStampProperty::TIME))
+        {
+            if (properties & Logger::TimeStampProperty::DATE)
+            {
+                ss << " ";
+            }
+
+            ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
+
+            if (properties & Logger::TimeStampProperty::NANOSECS)
+            {
+                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count() // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << usCurrSec.count() // microseconds
+                   << "." << std::setw(3) << std::setfill('0') << nsCurrSec.count(); // nanoseconds
+
+                return ss.str();
+            }
+
+            if (properties & Logger::TimeStampProperty::MICROSECS)
+            {
+                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count() // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << usCurrSec.count(); // microseconds
+
+                return ss.str();
+            }
+
+            if (properties & Logger::TimeStampProperty::MILISECS)
+            {
+                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count(); // miliseconds
+
+                return ss.str();
+            }
+        }
+
+        return ss.str();
+    }
+    else
     {
         return "";
     }
-
-    // the current time
-    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
-    // the current time as epoch time
-    std::chrono::system_clock::duration duration = today.time_since_epoch();
-
-    // get duration in different units
-    std::chrono::seconds durationSecs = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    std::chrono::milliseconds durationMiliSecs = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    std::chrono::microseconds durationMicroSecs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
-    std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
-
-    // construct miliseconds, microseconds and nanoseconds
-    std::chrono::milliseconds msCurrSec = durationMiliSecs - std::chrono::duration_cast<std::chrono::milliseconds>(durationSecs);
-    std::chrono::microseconds usCurrSec = durationMicroSecs - std::chrono::duration_cast<std::chrono::microseconds>(durationMiliSecs);
-    std::chrono::nanoseconds nsCurrSec = durationNanosecs - std::chrono::duration_cast<std::chrono::nanoseconds>(durationMicroSecs);
-
-    // transform current time to time_t format
-    time_t in_time_t = std::chrono::system_clock::to_time_t(today);
-
-    std::stringstream ss;
-
-    // return the time string like desired
-    if (properties & Logger::TimeStampProperty::DATE)
-    {
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d") << " "; // Date
-    }
-
-    if ((properties & Logger::TimeStampProperty::TIME))
-    {
-        ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
-    }
-
-    if (properties & Logger::TimeStampProperty::MILISECS)
-    {
-        ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count(); // miliseconds
-    }
-
-    if (properties & Logger::TimeStampProperty::MICROSECS)
-    {
-        ss << "." << std::setw(3) << std::setfill('0') << usCurrSec.count(); // microseconds
-    }
-
-    if (properties & Logger::TimeStampProperty::NANOSECS)
-    {
-        ss << "." << std::setw(3) << std::setfill('0') << nsCurrSec.count(); // nanoseconds
-    }
-
-    return ss.str();
 }
 
 std::ostream Logger::nirvana(NULL);
@@ -185,7 +201,12 @@ std::ostream& Logger::log(Logger::LogLevel level)
         if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
             (this->timeStampProps != Logger::TimeStampProperty::ALL_PROPS_OFF))
         {
-            *(this->logChannel) << "[" << this->getCurrentTimeStr(this->timeStampProps) << "]";
+            std::string timeStr = this->getCurrentTimeStr(this->timeStampProps);
+
+            if (!timeStr.empty())
+            {
+                *(this->logChannel) << "[" << timeStr << "]";
+            }
         }
 
         if (this->logTags & Logger::LogTag::LEVEL)
@@ -235,7 +256,7 @@ void Logger::setLogLevel(Logger::LogLevel level)
     this->logLevel = level;
 }
 
-void Logger::setTimeStamp(unsigned char properties)
+void Logger::setTimeStampProperties(unsigned char properties)
 {
     this->timeStampProps = properties;
 
@@ -293,7 +314,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "ConfigFile parse error: " << e.what() << std::endl;
+            std::cerr << "ConfigFile parse exception: " << e.what() << std::endl;
 
             ifs.close();
 
@@ -316,7 +337,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             }
             else
             {
-                std::cerr << "Configfile parse error: No feasible BasicSetup.LogType found" << std::endl;
+                std::cerr << "Configfile parse error: No feasible value found for BasicSetup.LogType" << std::endl;
 
                 ifs.close();
 
@@ -325,7 +346,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error: " << e.what() << std::endl;
+            std::cerr << "Configfile parse exception: " << e.what() << std::endl;
 
             ifs.close();
 
@@ -364,14 +385,14 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             }
             else
             {
-                std::cerr << "Configfile parse error: No feasible BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
+                std::cerr << "Configfile parse error: No feasible value found for BasicSetup.LogLevel. Defaulting to INFO" << std::endl;
 
                 this->logLevel = Logger::LogLevel::INFO;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error: No feasible BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
+            std::cerr << "Configfile parse exception: No BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
 
             this->logLevel = Logger::LogLevel::INFO;
         }
@@ -398,14 +419,14 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
                 }
                 else
                 {
-                    std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
+                    std::cerr << "Configfile parse error:  No feasible value found for ConsoleLog.Channel. Defaulting std::log " << std::endl;
 
                     this->logChannel = &std::clog;
                 }
             }
             catch (const boost::property_tree::ptree_error& e)
             {
-                std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
+                std::cerr << "Configfile parse exception: No ConsoleLog.Channel found. Defaulting std::log " << std::endl;
 
                 this->logChannel = &std::clog;
             }
@@ -417,9 +438,6 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         }
         else
         {
-            std::cerr << "Configfile parse error:  No feasible ConsoleLog.Channel found. Defaulting std::log " << std::endl;
-
-            this->logChannel = &std::clog;
         }
 
         // [LogTag.Counter] processing
@@ -428,20 +446,20 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             std::string logTagCounter = iniTree.get<std::string>("LogTag.Counter");
             boost::to_lower(logTagCounter);
 
-            if ("yes" == logTagCounter)
+            if ("on" == logTagCounter)
             {
                 this->logTags = this->logTags | Logger::LogTag::COUNTER;
             }
-            else if ("no" != logTagCounter)
+            else if ("off" != logTagCounter)
             {
-                std::cerr << "Configfile parse error:  No feasible LogTag.Counter found. Defaulting to OFF " << std::endl;
+                std::cerr << "Configfile parse error:  No feasible value found for LogTag.Counter. Defaulting to OFF " << std::endl;
 
                 this->logTags = this->logTags & ~Logger::LogTag::COUNTER;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error:  No feasible LogTag.Counter found. Defaulting to OFF " << std::endl;
+            std::cerr << "Configfile parse exception:  No LogTag.Counter found. Defaulting to OFF " << std::endl;
 
             this->logTags = Logger::LogTag::ALL_TAGS_OFF;
         }
@@ -452,22 +470,22 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             std::string logTagTimeStamp = iniTree.get<std::string>("LogTag.TimeStamp");
             boost::to_lower(logTagTimeStamp);
 
-            if ("yes" == logTagTimeStamp)
+            if ("on" == logTagTimeStamp)
             {
                 this->logTags = this->logTags | Logger::LogTag::TIME_STAMP;
             }
-            else if ("no" != logTagTimeStamp)
+            else if ("off" != logTagTimeStamp)
             {
-                std::cerr << "Configfile parse error:  No feasible LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
+                std::cerr << "Configfile parse error: No feasible value found for LogTag.TimeStamp. Defaulting to OFF " << std::endl;
 
                 this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error: No feasible LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
+            std::cerr << "Configfile parse exception: No LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
 
-            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
+            this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
         }
 
         // [LogTag.Level] processing
@@ -476,149 +494,106 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             std::string logTagLevel = iniTree.get<std::string>("LogTag.Level");
             boost::to_lower(logTagLevel);
 
-            if ("yes" == logTagLevel)
+            if ("on" == logTagLevel)
             {
                 this->logTags = this->logTags | Logger::LogTag::LEVEL;
             }
-            else if ("no" != logTagLevel)
+            else if ("off" != logTagLevel)
             {
-                std::cerr << "Configfile parse error:  No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
+                std::cerr << "Configfile parse error: No feasible value found for LogTag.Level. Defaulting to OFF " << std::endl;
 
                 this->logTags = this->logTags & ~Logger::LogTag::LEVEL;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
-            std::cerr << "Configfile parse error:  No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
+            std::cerr << "Configfile parse exception: No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
 
-            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
+            this->logTags = this->logTags & ~Logger::LogTag::LEVEL;
         }
 
-        // [TimeStampFormat.Date] processing
-        try
+        if (this->logTags & Logger::LogTag::TIME_STAMP)
         {
-            std::string timeStampDate = iniTree.get<std::string>("TimeStampFormat.Date");
-            boost::to_lower(timeStampDate);
+            // [TimeStampFormat] processing
+            unsigned char timeStampProperties = Logger::TimeStampProperty::ALL_PROPS_OFF;
 
-            if ("yes" == timeStampDate)
-            {
-                this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::DATE;
-            }
-            else if ("no" != timeStampDate)
-            {
-                std::cerr << "Configfile parse error: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
-
-                this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::DATE;
-            }
-        }
-        catch (const boost::property_tree::ptree_error& e)
-        {
-            std::cerr << "Configfile parse error: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
-
-            this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::DATE;
-        }
-
-        // [TimeStampFormat.Time] processing
-        try
-        {
-            std::string timeStampTime = iniTree.get<std::string>("TimeStampFormat.Time");
-            boost::to_lower(timeStampTime);
-
-            if ("yes" == timeStampTime)
-            {
-                this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::TIME;
-            }
-            else if ("no" != timeStampTime)
-            {
-                std::cerr << "Configfile parse error: No feasible TimeStampTime.Date found. Defaulting to OFF " << std::endl;
-
-                this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::TIME;
-            }
-        }
-        catch (const boost::property_tree::ptree_error& e)
-        {
-            std::cerr << "Configfile parse error: No feasible TimeStampFormat.Time found. Defaulting to OFF " << std::endl;
-
-            this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::TIME;
-        }
-
-        // further processing is only necessary if Logger::TimeStampProperty::TIME is set
-        if (this->timeStampProps | Logger::TimeStampProperty::TIME)
-        {
-            // [TimeStampFormat.MiliSecs] processing
+            // [TimeStampFormat.Date] processing
             try
             {
-                std::string timeStampMiliSecs = iniTree.get<std::string>("TimeStampFormat.MiliSecs");
-                boost::to_lower(timeStampMiliSecs);
+                std::string timeStampDate = iniTree.get<std::string>("TimeStampFormat.Date");
+                boost::to_lower(timeStampDate);
 
-                if ("yes" == timeStampMiliSecs)
+                if ("on" == timeStampDate)
                 {
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MILISECS;
+                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::DATE;
                 }
-                else if ("no" != timeStampMiliSecs)
+                else if ("off" != timeStampDate)
                 {
-                    std::cerr << "Configfile parse error: No feasible TimeStampTime.Milisecs found. Defaulting to OFF " << std::endl;
-
-                    this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::MILISECS;
+                    std::cerr << "Configfile parse error: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
                 }
             }
             catch (const boost::property_tree::ptree_error& e)
             {
-                std::cerr << "Configfile parse error: No feasible TimeStampTime.Milisecs found. Defaulting to OFF " << std::endl;
-
-                this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::MILISECS;
+                std::cerr << "Configfile parse exception: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
             }
 
-            // [TimeStampFormat.MicroSec] processing
+            // [TimeStampFormat.Time] processing
             try
             {
-                std::string timeStampMicroSecs = iniTree.get<std::string>("TimeStampFormat.MicroSec");
-                boost::to_lower(timeStampMicroSecs);
+                std::string timeStampTime = iniTree.get<std::string>("TimeStampFormat.Time");
+                boost::to_lower(timeStampTime);
 
-                if ("yes" == timeStampMicroSecs)
+                if ("on" == timeStampTime)
                 {
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MICROSECS;
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MILISECS; // ms is needed, too
+                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::TIME;
                 }
-                else if ("no" != timeStampMicroSecs)
+                else if ("off" != timeStampTime)
                 {
-                    std::cerr << "Configfile parse error: No feasible TimeStampTime.MicroSec found. Defaulting to OFF " << std::endl;
-
-                    this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::MICROSECS;
+                    std::cerr << "Configfile parse error: No feasible TimeStampTime.Date found. Defaulting to OFF " << std::endl;
                 }
             }
             catch (const boost::property_tree::ptree_error& e)
             {
-                std::cerr << "Configfile parse error: No feasible TimeStampTime.MicroSec found. Defaulting to OFF " << std::endl;
-
-                this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::MICROSECS;
+                std::cerr << "Configfile parse exception: No TimeStampFormat.Time found. Defaulting to OFF " << std::endl;
             }
 
-            // [TimeStampFormat.NanoSecs] processing
-            try
+            // this is only needed if Time proprty is set
+            if (timeStampProperties & Logger::TimeStampProperty::TIME)
             {
-                std::string timeStampNanoSecs = iniTree.get<std::string>("TimeStampFormat.NanoSecs");
-                boost::to_lower(timeStampNanoSecs);
-
-                if ("yes" == timeStampNanoSecs)
+                // [TimeStampFormat.TimeResolution] processing
+                try
                 {
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::NANOSECS;
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MICROSECS; // µs is needed, too
-                    this->timeStampProps = this->timeStampProps | Logger::TimeStampProperty::MILISECS; // ms is needed, too
+                    std::string timeResolution = iniTree.get<std::string>("TimeStampFormat.TimeResolution");
+                    boost::to_lower(timeResolution);
+
+                    if ("secs" == timeResolution)
+                    {
+                        // nothing to do, already covered by Logger::TimeStampProperty::TIME
+                    }
+                    else if ("milis" == timeResolution)
+                    {
+                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::MILISECS;
+                    }
+                    else if ("micros" == timeResolution)
+                    {
+                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::MICROSECS;
+                    }
+                    else if ("nanos" == timeResolution)
+                    {
+                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::NANOSECS;
+                    }
+                    else
+                    {
+                        std::cerr << "Configfile parse error: No feasible value found for TimeStampFormat.Resolution. Defaulting to seconds " << std::endl;
+                    }
                 }
-                else if ("no" != timeStampNanoSecs)
+                catch (const boost::property_tree::ptree_error& e)
                 {
-                    std::cerr << "Configfile parse error: No feasible TimeStampTime.NanoSecs found. Defaulting to OFF " << std::endl;
-
-                    this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::NANOSECS;
+                    std::cerr << "Configfile parse exception: No TimeStampFormat.Resolution found. Defaulting to seconds " << std::endl;
                 }
             }
-            catch (const boost::property_tree::ptree_error& e)
-            {
-                std::cerr << "Configfile parse error: No feasible TimeStampTime.NanoSecs found. Defaulting to OFF " << std::endl;
 
-                this->timeStampProps = this->timeStampProps & ~Logger::TimeStampProperty::NANOSECS;
-            }
+            this->setTimeStampProperties(timeStampProperties);
         }
 
         ifs.close();
