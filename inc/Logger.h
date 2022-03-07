@@ -88,12 +88,16 @@ public:
 private:
     // private static members
     static std::ostream nirvana;
+    static unsigned short const MIN_LOGS_PER_FILE;
+    static unsigned short const MAX_LOGS_PER_FILE;
     static std::string const logLevel2String[];
     inline static std::string getCurrentTimeStr(unsigned char properties);
 
     // private instance members
     unsigned char logTags;
     unsigned char timeStampProps;
+    unsigned short logsPerFile;
+    unsigned short logFileCounter;
     unsigned long logCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
@@ -101,4 +105,5 @@ private:
     std::ostream* logChannel;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
+    inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

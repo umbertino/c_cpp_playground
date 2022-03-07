@@ -172,6 +172,11 @@ int main(void)
     Logger::LOG_ERROR(myLogger) << __FILE_EXT__ << " 5 This is an error message";
     Logger::LOG_INFO(myLogger) << __LOCATION__ << " 6 This is a fatal message";
 
+    for (int i = 0; i < 1000; i++)
+    {
+        Logger::LOG_INFO(myLogger) << __LOCATION__ << " This is a fatal message " << i;
+    }
+
     myLogger.stop();
 
     ofs.close();

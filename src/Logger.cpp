@@ -3,16 +3,20 @@
 
 // std includes
 #include <chrono>
+#include <algorithm>
 
 // boost includes
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
 // constructors and destructors
 Logger::Logger(std::ostream& strm) : logChannel(&strm),
                                      logCounter(0),
+                                     logsPerFile(0),
+                                     logFileCounter(0),
                                      logLevel(Logger::LogLevel::INFO),
                                      logTags(Logger::LogTag::ALL_TAGS_OFF),
                                      timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
@@ -20,7 +24,12 @@ Logger::Logger(std::ostream& strm) : logChannel(&strm),
     this->loggingSuppressed = true;
 }
 
-Logger::Logger(const std::string& configFilename) : logCounter(0)
+Logger::Logger(const std::string& configFilename) : logCounter(0),
+                                                    logsPerFile(0),
+                                                    logFileCounter(0),
+                                                    logLevel(Logger::LogLevel::INFO),
+                                                    logTags(Logger::LogTag::ALL_TAGS_OFF),
+                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
     std::error_condition error = this->parseConfigFile(configFilename);
 
@@ -184,6 +193,8 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
 }
 
 std::ostream Logger::nirvana(NULL);
+unsigned short const Logger::MIN_LOGS_PER_FILE = 100;
+unsigned short const Logger::MAX_LOGS_PER_FILE = 10000;
 std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
 
 // instance members
@@ -191,11 +202,23 @@ std::ostream& Logger::log(Logger::LogLevel level)
 {
     if (!this->loggingSuppressed && level >= this->logLevel)
     {
+        this->logCounter++;
+
+        // check whether to init a new logfile
+        if (this->logType == Logger::LogType::FILE)
+        {
+            // init a new logfile the very first time and every time the max number of log-events per file is reached
+            if (((this->logCounter % this->logsPerFile) == 1))
+            {
+                this->logChannel = Logger::getNewLogFile(++this->logFileCounter);
+            }
+        }
+
         *(this->logChannel) << std::string("\n");
 
         if (this->logTags & Logger::LogTag::COUNTER)
         {
-            *(this->logChannel) << "[" << std::setw(5) << std::setfill('0') << ++this->logCounter << "]";
+            *(this->logChannel) << "[" << std::setw(5) << std::setfill('0') << this->logCounter << "]";
         }
 
         if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
@@ -431,13 +454,32 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
                 this->logChannel = &std::clog;
             }
         }
-
         // [FileLog] processing
         else if (this->logType == Logger::LogType::FILE)
         {
+            try
+            {
+                unsigned short logsPerFile = iniTree.get<unsigned short>("FileLog.MaxLogsPerFile");
+
+                this->logsPerFile = std::clamp(logsPerFile, Logger::MIN_LOGS_PER_FILE, Logger::MAX_LOGS_PER_FILE);
+
+                if ((logsPerFile > Logger::MAX_LOGS_PER_FILE) || (logsPerFile < Logger::MIN_LOGS_PER_FILE))
+                {
+                    std::cerr << "Configfile parse error: No feasible value found for FileLog.MaxLogsPerFile. Defaulting to " << this->logsPerFile << std::endl;
+                }
+            }
+            catch (const boost::property_tree::ptree_error& e)
+            {
+                std::cerr << "Configfile parse exception: No FileLog.MaxLogsPerFile. Defaulting to " << Logger::MAX_LOGS_PER_FILE << std::endl;
+
+                this->logsPerFile = Logger::MAX_LOGS_PER_FILE;
+            }
         }
         else
         {
+            std::cerr << "Configfile parse error: No feasible value found for BasicSetup.LogType." << std::endl;
+
+            return std::errc::invalid_seek;
         }
 
         // [LogTag.Counter] processing
@@ -594,4 +636,16 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
     }
 
     return errCond;
+}
+
+std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
+{
+    std::string date = Logger::getCurrentTimeStr(Logger::TimeStampProperty::DATE);
+    std::string time = Logger::getCurrentTimeStr(Logger::TimeStampProperty::TIME);
+    boost::replace_all(time, ":", ".");
+    std::stringstream fss;
+    fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";
+    std::string logFileName = fss.str();
+
+    return new std::ofstream(logFileName, std::ofstream::out);
 }
