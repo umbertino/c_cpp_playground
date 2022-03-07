@@ -441,6 +441,8 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         }
 
         // [LogTag.Counter] processing
+        unsigned char logTags = Logger::LogTag::ALL_TAGS_OFF;
+
         try
         {
             std::string logTagCounter = iniTree.get<std::string>("LogTag.Counter");
@@ -448,20 +450,16 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagCounter)
             {
-                this->logTags = this->logTags | Logger::LogTag::COUNTER;
+                logTags = logTags | Logger::LogTag::COUNTER;
             }
             else if ("off" != logTagCounter)
             {
                 std::cerr << "Configfile parse error:  No feasible value found for LogTag.Counter. Defaulting to OFF " << std::endl;
-
-                this->logTags = this->logTags & ~Logger::LogTag::COUNTER;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
             std::cerr << "Configfile parse exception:  No LogTag.Counter found. Defaulting to OFF " << std::endl;
-
-            this->logTags = Logger::LogTag::ALL_TAGS_OFF;
         }
 
         // [LogTag.TimeStamp] processing
@@ -472,13 +470,11 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagTimeStamp)
             {
-                this->logTags = this->logTags | Logger::LogTag::TIME_STAMP;
+                logTags = logTags | Logger::LogTag::TIME_STAMP;
             }
             else if ("off" != logTagTimeStamp)
             {
                 std::cerr << "Configfile parse error: No feasible value found for LogTag.TimeStamp. Defaulting to OFF " << std::endl;
-
-                this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
@@ -496,21 +492,19 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagLevel)
             {
-                this->logTags = this->logTags | Logger::LogTag::LEVEL;
+                logTags = logTags | Logger::LogTag::LEVEL;
             }
             else if ("off" != logTagLevel)
             {
                 std::cerr << "Configfile parse error: No feasible value found for LogTag.Level. Defaulting to OFF " << std::endl;
-
-                this->logTags = this->logTags & ~Logger::LogTag::LEVEL;
             }
         }
         catch (const boost::property_tree::ptree_error& e)
         {
             std::cerr << "Configfile parse exception: No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
-
-            this->logTags = this->logTags & ~Logger::LogTag::LEVEL;
         }
+
+        this->setLogTags(logTags);
 
         if (this->logTags & Logger::LogTag::TIME_STAMP)
         {
