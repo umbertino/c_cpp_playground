@@ -4,7 +4,7 @@
 
 // std includes
 #include <ostream>
-#include <deque>
+#include <queue>
 #include <sstream>
 #include <thread>
 #include <mutex>
@@ -56,6 +56,7 @@ public:
         ALL_PROPS_ON = 0xFF
     } TimeStampProperty;
 
+    // constructors and destructors
     Logger(std::ostream& strm);
     Logger(const std::string& configFilename);
     ~Logger();
@@ -69,6 +70,7 @@ public:
     static void LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
     static void LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
+
     static std::ostream& LOG_TRACE(Logger& instance);
     static std::ostream& LOG_DEBUG(Logger& instance);
     static std::ostream& LOG_INFO(Logger& instance);
@@ -78,17 +80,14 @@ public:
 
     // public instance members
     std::ostream& log(Logger::LogLevel level);
-
     void start();
     void stop();
     void resume();
     void suppress();
-
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
     Logger::LogLevel getLogLevel();
-    void getNextLogMessageInQueue();
 
 private:
     // private static members
@@ -96,6 +95,7 @@ private:
     static unsigned short const MIN_LOGS_PER_FILE;
     static unsigned short const MAX_LOGS_PER_FILE;
     static std::string const logLevel2String[];
+
     inline static std::string getCurrentTimeStr(unsigned char properties);
 
     // private instance members
@@ -110,11 +110,12 @@ private:
     bool loggerStarted;
     bool loggingSuppressed;
     std::ostream* logChannel;
-    std::deque<std::ostringstream> logMessageQueue;
+    std::queue<std::ostringstream> logMessageQueue;
     std::thread logThreadHandle;
     std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
+    void getNextLogMessageInQueue();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };
