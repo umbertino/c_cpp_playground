@@ -13,6 +13,8 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <queue>
+#include <thread>
 
 // Own Includes
 #include "Prime.h"
@@ -23,6 +25,7 @@
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
 #define LOGGER_EXAMPLE 1
+#define QUEUE_EXAMPLE 0
 
 int main(void)
 {
@@ -136,7 +139,7 @@ int main(void)
     Logger myLogger("logging.ini"); //(new Logger(std::clog));
     //Logger myLogger(std::clog);
 
-    std::ofstream ofs("test.txt", std::ofstream::out);
+    //std::ofstream ofs("test.txt", std::ofstream::out);
 
     //Logger myLogger(ofs);
 
@@ -177,9 +180,43 @@ int main(void)
         Logger::LOG_INFO(myLogger) << __LOCATION__ << " This is a fatal message " << i;
     }
 
+    Logger::LOG_ERROR(myLogger) << __FILE_EXT__ << " 5 This is an error message";
+    Logger::LOG_INFO(myLogger) << __LOCATION__ << " 6 This is a fatal message";
+
+    // for (int i = 0; i < 1100; i++)
+    // {
+    //     myLogger.getNextLogMessageInQueue();
+    // }
+
     myLogger.stop();
 
-    ofs.close();
+    //std::this_thread::sleep_for(std::chrono::microseconds(10000000));
+
+    //ofs.close();
+
+
+    std::cout << std::endl;
+#endif
+
+#if QUEUE_EXAMPLE
+    std::queue<std::ostringstream> mq;
+
+    mq.emplace(std::ostringstream(""));
+    mq.emplace(std::ostringstream("world "));
+
+    std::cout << mq.front().str() << std::endl;
+
+    mq.front() << "gone mad ";
+
+    std::cout << mq.front().str() << std::endl;
+
+    mq.front() << "and crazy";
+
+    std::cout << mq.front().str() << std::endl;
+
+    mq.front() << " for all people";
+
+    std::cout << mq.front().str() << std::endl;
 
     std::cout << std::endl;
 #endif

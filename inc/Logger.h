@@ -4,6 +4,10 @@
 
 // std includes
 #include <ostream>
+#include <deque>
+#include <sstream>
+#include <thread>
+#include <mutex>
 
 // boost includes
 #include <boost/filesystem/convenience.hpp>
@@ -84,6 +88,7 @@ public:
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
     Logger::LogLevel getLogLevel();
+    void getNextLogMessageInQueue();
 
 private:
     // private static members
@@ -99,11 +104,17 @@ private:
     unsigned short logsPerFile;
     unsigned short logFileCounter;
     unsigned long logCounter;
+    unsigned long logFlushCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
+    bool loggerStarted;
     bool loggingSuppressed;
     std::ostream* logChannel;
+    std::deque<std::ostringstream> logMessageQueue;
+    std::thread logThreadHandle;
+    std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
+    void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

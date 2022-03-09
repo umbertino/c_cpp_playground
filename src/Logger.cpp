@@ -13,18 +13,23 @@
 #include <boost/date_time/local_time/local_time.hpp>
 
 // constructors and destructors
-Logger::Logger(std::ostream& strm) : logChannel(&strm),
+Logger::Logger(std::ostream& strm) : loggerStarted(false),
+                                     loggingSuppressed(false),
+                                     logChannel(&strm),
                                      logCounter(0),
+                                     logFlushCounter(1),
                                      logsPerFile(0),
                                      logFileCounter(0),
                                      logLevel(Logger::LogLevel::INFO),
                                      logTags(Logger::LogTag::ALL_TAGS_OFF),
                                      timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
-    this->loggingSuppressed = true;
 }
 
-Logger::Logger(const std::string& configFilename) : logCounter(0),
+Logger::Logger(const std::string& configFilename) : loggerStarted(false),
+                                                    loggingSuppressed(false),
+                                                    logCounter(0),
+                                                    logFlushCounter(1),
                                                     logsPerFile(0),
                                                     logFileCounter(0),
                                                     logLevel(Logger::LogLevel::INFO),
@@ -46,6 +51,19 @@ Logger::Logger(const std::string& configFilename) : logCounter(0),
 
 Logger::~Logger()
 {
+    this->loggerStarted = false;
+
+    try
+    {
+        if (this->logThreadHandle.joinable())
+        {
+            this->logThreadHandle.join();
+        }
+    }
+    catch (std::system_error& e)
+    {
+        std::cerr << "Exception: " << e.what() << " " << e.code();
+    }
 }
 
 // static class members
@@ -200,25 +218,29 @@ std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN 
 // instance members
 std::ostream& Logger::log(Logger::LogLevel level)
 {
-    if (!this->loggingSuppressed && level >= this->logLevel)
+    std::lock_guard<std::mutex> lock(this->logMtx);
+
+    if (this->loggerStarted && !this->loggingSuppressed && level >= this->logLevel)
     {
+        this->logMessageQueue.emplace_back(std::ostringstream(""));
+
         this->logCounter++;
 
-        // check whether to init a new logfile
-        if (this->logType == Logger::LogType::FILE)
-        {
-            // init a new logfile the very first time and every time the max number of log-events per file is reached
-            if (((this->logCounter % this->logsPerFile) == 1))
-            {
-                this->logChannel = Logger::getNewLogFile(++this->logFileCounter);
-            }
-        }
+        // // check whether to init a new logfile
+        // if (this->logType == Logger::LogType::FILE)
+        // {
+        //     // init a new logfile the very first time and every time the max number of log-events per file is reached
+        //     if (((this->logCounter % this->logsPerFile) == 1))
+        //     {
+        //         this->logChannel = Logger::getNewLogFile(++this->logFileCounter);
+        //     }
+        // }
 
-        *(this->logChannel) << std::string("\n");
+        this->logMessageQueue.back() << std::string("\n");
 
         if (this->logTags & Logger::LogTag::COUNTER)
         {
-            *(this->logChannel) << "[" << std::setw(5) << std::setfill('0') << this->logCounter << "]";
+            this->logMessageQueue.back() << "[" << std::setw(5) << std::setfill('0') << this->logCounter << "]";
         }
 
         if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
@@ -228,21 +250,21 @@ std::ostream& Logger::log(Logger::LogLevel level)
 
             if (!timeStr.empty())
             {
-                *(this->logChannel) << "[" << timeStr << "]";
+                this->logMessageQueue.back() << "[" << timeStr << "]";
             }
         }
 
         if (this->logTags & Logger::LogTag::LEVEL)
         {
-            *(this->logChannel) << "[" << Logger::logLevel2String[level] << "]";
+            this->logMessageQueue.back() << "[" << Logger::logLevel2String[level] << "]";
         }
 
         if (this->logTags != Logger::LogTag::ALL_TAGS_OFF)
         {
-            *(this->logChannel) << " ";
+            this->logMessageQueue.back() << " ";
         }
 
-        return *(this->logChannel);
+        return this->logMessageQueue.back();
     }
     else
     {
@@ -252,21 +274,40 @@ std::ostream& Logger::log(Logger::LogLevel level)
 
 void Logger::start()
 {
-    this->loggingSuppressed = false;
+    this->logMessageQueue.emplace_front("");
+    this->loggerStarted = true;
+    this->logThreadHandle = std::thread(&Logger::logThread, this);
 }
+
 void Logger::stop()
 {
-    this->loggingSuppressed = true;
+    this->logCounter = 0;
+    this->logFileCounter = 0;
+    this->logFlushCounter = 1;
+    this->logMessageQueue.emplace_front(""); // push last message to pos 1 of queue to be output
+    this->loggerStarted = false;
+
+    try
+    {
+        if (this->logThreadHandle.joinable())
+        {
+            this->logThreadHandle.join();
+        }
+    }
+    catch (std::system_error& e)
+    {
+        std::cerr << "Exception: " << e.what() << " " << e.code();
+    }
 }
 
 void Logger::resume()
 {
-    this->start();
+    this->loggingSuppressed = false;
 }
 
 void Logger::suppress()
 {
-    this->stop();
+    this->loggingSuppressed = true;
 }
 
 void Logger::setLogTags(unsigned char logTags)
@@ -311,6 +352,30 @@ void Logger::setTimeStampProperties(unsigned char properties)
 Logger::LogLevel Logger::getLogLevel()
 {
     return this->logLevel;
+}
+
+void Logger::getNextLogMessageInQueue()
+{
+    // log next message in queue to logChannel
+    if (this->logMessageQueue.size() > 1)
+    {
+        // log to channel and remove queue element
+        *(this->logChannel) << this->logMessageQueue.at(1).str();
+
+        this->logMessageQueue.erase(this->logMessageQueue.begin() + 1);
+        this->logFlushCounter++;
+    }
+
+    // if we have file logging check, whether we need to create a new file
+    // this is the case when the max allowed logs per file is reached
+    if (this->logType == Logger::LogType::FILE)
+    {
+        // init a new logfile the very first time and every time the max number of log-events per file is reached
+        if (((this->logFlushCounter % this->logsPerFile) == 1))
+        {
+            this->logChannel = Logger::getNewLogFile(++this->logFileCounter);
+        }
+    }
 }
 
 std::error_condition Logger::parseConfigFile(const std::string& configFilename)
@@ -474,6 +539,8 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
                 this->logsPerFile = Logger::MAX_LOGS_PER_FILE;
             }
+
+            this->logChannel = this->getNewLogFile(++this->logFileCounter);
         }
         else
         {
@@ -636,6 +703,16 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
     }
 
     return errCond;
+}
+
+void Logger::logThread()
+{
+    while (this->loggerStarted || this->logMessageQueue.size() > 1)
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(2));
+        std::lock_guard<std::mutex> lock(this->logMtx);
+        this->getNextLogMessageInQueue();
+    }
 }
 
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
