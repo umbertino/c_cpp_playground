@@ -71,15 +71,16 @@ public:
     static void LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
 
-    static std::ostream& LOG_TRACE(Logger& instance);
-    static std::ostream& LOG_DEBUG(Logger& instance);
-    static std::ostream& LOG_INFO(Logger& instance);
-    static std::ostream& LOG_WARN(Logger& instance);
-    static std::ostream& LOG_ERROR(Logger& instance);
-    static std::ostream& LOG_FATAL(Logger& instance);
+    static void LOG_TRACE(Logger& instance, std::ostream& messageStream);
+    static void LOG_DEBUG(Logger& instance, std::ostream& messageStream);
+    static void LOG_INFO(Logger& instance, std::ostream& messageStream);
+    static void LOG_WARN(Logger& instance, std::ostream& messageStream);
+    static void LOG_ERROR(Logger& instance, std::ostream& messageStream);
+    static void LOG_FATAL(Logger& instance, std::ostream& messageStream);
 
     // public instance members
-    std::ostream& log(Logger::LogLevel level);
+    std::ostream& getMsgStream();
+    void log(Logger::LogLevel level, const std::ostream& msg);
     void start();
     void stop();
     void resume();
@@ -109,13 +110,19 @@ private:
     Logger::LogType logType;
     bool loggerStarted;
     bool loggingSuppressed;
+    std::ostringstream userMessageStream;
+    std::ostringstream fullMessageStream;
     std::ostream* logChannel;
-    std::queue<std::ostringstream> logMessageQueue;
+    std::queue<std::string> logMessageIngressQueue;
+    std::queue<std::string> logMessageOutputQueue;
+    std::thread queueTransfereThreadHandle;
     std::thread logThreadHandle;
     std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
-    void getNextLogMessageInQueue();
+    void passLogsToOutputQueue();
+    void logNextMessageInOutputQueue();
+    void queueTransfereThread();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

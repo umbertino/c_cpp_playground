@@ -147,18 +147,18 @@ int main(void)
 
     std::cout << std::endl;
 
-    //myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
-    //myLogger.setLogLevel(Logger::LogLevel::INFO);
-    //myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
+    myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    myLogger.setLogLevel(Logger::LogLevel::INFO);
+    myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
-    myLogger.log(Logger::LogLevel::TRACE) << __LOCATION__ << " 1 This is a trace message";
-    myLogger.log(Logger::LogLevel::FATAL) << __LOCATION__ << " 2 This is a fatal message";
+    myLogger.log(Logger::LogLevel::TRACE, myLogger.getMsgStream() << __LOCATION__ << " 1 This is a trace message");
+    myLogger.log(Logger::LogLevel::FATAL, myLogger.getMsgStream() << __LOCATION__ << " 2 This is a fatal message");
     myLogger.suppress();
-    myLogger.log(Logger::LogLevel::DEBUG) << __LOCATION__ << " 3 This is a debug message";
-    myLogger.log(Logger::LogLevel::WARN) << __LOCATION__ << " 4 This is a warning message";
+    myLogger.log(Logger::LogLevel::DEBUG, myLogger.getMsgStream() << __LOCATION__ << " 3 This is a debug message");
+    myLogger.log(Logger::LogLevel::WARN, myLogger.getMsgStream() << __LOCATION__ << " 4 This is a warning message");
     myLogger.resume();
-    myLogger.log(Logger::LogLevel::ERR) << __LOCATION__ << " 5 This is an error message";
-    myLogger.log(Logger::LogLevel::INFO) << __LOCATION__ << " 6 This is a info message";
+    myLogger.log(Logger::LogLevel::ERR, myLogger.getMsgStream() << __LOCATION__ << " 5 This is an error message");
+    myLogger.log(Logger::LogLevel::INFO, myLogger.getMsgStream() << __LOCATION__ << " 6 This is a info message");
 
     std::cout << std::endl;
 
@@ -166,22 +166,22 @@ int main(void)
     //Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
     //Logger::LOG_SET_TIME_STAMP(myLogger, Logger::TimeStampProperty::TIME | Logger::TimeStampProperty::MICROSECS);
 
-    Logger::LOG_TRACE(myLogger) << __LOCATION__ << " 1 This is a trace message";
-    Logger::LOG_FATAL(myLogger) << __LOCATION__ << " 2 This is a fatal message";
+    Logger::LOG_TRACE(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 1 This is a trace message");
+    Logger::LOG_FATAL(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 2 This is a fatal message");
     Logger::LOG_SUPPRESS(myLogger);
-    Logger::LOG_DEBUG(myLogger) << __LOCATION__ << " 3 This is a debug message";
-    Logger::LOG_WARN(myLogger) << __LOCATION__ << " 4 This is a warning message";
+    Logger::LOG_DEBUG(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 3 This is a debug message");
+    Logger::LOG_WARN(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 4 This is a warning message");
     Logger::LOG_RESUME(myLogger);
-    Logger::LOG_ERROR(myLogger) << __LOCATION__ << " 5 This is an error message";
-    Logger::LOG_INFO(myLogger) << __LOCATION__ << " 6 This is a fatal message";
+    Logger::LOG_ERROR(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 5 This is an error message");
+    Logger::LOG_INFO(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 6 This is a fatal message");
 
     for (int i = 0; i < 1000; i++)
     {
-        Logger::LOG_INFO(myLogger) << __LOCATION__ << " This is a fatal message " << i;
+        Logger::LOG_INFO(myLogger, myLogger.getMsgStream() << __LOCATION__ << " This is a fatal message " << i);
     }
 
-    Logger::LOG_WARN(myLogger) << __LOCATION__ << " 5 This is an error message";
-    Logger::LOG_WARN(myLogger) << __LOCATION__ << " 6 This is a fatal message";
+    Logger::LOG_WARN(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 5 This is an error message");
+    Logger::LOG_WARN(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 6 This is a fatal message");
 
     myLogger.stop();
 
