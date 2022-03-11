@@ -22,15 +22,31 @@
 #include "Logger.h"
 
 // switches to activate / deactivate examples
+#define SCRATCH_PAD 1
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
-#define LOGGER_EXAMPLE 1
+#define LOGGER_EXAMPLE 0
 #define QUEUE_EXAMPLE 0
 
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl
               << std::endl;
+
+#if SCRATCH_PAD
+    std::chrono::nanoseconds epochDur = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+    //std::cout << std::put_time(std::localtime(&secsSinceEpoch), "%H:%M") << std::endl;
+
+    std::cout << epochDur.count();
+    std::cout << std::endl;
+    unsigned long nanoSecs = epochDur.count() % 1000000000;
+    std::cout << nanoSecs / 1000000 <<"."
+              << (nanoSecs % 1000000) / 1000 <<"."
+              << (nanoSecs % 1000000) % 1000;
+
+    std::cout << std::endl;
+#endif
 
 #if PRIME_EXAMPLE
     unsigned long number = 987654321;
@@ -150,9 +166,9 @@ int main(void)
 
     std::cout << std::endl;
 
-    myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
-    myLogger.setLogLevel(Logger::LogLevel::INFO);
-    myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
+    // myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    // myLogger.setLogLevel(Logger::LogLevel::INFO);
+    // myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
     myLogger.log(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     myLogger.log(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
@@ -180,6 +196,7 @@ int main(void)
 
     for (int i = 0; i < 1000; i++)
     {
+        //std::this_thread::sleep_for(std::chrono::microseconds(1));
         auto start = std::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is a fatal message " << i);
         auto stop = std::chrono::high_resolution_clock::now();
@@ -192,13 +209,24 @@ int main(void)
 
     myLogger.stop();
 
-    for (int i = 0; i < 1000; i++)
+    float avgDur(0);
+    const unsigned short LOOP = 1000;
+
+    for (int i = 0; i < LOOP; i++)
     {
-        std::cout << std::setw(4) << i << " " << dur[i].count() << "us" << std::endl;
+        //std::cout << std::setw(4) << i << " " << dur[i].count() << "us" << std::endl;
+
+        avgDur = avgDur + dur[i].count();
     }
+
+    avgDur = avgDur / LOOP;
+
+    std::cout << "avgDur: " << avgDur << std::endl;
+
     //ofs.close();
 
-    std::cout << std::endl;
+    std::cout
+        << std::endl;
 #endif
 
 #if QUEUE_EXAMPLE

@@ -1,3 +1,11 @@
+/**
+ * @file Logger.h
+ * @author umbertino@mailbox.org
+ * @brief A class that provides logging capabilities
+ * @date 2022-03-11
+ *
+ */
+
 #pragma once
 
 // own includes

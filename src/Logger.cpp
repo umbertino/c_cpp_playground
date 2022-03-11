@@ -141,15 +141,8 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
         std::chrono::system_clock::duration duration = today.time_since_epoch();
 
         // get duration in different units
-        std::chrono::seconds durationSecs = std::chrono::duration_cast<std::chrono::seconds>(duration);
-        std::chrono::milliseconds durationMiliSecs = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        std::chrono::microseconds durationMicroSecs = std::chrono::duration_cast<std::chrono::microseconds>(duration);
         std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
-
-        // construct miliseconds, microseconds and nanoseconds
-        std::chrono::milliseconds msCurrSec = durationMiliSecs - std::chrono::duration_cast<std::chrono::milliseconds>(durationSecs);
-        std::chrono::microseconds usCurrSec = durationMicroSecs - std::chrono::duration_cast<std::chrono::microseconds>(durationMiliSecs);
-        std::chrono::nanoseconds nsCurrSec = durationNanosecs - std::chrono::duration_cast<std::chrono::nanoseconds>(durationMicroSecs);
+        unsigned long curSubSecondNs = durationNanosecs.count() % 1000000000;
 
         // transform current time to time_t format
         time_t in_time_t = std::chrono::system_clock::to_time_t(today);
@@ -173,24 +166,24 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
 
             if (properties & Logger::TimeStampProperty::NANOSECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count() // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << usCurrSec.count() // microseconds
-                   << "." << std::setw(3) << std::setfill('0') << nsCurrSec.count(); // nanoseconds
+                ss << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000000 // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000 // microseconds
+                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs; // nanoseconds
 
                 return ss.str();
             }
 
             if (properties & Logger::TimeStampProperty::MICROSECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count() // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << usCurrSec.count(); // microseconds
+                ss << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000000 // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000; // microseconds
 
                 return ss.str();
             }
 
             if (properties & Logger::TimeStampProperty::MILISECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << msCurrSec.count(); // miliseconds
+                ss << "." << std::setw(3) << std::setfill('0') << durationNanosecs.count(); // miliseconds
 
                 return ss.str();
             }
@@ -215,6 +208,12 @@ std::ostream& Logger::getMsgStream()
     return this->userMessageStream;
 }
 
+/**
+ * @brief Provides the logging metod for the user.
+ *
+ * @param level The log message category of type Logger::LogLevel
+ * @param msg The log message as a stream
+ */
 void Logger::log(Logger::LogLevel level, const std::ostream& msg)
 {
     std::lock_guard<std::mutex> lock(this->logMtx);
