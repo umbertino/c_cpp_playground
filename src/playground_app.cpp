@@ -143,6 +143,9 @@ int main(void)
 
     //Logger myLogger(ofs);
 
+    std::chrono::duration<int, std::micro> dur[1000];
+    //std::chrono::system_clock::time_point start, stop;
+
     myLogger.start();
 
     std::cout << std::endl;
@@ -177,7 +180,11 @@ int main(void)
 
     for (int i = 0; i < 1000; i++)
     {
+        auto start = std::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, myLogger.getMsgStream() << __LOCATION__ << " This is a fatal message " << i);
+        auto stop = std::chrono::high_resolution_clock::now();
+
+        dur[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     }
 
     Logger::LOG_WARN(myLogger, myLogger.getMsgStream() << __LOCATION__ << " 5 This is an error message");
@@ -185,6 +192,10 @@ int main(void)
 
     myLogger.stop();
 
+    for (int i = 0; i < 1000; i++)
+    {
+        std::cout << std::setw(4) << i << " " << dur[i].count() << "us" << std::endl;
+    }
     //ofs.close();
 
     std::cout << std::endl;

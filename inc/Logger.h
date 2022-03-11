@@ -113,16 +113,12 @@ private:
     std::ostringstream userMessageStream;
     std::ostringstream fullMessageStream;
     std::ostream* logChannel;
-    std::queue<std::string> logMessageIngressQueue;
     std::queue<std::string> logMessageOutputQueue;
-    std::thread queueTransfereThreadHandle;
     std::thread logThreadHandle;
     std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
-    void passLogsToOutputQueue();
     void logNextMessageInOutputQueue();
-    void queueTransfereThread();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

@@ -49,18 +49,6 @@ Logger::~Logger()
 
     try
     {
-        if (this->queueTransfereThreadHandle.joinable())
-        {
-            this->queueTransfereThreadHandle.join();
-        }
-    }
-    catch (std::system_error& e)
-    {
-        std::cerr << "Exception: " << e.what() << " " << e.code();
-    }
-
-    try
-    {
         if (this->logThreadHandle.joinable())
         {
             this->logThreadHandle.join();
@@ -229,16 +217,11 @@ std::ostream& Logger::getMsgStream()
 
 void Logger::log(Logger::LogLevel level, const std::ostream& msg)
 {
-    std::this_thread::sleep_for(std::chrono::microseconds(1));
-
     std::lock_guard<std::mutex> lock(this->logMtx);
 
     if (this->loggerStarted && !this->loggingSuppressed && level >= this->logLevel)
     {
-        // this->logMessageIngressQueue.emplace(std::ostringstream(""));
-        // this->logMessageIngressQueue.back() << std::string("\n");
         this->logCounter++;
-        this->fullMessageStream << "\n";
 
         if (this->logTags & Logger::LogTag::COUNTER)
         {
@@ -266,23 +249,15 @@ void Logger::log(Logger::LogLevel level, const std::ostream& msg)
             this->fullMessageStream << " ";
         }
 
-        this->fullMessageStream << this->userMessageStream.str();
+        this->fullMessageStream << this->userMessageStream.str() << std::endl;
 
-        //this->logMessageIngressQueue.push(this->messageStream.str());
-
-        //this->messageStream.flush();
-
-        //this->messageStream.str(std::string("\r"));
-
-        //std::cout << this->fullMessageStream.str();
-
-        //*(this->logChannel) << this->fullMessageStream.str();
         this->logMessageOutputQueue.emplace(this->fullMessageStream.str());
     }
 
+    // discard the streams
     this->fullMessageStream.str(std::string("\r"));
-    this->userMessageStream.str(std::string("\r"));
     Logger::nirvana << this->fullMessageStream.str();
+    this->userMessageStream.str(std::string("\r"));
     Logger::nirvana << this->userMessageStream.str();
 }
 
@@ -293,24 +268,11 @@ void Logger::start()
     this->logFlushCounter = 1;
     this->loggerStarted = true;
     this->logThreadHandle = std::thread(&Logger::logThread, this);
-    //    this->queueTransfereThreadHandle = std::thread(&Logger::queueTransfereThread, this);
 }
 
 void Logger::stop()
 {
-    //this->logMessageIngressQueue.emplace(""); // assures to log last log message
     this->loggerStarted = false;
-    try
-    {
-        if (this->queueTransfereThreadHandle.joinable())
-        {
-            this->queueTransfereThreadHandle.join();
-        }
-    }
-    catch (std::system_error& e)
-    {
-        std::cerr << "Exception: " << e.what() << " " << e.code();
-    }
 
     try
     {
@@ -377,15 +339,6 @@ void Logger::setTimeStampProperties(unsigned char properties)
 Logger::LogLevel Logger::getLogLevel()
 {
     return this->logLevel;
-}
-
-void Logger::passLogsToOutputQueue()
-{
-    while (!this->logMessageIngressQueue.empty())
-    {
-        this->logMessageOutputQueue.emplace(this->logMessageIngressQueue.front());
-        this->logMessageIngressQueue.pop();
-    }
 }
 
 void Logger::logNextMessageInOutputQueue()
@@ -739,20 +692,9 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
     return errCond;
 }
 
-void Logger::queueTransfereThread()
-{
-    while (this->loggerStarted || !this->logMessageIngressQueue.empty() || !this->logMessageOutputQueue.empty())
-    {
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
-        std::lock_guard<std::mutex> lock(this->logMtx);
-        this->passLogsToOutputQueue();
-        //std::cout << "queueTransfereThread" << std::endl;
-    }
-}
-
 void Logger::logThread()
 {
-    while (this->loggerStarted || !this->logMessageIngressQueue.empty() || !this->logMessageOutputQueue.empty())
+    while (this->loggerStarted || !this->logMessageOutputQueue.empty())
     {
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
         std::lock_guard<std::mutex> lock(this->logMtx);
