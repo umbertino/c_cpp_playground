@@ -341,7 +341,7 @@ Logger::LogLevel Logger::getLogLevel()
     return this->logLevel;
 }
 
-void Logger::logNextMessageInOutputQueue()
+void Logger::logMessagesInOutputQueue()
 {
     // log next message in queue to logChannel
     while (!this->logMessageOutputQueue.empty())
@@ -698,8 +698,7 @@ void Logger::logThread()
     {
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
         std::lock_guard<std::mutex> lock(this->logMtx);
-        this->logNextMessageInOutputQueue();
-        //std::cout << "logThread" << std::endl;
+        this->logMessagesInOutputQueue();
     }
 }
 

@@ -16,6 +16,7 @@
 #define __BASENAME__ (boost::filesystem::path(__FILE__).filename().string())
 #define __FILE_EXT__ (boost::filesystem::path(__FILE__).filename().extension().string())
 #define __LOCATION__ __BASENAME__ << ":" << __FUNCTION__ << ":" << __LINE__
+#define GMS(inst) inst.getMsgStream()
 
 class Logger
 {
@@ -118,7 +119,7 @@ private:
     std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
-    void logNextMessageInOutputQueue();
+    void logMessagesInOutputQueue();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };
