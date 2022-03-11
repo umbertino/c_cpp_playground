@@ -22,10 +22,10 @@
 #include "Logger.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 1
+#define SCRATCH_PAD 0
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
-#define LOGGER_EXAMPLE 0
+#define LOGGER_EXAMPLE 1
 #define QUEUE_EXAMPLE 0
 
 int main(void)
@@ -41,9 +41,9 @@ int main(void)
     std::cout << epochDur.count();
     std::cout << std::endl;
     unsigned long nanoSecs = epochDur.count() % 1000000000;
-    std::cout << nanoSecs / 1000000 <<"."
-              << (nanoSecs % 1000000) / 1000 <<"."
-              << (nanoSecs % 1000000) % 1000;
+    std::cout << std::setw(3) << std::setfill('0') << (nanoSecs / 1000000) << "."
+              << std::setw(3) << std::setfill('0') << (nanoSecs % 1000000) / 1000 << "."
+              << std::setw(3) << std::setfill('0') << (nanoSecs % 1000000) % 1000;
 
     std::cout << std::endl;
 #endif

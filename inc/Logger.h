@@ -41,11 +41,11 @@ public:
 
     typedef enum
     {
-        ALL_TAGS_OFF = 0x00,
-        COUNTER = 0x01,
-        TIME_STAMP = 0x02,
-        LEVEL = 0x04,
-        ALL_TAGS_ON = 0xFF
+        ALL_TAGS_OFF = 0b00000000,
+        COUNTER = 0b00000001,
+        TIME_STAMP = 0b00000010,
+        LEVEL = 0b00000100,
+        ALL_TAGS_ON = 0x11111111
     } LogTag;
 
     typedef enum
@@ -56,14 +56,20 @@ public:
 
     typedef enum
     {
-        ALL_PROPS_OFF = 0x00,
-        DATE = 0x01, //YYYY-MM-DD
-        TIME = 0x02, //HH:MM:SS
-        MILISECS = 0x04, // HH:MM:SS.mmm
-        MICROSECS = 0x08, // HH:MM:SS.mmm.uuu
-        NANOSECS = 0x10, // HH:MM:SS.mmm.uuu.nnn
-        ALL_PROPS_ON = 0xFF
+        ALL_PROPS_OFF = 0b00000000,
+        DATE = 0b00000001, //YYYY-MM-DD
+        SECS = 0b00000010, //HH:MM:SS
+        MILISECS = 0b00000100, // HH:MM:SS.mmm
+        MICROSECS = 0b00001000, // HH:MM:SS.mmm.uuu
+        NANOSECS = 0b00010000, // HH:MM:SS.mmm.uuu.nnn
+        ALL_PROPS_ON = 0b11111111
     } TimeStampProperty;
+
+    typedef enum
+    {
+        DATE_MASK = 0b00000001,
+        TIME_MASK = 0b00011110
+    } Masks;
 
     // constructors and destructors
     Logger(std::ostream& strm);

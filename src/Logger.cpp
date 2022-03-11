@@ -133,7 +133,7 @@ void Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
 
 std::string Logger::getCurrentTimeStr(unsigned char properties)
 {
-    if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::TIME))
+    if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
     {
         // the current time
         std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
@@ -155,7 +155,7 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
             ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
         }
 
-        if ((properties & Logger::TimeStampProperty::TIME))
+        if ((properties & Logger::TimeStampProperty::SECS))
         {
             if (properties & Logger::TimeStampProperty::DATE)
             {
@@ -166,24 +166,24 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
 
             if (properties & Logger::TimeStampProperty::NANOSECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000000 // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000 // microseconds
-                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs; // nanoseconds
+                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000 // microseconds
+                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) % 1000; // nanoseconds
 
                 return ss.str();
             }
 
             if (properties & Logger::TimeStampProperty::MICROSECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000000 // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << curSubSecondNs % 1000; // microseconds
+                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
+                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000; // microseconds
 
                 return ss.str();
             }
 
             if (properties & Logger::TimeStampProperty::MILISECS)
             {
-                ss << "." << std::setw(3) << std::setfill('0') << durationNanosecs.count(); // miliseconds
+                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
 
                 return ss.str();
             }
@@ -316,20 +316,20 @@ void Logger::setTimeStampProperties(unsigned char properties)
     if (Logger::TimeStampProperty::MILISECS & properties)
     {
         this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::TIME;
+                               Logger::TimeStampProperty::SECS;
     }
 
     if (Logger::TimeStampProperty::MICROSECS & properties)
     {
         this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::TIME |
+                               Logger::TimeStampProperty::SECS |
                                Logger::TimeStampProperty::MILISECS;
     }
 
     if (Logger::TimeStampProperty::NANOSECS & properties)
     {
         this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::TIME |
+                               Logger::TimeStampProperty::SECS |
                                Logger::TimeStampProperty::MILISECS |
                                Logger::TimeStampProperty::MICROSECS;
     }
@@ -634,7 +634,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
                 if ("on" == timeStampTime)
                 {
-                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::TIME;
+                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::SECS;
                 }
                 else if ("off" != timeStampTime)
                 {
@@ -647,7 +647,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             }
 
             // this is only needed if Time proprty is set
-            if (timeStampProperties & Logger::TimeStampProperty::TIME)
+            if (timeStampProperties & Logger::TimeStampProperty::SECS)
             {
                 // [TimeStampFormat.TimeResolution] processing
                 try
@@ -704,7 +704,7 @@ void Logger::logThread()
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
     std::string date = Logger::getCurrentTimeStr(Logger::TimeStampProperty::DATE);
-    std::string time = Logger::getCurrentTimeStr(Logger::TimeStampProperty::TIME);
+    std::string time = Logger::getCurrentTimeStr(Logger::TimeStampProperty::SECS);
     boost::replace_all(time, ":", ".");
     std::stringstream fss;
     fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";
