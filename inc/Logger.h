@@ -100,9 +100,9 @@ public:
     void stop();
     void resume();
     void suppress();
-    void setLogTags(unsigned char logTags);
-    void setLogLevel(Logger::LogLevel level);
-    void setTimeStampProperties(unsigned char properties);
+    void userSetLogTags(unsigned char logTags);
+    void userSetLogLevel(Logger::LogLevel level);
+    void userSetTimeStampProperties(unsigned char properties);
     Logger::LogLevel getLogLevel();
 
 private:
@@ -123,6 +123,7 @@ private:
     unsigned long logFlushCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
+    bool iniFileMode;
     bool loggerStarted;
     bool loggingSuppressed;
     std::ostringstream userMessageStream;
@@ -133,6 +134,9 @@ private:
     std::mutex logMtx;
 
     std::error_condition parseConfigFile(const std::string& configFilename);
+    void setLogTags(unsigned char logTags);
+    void setLogLevel(Logger::LogLevel level);
+    void setTimeStampProperties(unsigned char properties);
     void logMessagesInOutputQueue();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);

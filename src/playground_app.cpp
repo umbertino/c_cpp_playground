@@ -166,9 +166,9 @@ int main(void)
 
     std::cout << std::endl;
 
-    // myLogger.setLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
-    // myLogger.setLogLevel(Logger::LogLevel::INFO);
-    // myLogger.setTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
+    myLogger.userSetLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    myLogger.userSetLogLevel(Logger::LogLevel::INFO);
+    myLogger.userSetTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
     myLogger.log(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     myLogger.log(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
@@ -181,9 +181,9 @@ int main(void)
 
     std::cout << std::endl;
 
-    //Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL);
-    //Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
-    //Logger::LOG_SET_TIME_STAMP(myLogger, Logger::TimeStampProperty::TIME | Logger::TimeStampProperty::MICROSECS);
+    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
+    Logger::LOG_SET_TIME_STAMP_PROPS(myLogger, Logger::TimeStampProperty::SECS | Logger::TimeStampProperty::NANOSECS);
 
     Logger::LOG_TRACE(myLogger, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     Logger::LOG_FATAL(myLogger, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");

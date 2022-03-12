@@ -13,7 +13,8 @@
 #include <boost/date_time/local_time/local_time.hpp>
 
 // constructors and destructors
-Logger::Logger(std::ostream& strm) : loggerStarted(false),
+Logger::Logger(std::ostream& strm) : iniFileMode(false),
+                                     loggerStarted(false),
                                      loggingSuppressed(false),
                                      logChannel(&strm),
                                      logsPerFile(Logger::MAX_LOGS_PER_FILE),
@@ -23,8 +24,10 @@ Logger::Logger(std::ostream& strm) : loggerStarted(false),
 {
 }
 
-Logger::Logger(const std::string& configFilename) : loggerStarted(false),
+Logger::Logger(const std::string& configFilename) : iniFileMode(true),
+                                                    loggerStarted(false),
                                                     loggingSuppressed(false),
+                                                    logChannel(nullptr),
                                                     logsPerFile(Logger::MAX_LOGS_PER_FILE),
                                                     logLevel(Logger::LogLevel::INFO),
                                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
@@ -36,6 +39,7 @@ Logger::Logger(const std::string& configFilename) : loggerStarted(false),
     {
         std::cerr << "Falling back to default console logger" << std::endl;
         // fall back to a default console logger
+        this->iniFileMode = false;
         this->logChannel = &std::clog;
         this->logLevel = Logger::LogLevel::INFO;
         this->logTags = Logger::LogTag::ALL_TAGS_OFF;
@@ -83,17 +87,17 @@ void Logger::LOG_SUPPRESS(Logger& instance)
 
 void Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
 {
-    instance.setLogTags(logTags);
+    instance.userSetLogTags(logTags);
 }
 
 void Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
 {
-    instance.setLogLevel(level);
+    instance.userSetLogLevel(level);
 }
 
 void Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
 {
-    instance.setTimeStampProperties(properties);
+    instance.userSetTimeStampProperties(properties);
 }
 
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
@@ -155,13 +159,13 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
             ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
         }
 
-        if ((properties & Logger::TimeStampProperty::SECS))
+        if ((properties & Logger::TimeStampProperty::DATE) && (properties & Logger::TIME_MASK))
         {
-            if (properties & Logger::TimeStampProperty::DATE)
-            {
-                ss << " ";
-            }
+            ss << " ";
+        }
 
+        if (properties & Logger::TIME_MASK)
+        {
             ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
 
             if (properties & Logger::TimeStampProperty::NANOSECS)
@@ -169,23 +173,15 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
                    << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000 // microseconds
                    << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) % 1000; // nanoseconds
-
-                return ss.str();
             }
-
-            if (properties & Logger::TimeStampProperty::MICROSECS)
+            else if (properties & Logger::TimeStampProperty::MICROSECS)
             {
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
                    << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000; // microseconds
-
-                return ss.str();
             }
-
-            if (properties & Logger::TimeStampProperty::MILISECS)
+            else if (properties & Logger::TimeStampProperty::MILISECS)
             {
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
-
-                return ss.str();
             }
         }
 
@@ -296,6 +292,30 @@ void Logger::suppress()
     this->loggingSuppressed = true;
 }
 
+void Logger::userSetLogTags(unsigned char logTags)
+{
+    if (!this->iniFileMode)
+    {
+        this->setLogTags(logTags);
+    }
+}
+
+void Logger::userSetLogLevel(Logger::LogLevel level)
+{
+    if (!this->iniFileMode)
+    {
+        this->setLogLevel(level);
+    }
+}
+
+void Logger::userSetTimeStampProperties(unsigned char properties)
+{
+    if (!this->iniFileMode)
+    {
+        this->setTimeStampProperties(properties);
+    }
+}
+
 void Logger::setLogTags(unsigned char logTags)
 {
     this->logTags = logTags;
@@ -308,30 +328,25 @@ void Logger::setLogLevel(Logger::LogLevel level)
 
 void Logger::setTimeStampProperties(unsigned char properties)
 {
-    this->timeStampProps = properties;
-
-    // adjust time properties in case of missing but
-    // mandatory properties, e.g. if microseconds shall be
-    // set make sure that general time and milliseconds are set, too
-    if (Logger::TimeStampProperty::MILISECS & properties)
-    {
-        this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::SECS;
-    }
-
-    if (Logger::TimeStampProperty::MICROSECS & properties)
-    {
-        this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::SECS |
-                               Logger::TimeStampProperty::MILISECS;
-    }
-
     if (Logger::TimeStampProperty::NANOSECS & properties)
     {
-        this->timeStampProps = this->timeStampProps |
-                               Logger::TimeStampProperty::SECS |
-                               Logger::TimeStampProperty::MILISECS |
-                               Logger::TimeStampProperty::MICROSECS;
+        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::NANOSECS;
+    }
+    else if (Logger::TimeStampProperty::MICROSECS & properties)
+    {
+        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::MICROSECS;
+    }
+    else if (Logger::TimeStampProperty::MILISECS & properties)
+    {
+        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::MILISECS;
+    }
+    else if (Logger::TimeStampProperty::SECS & properties)
+    {
+        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::SECS;
+    }
+    else
+    {
+        this->timeStampProps = (properties & ~Logger::TIME_MASK);
     }
 }
 
@@ -361,19 +376,21 @@ void Logger::logMessagesInOutputQueue()
 
         this->logMessageOutputQueue.pop();
         this->logFlushCounter++;
+
+        this->logChannel->flush();
     }
 }
 
 std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 {
     std::error_condition errCond(0, std::generic_category());
-    std::ifstream ifs;
+    std::ifstream iniFs;
 
-    ifs.open(configFilename.c_str(), std::ifstream::in);
+    iniFs.open(configFilename.c_str(), std::ifstream::in);
 
-    if (ifs.fail())
+    if (iniFs.fail())
     {
-        ifs.close();
+        iniFs.close();
 
         errCond = std::errc::no_such_file_or_directory;
     }
@@ -390,7 +407,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         {
             std::cerr << "ConfigFile parse exception: " << e.what() << std::endl;
 
-            ifs.close();
+            iniFs.close();
 
             return std::errc::invalid_seek;
         }
@@ -413,7 +430,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             {
                 std::cerr << "Configfile parse error: No feasible value found for BasicSetup.LogType" << std::endl;
 
-                ifs.close();
+                iniFs.close();
 
                 return std::errc::invalid_seek;
             }
@@ -422,7 +439,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         {
             std::cerr << "Configfile parse exception: " << e.what() << std::endl;
 
-            ifs.close();
+            iniFs.close();
 
             return std::errc::invalid_seek;
         }
@@ -526,7 +543,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
                 this->logsPerFile = Logger::MAX_LOGS_PER_FILE;
             }
 
-            //this->logChannel = this->getNewLogFile(++this->logFileCounter);
+            // this->logChannel = this->getNewLogFile(++this->logFileCounter);
         }
         else
         {
@@ -685,7 +702,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
             this->setTimeStampProperties(timeStampProperties);
         }
 
-        ifs.close();
+        iniFs.close();
     }
 
     return errCond;
