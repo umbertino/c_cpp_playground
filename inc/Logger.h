@@ -79,30 +79,30 @@ public:
     // static public class members
     static void LOG_START(Logger& instance);
     static void LOG_STOP(Logger& instance);
-    static std::error_condition LOG_RESUME(Logger& instance);
-    static std::error_condition LOG_SUPPRESS(Logger& instance);
-    static std::error_condition LOG_SET_TAGS(Logger& instance, unsigned char logTags);
-    static std::error_condition LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
-    static std::error_condition LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
+    static std::error_code LOG_RESUME(Logger& instance);
+    static std::error_code LOG_SUPPRESS(Logger& instance);
+    static std::error_code LOG_SET_TAGS(Logger& instance, unsigned char logTags);
+    static std::error_code LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
+    static std::error_code LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
 
-    static std::error_condition LOG_TRACE(Logger& instance, std::ostream& messageStream);
-    static std::error_condition LOG_DEBUG(Logger& instance, std::ostream& messageStream);
-    static std::error_condition LOG_INFO(Logger& instance, std::ostream& messageStream);
-    static std::error_condition LOG_WARN(Logger& instance, std::ostream& messageStream);
-    static std::error_condition LOG_ERROR(Logger& instance, std::ostream& messageStream);
-    static std::error_condition LOG_FATAL(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_TRACE(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_DEBUG(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_INFO(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_WARN(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_ERROR(Logger& instance, std::ostream& messageStream);
+    static std::error_code LOG_FATAL(Logger& instance, std::ostream& messageStream);
 
     // public instance members
     std::ostream& getMsgStream();
-    std::error_condition log(Logger::LogLevel level, const std::ostream& msg);
+    std::error_code log(Logger::LogLevel level, const std::ostream& msg);
     void start();
-    std::error_condition stop();
-    std::error_condition resume();
-    std::error_condition suppress();
-    std::error_condition userSetLogTags(unsigned char logTags);
-    std::error_condition userSetLogLevel(Logger::LogLevel level);
-    std::error_condition userSetTimeStampProperties(unsigned char properties);
+    std::error_code stop();
+    std::error_code resume();
+    std::error_code suppress();
+    std::error_code userSetLogTags(unsigned char logTags);
+    std::error_code userSetLogLevel(Logger::LogLevel level);
+    std::error_code userSetTimeStampProperties(unsigned char properties);
     Logger::LogLevel getLogLevel();
 
 private:
@@ -133,7 +133,7 @@ private:
     std::thread logThreadHandle;
     std::mutex logMtx;
 
-    std::error_condition parseConfigFile(const std::string& configFilename);
+    std::error_code parseConfigFile(const std::string& configFilename);
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);

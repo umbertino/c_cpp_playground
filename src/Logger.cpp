@@ -33,7 +33,7 @@ Logger::Logger(const std::string& configFilename) : iniFileMode(true),
                                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
                                                     timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
-    std::error_condition error = this->parseConfigFile(configFilename);
+    std::error_code error = this->parseConfigFile(configFilename);
 
     if (error.value() != 0)
     {
@@ -77,27 +77,27 @@ void Logger::LOG_STOP(Logger& instance)
     instance.stop();
 }
 
-std::error_condition Logger::LOG_RESUME(Logger& instance)
+std::error_code Logger::LOG_RESUME(Logger& instance)
 {
     return instance.resume();
 }
 
-std::error_condition Logger::LOG_SUPPRESS(Logger& instance)
+std::error_code Logger::LOG_SUPPRESS(Logger& instance)
 {
     return instance.suppress();
 }
 
-std::error_condition Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
+std::error_code Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
 {
     return instance.userSetLogTags(logTags);
 }
 
-std::error_condition Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
+std::error_code Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
 {
     return instance.userSetLogLevel(level);
 }
 
-std::error_condition Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
+std::error_code Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
 {
     return instance.userSetTimeStampProperties(properties);
 }
@@ -107,32 +107,32 @@ Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
     return instance.getLogLevel();
 }
 
-std::error_condition Logger::LOG_TRACE(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_TRACE(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::TRACE, messageStream);
 }
 
-std::error_condition Logger::LOG_DEBUG(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_DEBUG(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::DEBUG, messageStream);
 }
 
-std::error_condition Logger::LOG_INFO(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_INFO(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::INFO, messageStream);
 }
 
-std::error_condition Logger::LOG_WARN(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_WARN(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::WARN, messageStream);
 }
 
-std::error_condition Logger::LOG_ERROR(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_ERROR(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::ERR, messageStream);
 }
 
-std::error_condition Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
+std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
 {
     return instance.log(Logger::LogLevel::FATAL, messageStream);
 }
@@ -212,10 +212,8 @@ std::ostream& Logger::getMsgStream()
  * @param level The log message category of type Logger::LogLevel
  * @param msg The log message as a stream
  */
-std::error_condition Logger::log(Logger::LogLevel level, const std::ostream& msg)
+std::error_code Logger::log(Logger::LogLevel level, const std::ostream& msg)
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->loggerStarted)
     {
         if (!this->loggingSuppressed && level >= this->logLevel)
@@ -259,13 +257,13 @@ std::error_condition Logger::log(Logger::LogLevel level, const std::ostream& msg
             this->userMessageStream.str(std::string("\r"));
             Logger::nirvana << this->userMessageStream.str();
         }
+
+        return std::error_code(0, std::generic_category());
     }
     else
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
-
-    return errCond;
 }
 
 void Logger::start()
@@ -277,10 +275,8 @@ void Logger::start()
     this->logThreadHandle = std::thread(&Logger::logThread, this);
 }
 
-std::error_condition Logger::stop()
+std::error_code Logger::stop()
 {
-    std::error_condition errCond(0, std::generic_category());
-
     this->loggerStarted = false;
 
     try
@@ -294,90 +290,80 @@ std::error_condition Logger::stop()
     {
         std::cerr << "Exception: " << e.what() << " " << e.code();
 
-        errCond = std::errc::operation_canceled;
+        return std::make_error_code(std::errc::operation_canceled);
     }
 
-    return errCond;
+    return std::error_code(0, std::generic_category());
 }
 
-std::error_condition Logger::resume()
+std::error_code Logger::resume()
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->loggerStarted)
     {
         this->loggingSuppressed = false;
     }
     else
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
 
-    return errCond;
+    return std::error_code(0, std::generic_category());
 }
 
-std::error_condition Logger::suppress()
+std::error_code Logger::suppress()
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->loggerStarted)
     {
         this->loggingSuppressed = true;
     }
     else
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
 
-    return errCond;
+    return std::error_code(0, std::generic_category());
 }
 
-std::error_condition Logger::userSetLogTags(unsigned char logTags)
+std::error_code Logger::userSetLogTags(unsigned char logTags)
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->iniFileMode)
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
     else
     {
         this->setLogTags(logTags);
-    }
 
-    return errCond;
+        return std::error_code(0, std::generic_category());
+    }
 }
 
-std::error_condition Logger::userSetLogLevel(Logger::LogLevel level)
+std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->iniFileMode)
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
     else
     {
         this->setLogLevel(level);
-    }
 
-    return errCond;
+        return std::error_code(0, std::generic_category());
+    }
 }
 
-std::error_condition Logger::userSetTimeStampProperties(unsigned char properties)
+std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
 {
-    std::error_condition errCond(0, std::generic_category());
-
     if (this->iniFileMode)
     {
-        errCond = std::errc::operation_not_permitted;
+        return std::make_error_code(std::errc::operation_not_permitted);
     }
     else
     {
         this->setTimeStampProperties(properties);
-    }
 
-    return errCond;
+        return std::error_code(0, std::generic_category());
+    }
 }
 
 void Logger::setLogTags(unsigned char logTags)
@@ -449,9 +435,8 @@ void Logger::logMessagesInOutputQueue()
     }
 }
 
-std::error_condition Logger::parseConfigFile(const std::string& configFilename)
+std::error_code Logger::parseConfigFile(const std::string& configFilename)
 {
-    std::error_condition errCond(0, std::generic_category());
     std::ifstream iniFs;
 
     iniFs.open(configFilename.c_str(), std::ifstream::in);
@@ -460,7 +445,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
     {
         iniFs.close();
 
-        errCond = std::errc::no_such_file_or_directory;
+        return std::make_error_code(std::errc::no_such_file_or_directory);
     }
     else
     {
@@ -477,7 +462,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
             iniFs.close();
 
-            return std::errc::invalid_seek;
+            return std::make_error_code(std::errc::invalid_seek);
         }
 
         // [BasicSetup.LogType] processing
@@ -500,7 +485,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
                 iniFs.close();
 
-                return std::errc::invalid_seek;
+                return std::make_error_code(std::errc::invalid_seek);
             }
         }
         catch (const boost::property_tree::ptree_error& e)
@@ -509,7 +494,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
 
             iniFs.close();
 
-            return std::errc::invalid_seek;
+            return std::make_error_code(std::errc::invalid_seek);
         }
 
         // [BasicSetup.LogLevel] processing
@@ -617,7 +602,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         {
             std::cerr << "Configfile parse error: No feasible value found for BasicSetup.LogType." << std::endl;
 
-            return std::errc::invalid_seek;
+            return std::make_error_code(std::errc::invalid_seek);
         }
 
         // [LogTag.Counter] processing
@@ -773,7 +758,7 @@ std::error_condition Logger::parseConfigFile(const std::string& configFilename)
         iniFs.close();
     }
 
-    return errCond;
+    return std::error_code(0, std::generic_category());
 }
 
 void Logger::logThread()
