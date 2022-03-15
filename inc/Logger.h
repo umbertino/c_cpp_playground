@@ -18,6 +18,9 @@
 #include <mutex>
 
 // boost includes
+#include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/thread/thread.hpp>
 #include <boost/filesystem/convenience.hpp>
 
 // some convenience macros
@@ -129,15 +132,17 @@ private:
     std::ostringstream userMessageStream;
     std::ostringstream fullMessageStream;
     std::ostream* logChannel;
-    std::queue<std::string> logMessageOutputQueue;
-    std::thread logThreadHandle;
-    std::mutex logMtx;
+    //std::queue<std::string> logMessageOutputQueue;
+    boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> logMessageOutputQueue;
+    boost::thread logThreadHandle;
+    //boost::condition_variable logCv;
+    //boost::mutex logMtx;
 
     std::error_code parseConfigFile(const std::string& configFilename);
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
-    void logMessagesInOutputQueue();
+    void logNextMessage();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

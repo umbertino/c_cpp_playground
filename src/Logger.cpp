@@ -1,3 +1,11 @@
+/**
+ * @file Logger.cpp
+ * @author umbertino@mailbox.org
+ * @brief Implementation of Logger-Class
+ * @date 2022-03-14
+ *
+ */
+
 // own includes
 #include "Logger.h"
 
@@ -195,6 +203,7 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
     }
 }
 
+// Initialization of static class members
 std::ostream Logger::nirvana(NULL);
 unsigned short const Logger::MIN_LOGS_PER_FILE = 100;
 unsigned short const Logger::MAX_LOGS_PER_FILE = 10000;
@@ -218,7 +227,6 @@ std::error_code Logger::log(Logger::LogLevel level, const std::ostream& msg)
     {
         if (!this->loggingSuppressed && level >= this->logLevel)
         {
-            std::lock_guard<std::mutex> lock(this->logMtx);
             this->logInCounter++;
 
             if (this->logTags & Logger::LogTag::COUNTER)
@@ -249,7 +257,7 @@ std::error_code Logger::log(Logger::LogLevel level, const std::ostream& msg)
 
             this->fullMessageStream << this->userMessageStream.str() << std::endl;
 
-            this->logMessageOutputQueue.emplace(this->fullMessageStream.str());
+            this->logMessageOutputQueue.push(this->fullMessageStream.str());
 
             // discard the streams
             this->fullMessageStream.str(std::string("\r"));
@@ -272,7 +280,7 @@ void Logger::start()
     this->logFileCounter = 0;
     this->logOutCounter = 1;
     this->loggerStarted = true;
-    this->logThreadHandle = std::thread(&Logger::logThread, this);
+    this->logThreadHandle = boost::thread(&Logger::logThread, this);
 }
 
 std::error_code Logger::stop()
@@ -290,7 +298,8 @@ std::error_code Logger::stop()
     {
         std::cerr << "Exception: " << e.what() << " " << e.code();
 
-        return std::make_error_code(std::errc::operation_canceled);
+        return e.code();
+        //std::make_error_code(std::errc::operation_canceled);
     }
 
     return std::error_code(0, std::generic_category());
@@ -405,10 +414,9 @@ Logger::LogLevel Logger::getLogLevel()
     return this->logLevel;
 }
 
-void Logger::logMessagesInOutputQueue()
+void Logger::logNextMessage()
 {
-    // log next message in queue to logChannel
-    while (!this->logMessageOutputQueue.empty())
+    if (!this->logMessageOutputQueue.empty())
     {
         // if we have file logging check, whether we need to create a new file
         // this is the case at the very beginning and when the max allowed
@@ -756,18 +764,18 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
         }
 
         iniFs.close();
-    }
 
-    return std::error_code(0, std::generic_category());
+        return std::error_code(0, std::generic_category());
+    }
 }
 
 void Logger::logThread()
 {
     while (this->loggerStarted || !this->logMessageOutputQueue.empty())
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
-        std::lock_guard<std::mutex> lock(this->logMtx);
-        this->logMessagesInOutputQueue();
+        //std::this_thread::sleep_for(std::chrono::microseconds(1000));
+
+        this->logNextMessage();
     }
 }
 
