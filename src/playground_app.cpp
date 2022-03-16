@@ -169,14 +169,14 @@ int main(void)
     myLogger.userSetLogLevel(Logger::LogLevel::INFO);
     myLogger.userSetTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
 
-    myLogger.log(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
-    myLogger.log(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
+    myLogger.userLog(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
+    myLogger.userLog(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
     myLogger.suppress();
-    myLogger.log(Logger::LogLevel::DEBUG, GMS(myLogger) << __LOCATION__ << " 3 This is a debug message");
-    myLogger.log(Logger::LogLevel::WARN, GMS(myLogger) << __LOCATION__ << " 4 This is a warning message");
+    myLogger.userLog(Logger::LogLevel::DEBUG, GMS(myLogger) << __LOCATION__ << " 3 This is a debug message");
+    myLogger.userLog(Logger::LogLevel::WARN, GMS(myLogger) << __LOCATION__ << " 4 This is a warning message");
     myLogger.resume();
-    myLogger.log(Logger::LogLevel::ERR, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
-    myLogger.log(Logger::LogLevel::INFO, GMS(myLogger) << __LOCATION__ << " 6 This is a info message");
+    myLogger.userLog(Logger::LogLevel::ERR, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
+    myLogger.userLog(Logger::LogLevel::INFO, GMS(myLogger) << __LOCATION__ << " 6 This is a info message");
 
     std::cout << std::endl;
 
@@ -199,21 +199,19 @@ int main(void)
 
     for (int i = 0; i < LOOP; i++)
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(1000000));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         auto start = std::chrono::high_resolution_clock::now();
-
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
         auto stop = std::chrono::high_resolution_clock::now();
 
         dur[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-        //std::cout << dur[i].count() << std::endl;
+        std::cout << dur[i].count() << std::endl;
     }
 
     Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
     Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 6 This is a fatal message");
 
-    myLogger.stop();
     float avgDur(0);
 
     for (int i = 0; i < LOOP; i++)
@@ -224,6 +222,8 @@ int main(void)
     avgDur = avgDur / LOOP;
 
     std::cout << "avgDur: " << avgDur << std::endl;
+
+    myLogger.stop();
 
     //ofs.close();
 
