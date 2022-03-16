@@ -74,6 +74,14 @@ public:
         TIME_MASK = 0b00011110
     } Masks;
 
+    typedef struct
+    {
+        unsigned long counter;
+        Logger::LogLevel level;
+        std::chrono::system_clock::time_point now;
+        std::string userMessage;
+    } RawMessage;
+
     // constructors and destructors
     Logger(std::ostream& strm);
     Logger(const std::string& configFilename);
@@ -98,7 +106,7 @@ public:
 
     // public instance members
     std::ostream& getMsgStream();
-    std::error_code log(Logger::LogLevel level, const std::ostream& msg);
+    std::error_code userLog(Logger::LogLevel level, const std::ostream& msg);
     void start();
     std::error_code stop();
     std::error_code resume();
@@ -115,7 +123,7 @@ private:
     static unsigned short const MAX_LOGS_PER_FILE;
     static std::string const logLevel2String[];
 
-    inline static std::string getCurrentTimeStr(unsigned char properties);
+    inline static std::string getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties);
 
     // private instance members
     unsigned char logTags;
@@ -133,7 +141,7 @@ private:
     std::ostringstream fullMessageStream;
     std::ostream* logChannel;
     //std::queue<std::string> logMessageOutputQueue;
-    boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> logMessageOutputQueue;
+    boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<1024>> logMessageOutputQueue;
     boost::thread logThreadHandle;
     //boost::condition_variable logCv;
     //boost::mutex logMtx;
@@ -142,6 +150,7 @@ private:
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
+    std::string formatLogMessage(Logger::RawMessage raw);
     void logNextMessage();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);

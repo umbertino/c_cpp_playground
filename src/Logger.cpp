@@ -117,49 +117,50 @@ Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
 
 std::error_code Logger::LOG_TRACE(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::TRACE, messageStream);
+    return instance.userLog(Logger::LogLevel::TRACE, messageStream);
 }
 
 std::error_code Logger::LOG_DEBUG(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::DEBUG, messageStream);
+    return instance.userLog(Logger::LogLevel::DEBUG, messageStream);
 }
 
 std::error_code Logger::LOG_INFO(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::INFO, messageStream);
+    return instance.userLog(Logger::LogLevel::INFO, messageStream);
 }
 
 std::error_code Logger::LOG_WARN(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::WARN, messageStream);
+    return instance.userLog(Logger::LogLevel::WARN, messageStream);
 }
 
 std::error_code Logger::LOG_ERROR(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::ERR, messageStream);
+    return instance.userLog(Logger::LogLevel::ERR, messageStream);
 }
 
 std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
 {
-    return instance.log(Logger::LogLevel::FATAL, messageStream);
+    return instance.userLog(Logger::LogLevel::FATAL, messageStream);
 }
 
-std::string Logger::getCurrentTimeStr(unsigned char properties)
+std::string Logger::getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties)
 {
     if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
     {
+        //auto start = std::chrono::high_resolution_clock::now();
         // the current time
-        std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+        //std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
         // the current time as epoch time
-        std::chrono::system_clock::duration duration = today.time_since_epoch();
+        std::chrono::system_clock::duration duration = now.time_since_epoch();
 
         // get duration in different units
         std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
         unsigned long curSubSecondNs = durationNanosecs.count() % 1000000000;
 
         // transform current time to time_t format
-        time_t in_time_t = std::chrono::system_clock::to_time_t(today);
+        time_t in_time_t = std::chrono::system_clock::to_time_t(now);
 
         std::stringstream ss;
 
@@ -168,12 +169,12 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
         {
             ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
         }
-        auto start = std::chrono::high_resolution_clock::now();
+
         if ((properties & Logger::TimeStampProperty::DATE) && (properties & Logger::TIME_MASK))
         {
             ss << " ";
         }
-        auto stop = std::chrono::high_resolution_clock::now();
+
         if (properties & Logger::TIME_MASK)
         {
             ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
@@ -194,10 +195,10 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
             }
         }
-
-        std::chrono::duration<int, std::micro> dur = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        unsigned long dura = dur.count();
-        std::cout << dura << std::endl;
+        // auto stop = std::chrono::high_resolution_clock::now();
+        // std::chrono::duration<int, std::micro> dur = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        // unsigned long dura = dur.count();
+        // std::cout << dura << std::endl;
 
         return ss.str();
     }
@@ -222,50 +223,20 @@ std::ostream& Logger::getMsgStream()
 /**
  * @brief Provides the logging metod for the user.
  *
- * @param level The log message category of type Logger::LogLevel
- * @param msg The log message as a stream
+ * @param level The userLog message category of type Logger::LogLevel
+ * @param msg The userLog message as a stream
  */
-std::error_code Logger::log(Logger::LogLevel level, const std::ostream& msg)
+std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
 {
     if (this->loggerStarted)
     {
         if (!this->loggingSuppressed && level >= this->logLevel)
         {
             this->logInCounter++;
+            this->userMessageStream << std::endl;
+            this->logMessageOutputQueue.push(Logger::RawMessage{this->logInCounter, level, std::chrono::system_clock::now(), this->userMessageStream.str()});
 
-            if (this->logTags & Logger::LogTag::COUNTER)
-            {
-                this->fullMessageStream << "[" << std::setw(5) << std::setfill('0') << this->logInCounter << "]";
-            }
-
-            if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
-                (this->timeStampProps != Logger::TimeStampProperty::ALL_PROPS_OFF))
-            {
-                std::string timeStr = this->getCurrentTimeStr(this->timeStampProps);
-
-                if (!timeStr.empty())
-                {
-                    this->fullMessageStream << "[" << timeStr << "]";
-                }
-            }
-
-            if (this->logTags & Logger::LogTag::LEVEL)
-            {
-                this->fullMessageStream << "[" << Logger::logLevel2String[level] << "]";
-            }
-
-            if (this->logTags != Logger::LogTag::ALL_TAGS_OFF)
-            {
-                this->fullMessageStream << " ";
-            }
-
-            this->fullMessageStream << this->userMessageStream.str() << std::endl;
-
-            this->logMessageOutputQueue.push(this->fullMessageStream.str());
-
-            // discard the streams
-            this->fullMessageStream.str(std::string("\r"));
-            Logger::nirvana << this->fullMessageStream.str();
+            // discard the stream
             this->userMessageStream.str(std::string("\r"));
             Logger::nirvana << this->userMessageStream.str();
         }
@@ -418,6 +389,42 @@ Logger::LogLevel Logger::getLogLevel()
     return this->logLevel;
 }
 
+std::string Logger::formatLogMessage(Logger::RawMessage raw)
+{
+    this->fullMessageStream.str(std::string("\r"));
+    Logger::nirvana << this->fullMessageStream.str();
+
+    if (this->logTags & Logger::LogTag::COUNTER)
+    {
+        this->fullMessageStream << "[" << std::setw(5) << std::setfill('0') << raw.counter << "]";
+    }
+
+    if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
+        (this->timeStampProps != Logger::TimeStampProperty::ALL_PROPS_OFF))
+    {
+        std::string timeStr = this->getTimeStr(raw.now, this->timeStampProps);
+
+        if (!timeStr.empty())
+        {
+            this->fullMessageStream << "[" << timeStr << "]";
+        }
+    }
+
+    if (this->logTags & Logger::LogTag::LEVEL)
+    {
+        this->fullMessageStream << "[" << Logger::logLevel2String[raw.level] << "]";
+    }
+
+    if (this->logTags != Logger::LogTag::ALL_TAGS_OFF)
+    {
+        this->fullMessageStream << " ";
+    }
+
+    this->fullMessageStream << raw.userMessage;
+
+    return this->fullMessageStream.str();
+}
+
 void Logger::logNextMessage()
 {
     if (!this->logMessageOutputQueue.empty())
@@ -440,8 +447,8 @@ void Logger::logNextMessage()
             }
         }
 
-        // log to channel, remove queue element and increment the log-out counter
-        *(this->logChannel) << this->logMessageOutputQueue.front();
+        // userLog to channel, remove queue element and increment the log-out counter
+        *(this->logChannel) << this->formatLogMessage(this->logMessageOutputQueue.front());
         this->logMessageOutputQueue.pop();
         this->logOutCounter++;
     }
@@ -777,7 +784,7 @@ void Logger::logThread()
 {
     while (this->loggerStarted || !this->logMessageOutputQueue.empty())
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
 
         this->logNextMessage();
     }
@@ -785,8 +792,8 @@ void Logger::logThread()
 
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
-    std::string date = Logger::getCurrentTimeStr(Logger::TimeStampProperty::DATE);
-    std::string time = Logger::getCurrentTimeStr(Logger::TimeStampProperty::SECS);
+    std::string date = Logger::getTimeStr(std::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);
+    std::string time = Logger::getTimeStr(std::chrono::system_clock::now(), Logger::TimeStampProperty::SECS);
     boost::replace_all(time, ":", ".");
     std::stringstream fss;
     fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";
