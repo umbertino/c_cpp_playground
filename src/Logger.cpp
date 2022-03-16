@@ -168,12 +168,12 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
         {
             ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
         }
-
+        auto start = std::chrono::high_resolution_clock::now();
         if ((properties & Logger::TimeStampProperty::DATE) && (properties & Logger::TIME_MASK))
         {
             ss << " ";
         }
-
+        auto stop = std::chrono::high_resolution_clock::now();
         if (properties & Logger::TIME_MASK)
         {
             ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
@@ -194,6 +194,10 @@ std::string Logger::getCurrentTimeStr(unsigned char properties)
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
             }
         }
+
+        std::chrono::duration<int, std::micro> dur = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        unsigned long dura = dur.count();
+        std::cout << dura << std::endl;
 
         return ss.str();
     }
@@ -773,7 +777,7 @@ void Logger::logThread()
 {
     while (this->loggerStarted || !this->logMessageOutputQueue.empty())
     {
-        //std::this_thread::sleep_for(std::chrono::microseconds(1000));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
 
         this->logNextMessage();
     }
