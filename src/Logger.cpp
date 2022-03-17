@@ -269,7 +269,7 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
                     // wait for a free place in the log-message queue: will block caller
                     while (this->logMessageOutputQueue.write_available() == 0)
                     {
-                        //boost::this_thread::sleep_for(boost::chrono::microseconds(1));
+                        boost::this_thread::sleep_for(boost::chrono::microseconds(5));
                     }
                 }
                 else
