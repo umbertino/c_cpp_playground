@@ -82,6 +82,19 @@ public:
         std::string userMessage;
     } RawMessage;
 
+    typedef enum
+    {
+        GREEN,
+        ORANGE,
+        RED
+    } LogQueueColor;
+
+    typedef struct
+    {
+        size_t fillLevel;
+        Logger::LogQueueColor condition;
+    } LogQueueStatus;
+
     // constructors and destructors
     Logger(std::ostream& strm);
     Logger(const std::string& configFilename);
@@ -121,7 +134,13 @@ private:
     static std::ostream nirvana;
     static unsigned short const MIN_LOGS_PER_FILE;
     static unsigned short const MAX_LOGS_PER_FILE;
+    static unsigned long const GREEN_LOG_THREAD_PERIOD_US;
+    static unsigned long const ORANGE_LOG_THREAD_PERIOD_US;
+    static unsigned long const RED_LOG_THREAD_PERIOD_US;
+    static unsigned char const ORANGE_WMARK_PERCENT;
+    static unsigned char const RED_WMARK_PERCENT;
     static std::string const logLevel2String[];
+#define LOG_MESSAGE_Q_SIZE 1024
 
     inline static std::string getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties);
 
@@ -134,15 +153,20 @@ private:
     unsigned long logOutCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
+    Logger::LogQueueStatus logQueueStatus;
     bool iniFileMode;
+    bool logQMonEnabled;
+    bool logQOverloadWait;
     bool loggerStarted;
     bool loggingSuppressed;
     std::ostringstream userMessageStream;
     std::ostringstream fullMessageStream;
     std::ostream* logChannel;
     //std::queue<std::string> logMessageOutputQueue;
-    boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<1024>> logMessageOutputQueue;
+    boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<LOG_MESSAGE_Q_SIZE>> logMessageOutputQueue;
     boost::thread logThreadHandle;
+    boost::thread logQueueMonThreadHandle;
+    unsigned long logThreadPeriod;
     //boost::condition_variable logCv;
     //boost::mutex logMtx;
 
@@ -153,5 +177,6 @@ private:
     std::string formatLogMessage(Logger::RawMessage raw);
     void logNextMessage();
     void logThread();
+    void logQueueMonThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };

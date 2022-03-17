@@ -193,17 +193,17 @@ int main(void)
     Logger::LOG_ERROR(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
     Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " 6 This is a fatal message");
 
-    const unsigned short LOOP = 500;
+    const unsigned short LOOP = 3000;
 
-    std::chrono::duration<int, std::micro> dur[1000];
+    std::chrono::duration<int, std::micro> dur[LOOP];
 
     for (int i = 0; i < LOOP; i++)
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-        auto start = std::chrono::high_resolution_clock::now();
-        Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
-        auto stop = std::chrono::high_resolution_clock::now();
+        //std::this_thread::sleep_for(std::chrono::microseconds(1));
 
+        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+        Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
+        std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
         dur[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
         std::cout << dur[i].count() << std::endl;
@@ -212,7 +212,7 @@ int main(void)
     Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
     Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 6 This is a fatal message");
 
-    float avgDur(0);
+    int avgDur(0);
 
     for (int i = 0; i < LOOP; i++)
     {

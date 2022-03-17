@@ -20,26 +20,45 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
+// Initialization of static class members
+std::ostream Logger::nirvana(NULL);
+unsigned short const Logger::MIN_LOGS_PER_FILE = 100;
+unsigned short const Logger::MAX_LOGS_PER_FILE = 10000;
+unsigned long const Logger::GREEN_LOG_THREAD_PERIOD_US = 500000;
+unsigned long const Logger::ORANGE_LOG_THREAD_PERIOD_US = 5000;
+unsigned long const Logger::RED_LOG_THREAD_PERIOD_US = 50;
+unsigned char const Logger::ORANGE_WMARK_PERCENT = 30;
+unsigned char const Logger::RED_WMARK_PERCENT = 70;
+std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+
 // constructors and destructors
 Logger::Logger(std::ostream& strm) : iniFileMode(false),
+                                     logQMonEnabled(false),
+                                     logQOverloadWait(true),
+                                     logQueueStatus({0, Logger::LogQueueColor::GREEN}),
                                      loggerStarted(false),
                                      loggingSuppressed(false),
                                      logChannel(&strm),
                                      logsPerFile(Logger::MAX_LOGS_PER_FILE),
                                      logLevel(Logger::LogLevel::INFO),
                                      logTags(Logger::LogTag::ALL_TAGS_OFF),
-                                     timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
+                                     timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF),
+                                     logThreadPeriod(Logger::GREEN_LOG_THREAD_PERIOD_US)
 {
 }
 
 Logger::Logger(const std::string& configFilename) : iniFileMode(true),
+                                                    logQMonEnabled(false),
+                                                    logQOverloadWait(true),
+                                                    logQueueStatus({0, Logger::LogQueueColor::GREEN}),
                                                     loggerStarted(false),
                                                     loggingSuppressed(false),
                                                     logChannel(nullptr),
                                                     logsPerFile(Logger::MAX_LOGS_PER_FILE),
                                                     logLevel(Logger::LogLevel::INFO),
                                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
-                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
+                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF),
+                                                    logThreadPeriod(Logger::GREEN_LOG_THREAD_PERIOD_US)
 {
     std::error_code error = this->parseConfigFile(configFilename);
 
@@ -66,6 +85,18 @@ Logger::~Logger()
         if (this->logThreadHandle.joinable())
         {
             this->logThreadHandle.join();
+        }
+    }
+    catch (std::system_error& e)
+    {
+        std::cerr << "Exception: " << e.what() << " " << e.code();
+    }
+
+    try
+    {
+        if (this->logQueueMonThreadHandle.joinable())
+        {
+            this->logQueueMonThreadHandle.join();
         }
     }
     catch (std::system_error& e)
@@ -208,12 +239,6 @@ std::string Logger::getTimeStr(std::chrono::system_clock::time_point now, unsign
     }
 }
 
-// Initialization of static class members
-std::ostream Logger::nirvana(NULL);
-unsigned short const Logger::MIN_LOGS_PER_FILE = 100;
-unsigned short const Logger::MAX_LOGS_PER_FILE = 10000;
-std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
-
 // instance members
 std::ostream& Logger::getMsgStream()
 {
@@ -232,9 +257,30 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
     {
         if (!this->loggingSuppressed && level >= this->logLevel)
         {
+            // get the time stamp as soon as possible
+            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
             this->logInCounter++;
+
+            // check log messagequeue overload policy
+            if (this->logMessageOutputQueue.write_available() == 0)
+            {
+                if (this->logQOverloadWait)
+                {
+                    // wait for a free place in the log-message queue: will block caller
+                    while (this->logMessageOutputQueue.write_available() == 0)
+                    {
+                        //boost::this_thread::sleep_for(boost::chrono::microseconds(1));
+                    }
+                }
+                else
+                {
+                    // discard this log-message: discards can be identified by missing counter values
+                    return std::make_error_code(std::errc::operation_canceled);
+                }
+            }
+
             this->userMessageStream << std::endl;
-            this->logMessageOutputQueue.push(Logger::RawMessage{this->logInCounter, level, std::chrono::system_clock::now(), this->userMessageStream.str()});
+            this->logMessageOutputQueue.push(Logger::RawMessage{this->logInCounter, level, now, this->userMessageStream.str()});
 
             // discard the stream
             this->userMessageStream.str(std::string("\r"));
@@ -256,6 +302,11 @@ void Logger::start()
     this->logOutCounter = 1;
     this->loggerStarted = true;
     this->logThreadHandle = boost::thread(&Logger::logThread, this);
+
+    if (this->logQMonEnabled)
+    {
+        this->logQueueMonThreadHandle = boost::thread(&Logger::logQueueMonThread, this);
+    }
 }
 
 std::error_code Logger::stop()
@@ -274,7 +325,23 @@ std::error_code Logger::stop()
         std::cerr << "Exception: " << e.what() << " " << e.code();
 
         return e.code();
-        //std::make_error_code(std::errc::operation_canceled);
+    }
+
+    if (this->logQMonEnabled)
+    {
+        try
+        {
+            if (this->logQueueMonThreadHandle.joinable())
+            {
+                this->logQueueMonThreadHandle.join();
+            }
+        }
+        catch (std::system_error& e)
+        {
+            std::cerr << "Exception: " << e.what() << " " << e.code();
+
+            return e.code();
+        }
     }
 
     return std::error_code(0, std::generic_category());
@@ -427,7 +494,7 @@ std::string Logger::formatLogMessage(Logger::RawMessage raw)
 
 void Logger::logNextMessage()
 {
-    if (!this->logMessageOutputQueue.empty())
+    if (this->logMessageOutputQueue.read_available() > 0)
     {
         // if we have file logging check, whether we need to create a new file
         // this is the case at the very beginning and when the max allowed
@@ -558,6 +625,46 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
             std::cerr << "Configfile parse exception: No BasicSetup.LogLevel found. Defaulting to INFO" << std::endl;
 
             this->logLevel = Logger::LogLevel::INFO;
+        }
+
+        // [BasicSetup.MessageQMon] processing
+        try
+        {
+            std::string msgQMon = iniTree.get<std::string>("BasicSetup.MessageQMon");
+            boost::to_lower(msgQMon);
+
+            if ("on" == msgQMon)
+            {
+                this->logQMonEnabled = true;
+            }
+            else if ("off" != msgQMon)
+            {
+                std::cerr << "Configfile parse error:  No feasible value found for BasicSetup.MessageQMon. Defaulting to OFF " << std::endl;
+            }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse exception:  No BasicSetup.MessageQMon found. Defaulting to OFF " << std::endl;
+        }
+
+        // [BasicSetup.MessageQOverLoadPolicy] processing
+        try
+        {
+            std::string msgQMonOvldPolicy = iniTree.get<std::string>("BasicSetup.MessageQOverLoadPolicy");
+            boost::to_lower(msgQMonOvldPolicy);
+
+            if ("discard" == msgQMonOvldPolicy)
+            {
+                this->logQOverloadWait = false;
+            }
+            else if ("wait" != msgQMonOvldPolicy)
+            {
+                std::cerr << "Configfile parse error:  No feasible value found for BasicSetup.MessageQOverLoadPolicy. Defaulting to WAIT " << std::endl;
+            }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse exception:  No BasicSetup.MessageQOverLoadPolicy found. Defaulting to OFF " << std::endl;
         }
 
         // [ConsoleLog] processing
@@ -782,11 +889,76 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
 void Logger::logThread()
 {
-    while (this->loggerStarted || !this->logMessageOutputQueue.empty())
+    while (this->loggerStarted || this->logMessageOutputQueue.read_available() > 0)
     {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        boost::this_thread::sleep_for(boost::chrono::microseconds(this->logThreadPeriod));
 
-        this->logNextMessage();
+        unsigned char logsAtOnce;
+
+        if (this->logQueueStatus.condition == Logger::LogQueueColor::GREEN)
+        {
+            logsAtOnce = 1;
+        }
+
+        if (this->logQueueStatus.condition == Logger::LogQueueColor::ORANGE)
+        {
+            logsAtOnce = 10;
+        }
+
+        if (this->logQueueStatus.condition == Logger::LogQueueColor::RED)
+        {
+            logsAtOnce = 50;
+        }
+
+        for (int i = 0; i < logsAtOnce; i++)
+        {
+            this->logNextMessage();
+        }
+    }
+}
+
+void Logger::logQueueMonThread()
+{
+    while (this->loggerStarted || this->logMessageOutputQueue.read_available() > 0)
+    {
+        // monitor the log-messagequeue twice as fast as the log-thread period
+        boost::this_thread::sleep_for(boost::chrono::microseconds(this->logThreadPeriod) / 2);
+
+        // get the current fill level of the message queue
+        this->logQueueStatus.fillLevel = this->logMessageOutputQueue.read_available();
+
+        // determine the message queue's condition
+        size_t orangeThrshld = (LOG_MESSAGE_Q_SIZE * ORANGE_WMARK_PERCENT) / 100;
+        size_t redThrshld = (LOG_MESSAGE_Q_SIZE * RED_WMARK_PERCENT) / 100;
+
+        if (this->logQueueStatus.fillLevel < orangeThrshld)
+        {
+            this->logQueueStatus.condition = Logger::LogQueueColor::GREEN;
+        }
+
+        if (this->logQueueStatus.fillLevel > orangeThrshld)
+        {
+            this->logQueueStatus.condition = Logger::LogQueueColor::ORANGE;
+        }
+
+        if (this->logQueueStatus.fillLevel > redThrshld || !this->loggerStarted) // quickly empty the queue, too, when logger ist stopped
+        {
+            this->logQueueStatus.condition = Logger::LogQueueColor::RED;
+        }
+
+        // adjust the log-thread period according to the condition color
+        if (this->logQueueStatus.condition == Logger::LogQueueColor::ORANGE)
+        {
+            this->logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+        }
+        else if (this->logQueueStatus.condition == Logger::LogQueueColor::RED)
+        {
+            this->logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
+        }
+        else
+        {
+            this->logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
+        }
     }
 }
 
