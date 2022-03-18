@@ -10,6 +10,7 @@
 #include "Logger.h"
 
 // std includes
+#include <iostream>
 #include <chrono>
 #include <algorithm>
 
@@ -22,20 +23,12 @@
 
 // Initialization of static class members
 std::ostream Logger::nirvana(NULL);
-unsigned short const Logger::MIN_LOGS_PER_FILE = 100;
-unsigned short const Logger::MAX_LOGS_PER_FILE = 10000;
-unsigned long const Logger::GREEN_LOG_THREAD_PERIOD_US = 500000;
-unsigned long const Logger::ORANGE_LOG_THREAD_PERIOD_US = 5000;
-unsigned long const Logger::RED_LOG_THREAD_PERIOD_US = 50;
-unsigned char const Logger::ORANGE_WMARK_PERCENT = 30;
-unsigned char const Logger::RED_WMARK_PERCENT = 70;
-std::string const Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+const std::string Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
 
 // constructors and destructors
 Logger::Logger(std::ostream& strm) : iniFileMode(false),
                                      logQMonEnabled(false),
                                      logQOverloadWait(true),
-                                     logQueueStatus({0, Logger::LogQueueColor::GREEN}),
                                      loggerStarted(false),
                                      loggingSuppressed(false),
                                      logChannel(&strm),
@@ -50,7 +43,6 @@ Logger::Logger(std::ostream& strm) : iniFileMode(false),
 Logger::Logger(const std::string& configFilename) : iniFileMode(true),
                                                     logQMonEnabled(false),
                                                     logQOverloadWait(true),
-                                                    logQueueStatus({0, Logger::LogQueueColor::GREEN}),
                                                     loggerStarted(false),
                                                     loggingSuppressed(false),
                                                     logChannel(nullptr),
@@ -85,18 +77,6 @@ Logger::~Logger()
         if (this->logThreadHandle.joinable())
         {
             this->logThreadHandle.join();
-        }
-    }
-    catch (std::system_error& e)
-    {
-        std::cerr << "Exception: " << e.what() << " " << e.code();
-    }
-
-    try
-    {
-        if (this->logQueueMonThreadHandle.joinable())
-        {
-            this->logQueueMonThreadHandle.join();
         }
     }
     catch (std::system_error& e)
@@ -255,45 +235,40 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
 {
     if (this->loggerStarted)
     {
+        std::error_code ec(0, std::generic_category());
+
         if (!this->loggingSuppressed && level >= this->logLevel)
         {
             // get the time stamp as soon as possible
             std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
             this->logInCounter++;
 
-            // check log messagequeue overload policy
-            if (this->logMessageOutputQueue.write_available() == 0)
+            // // check log messagequeue and overload policy
+            if (this->logQOverloadWait || this->logMessageOutputQueue.write_available() > 0)
             {
-                if (this->logQOverloadWait)
+                // wait for a free place in the log-message queue: will block caller
+                while (this->logMessageOutputQueue.write_available() == 0)
                 {
-                    // wait for a free place in the log-message queue: will block caller
-                    while (this->logMessageOutputQueue.write_available() == 0)
-                    {
-                        boost::this_thread::sleep_for(boost::chrono::microseconds(5));
-                    }
+                    boost::this_thread::sleep_for(boost::chrono::microseconds(1));
                 }
-                else
-                {
-                    // discard this log-message: discards can be identified by missing counter values
-                    this->logDiscardCounter++;
 
-                    // discard the stream
-                    this->userMessageStream.str(std::string("\r"));
-                    Logger::nirvana << this->userMessageStream.str();
-
-                    return std::make_error_code(std::errc::operation_canceled);
-                }
+                this->userMessageStream << std::endl;
+                this->logMessageOutputQueue.push(Logger::RawMessage{this->logInCounter, level, now, this->userMessageStream.str()});
             }
+            else
+            {
+                // discard this log-message: discards can be identified by missing counter values
+                this->logDiscardCounter++;
 
-            this->userMessageStream << std::endl;
-            this->logMessageOutputQueue.push(Logger::RawMessage{this->logInCounter, level, now, this->userMessageStream.str()});
+                ec = std::make_error_code(std::errc::operation_canceled);
+            }
 
             // discard the stream
             this->userMessageStream.str(std::string("\r"));
             Logger::nirvana << this->userMessageStream.str();
         }
 
-        return std::error_code(0, std::generic_category());
+        return ec;
     }
     else
     {
@@ -309,11 +284,6 @@ void Logger::start()
     this->logOutCounter = 0;
     this->loggerStarted = true;
     this->logThreadHandle = boost::thread(&Logger::logThread, this);
-
-    if (this->logQMonEnabled)
-    {
-        this->logQueueMonThreadHandle = boost::thread(&Logger::logQueueMonThread, this);
-    }
 }
 
 std::error_code Logger::stop()
@@ -332,23 +302,6 @@ std::error_code Logger::stop()
         std::cerr << "Exception: " << e.what() << " " << e.code();
 
         return e.code();
-    }
-
-    if (this->logQMonEnabled)
-    {
-        try
-        {
-            if (this->logQueueMonThreadHandle.joinable())
-            {
-                this->logQueueMonThreadHandle.join();
-            }
-        }
-        catch (std::system_error& e)
-        {
-            std::cerr << "Exception: " << e.what() << " " << e.code();
-
-            return e.code();
-        }
     }
 
     // write Log-Session Statistics to log-channel
@@ -468,6 +421,40 @@ void Logger::setTimeStampProperties(unsigned char properties)
 Logger::LogLevel Logger::getLogLevel()
 {
     return this->logLevel;
+}
+
+Logger::LogQueueStatus Logger::getLogQueueStatus()
+{
+    Logger::LogQueueStatus queueStatus = {0, Logger::LogQueueColor::GREEN};
+
+    // get the current fill level of the message queue
+    size_t queueFillLevel = this->logMessageOutputQueue.read_available();
+
+    if (this->loggerStarted || queueFillLevel > 0)
+    {
+        queueStatus.fillLevel = queueFillLevel;
+
+        // determine the message queue's condition
+        size_t orangeThrshld = (Logger::LOG_MESSAGE_QUEUE_SIZE * ORANGE_WMARK_PERCENT) / 100;
+        size_t redThrshld = (Logger::LOG_MESSAGE_QUEUE_SIZE * RED_WMARK_PERCENT) / 100;
+
+        if (queueStatus.fillLevel < orangeThrshld)
+        {
+            queueStatus.condition = Logger::LogQueueColor::GREEN;
+        }
+
+        if (queueStatus.fillLevel > orangeThrshld)
+        {
+            queueStatus.condition = Logger::LogQueueColor::ORANGE;
+        }
+
+        if (queueStatus.fillLevel > redThrshld)
+        {
+            queueStatus.condition = Logger::LogQueueColor::RED;
+        }
+    }
+
+    return queueStatus;
 }
 
 std::string Logger::formatLogMessage(Logger::RawMessage raw)
@@ -906,75 +893,58 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
 void Logger::logThread()
 {
+    unsigned short logsAtOnce = 1;
+    unsigned long logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
+
     while (this->loggerStarted || this->logMessageOutputQueue.read_available() > 0)
     {
-        boost::this_thread::sleep_for(boost::chrono::microseconds(this->logThreadPeriod));
+        boost::this_thread::sleep_for(boost::chrono::microseconds(logThreadPeriod));
 
-        unsigned char logsAtOnce;
-
-        if (this->logQueueStatus.condition == Logger::LogQueueColor::GREEN)
+        // Check Log-Queuestaus and adjust thread period and number of logs to log at once
+        // This is only supported if Queue-Monitoring was activated
+        if (this->logQMonEnabled)
         {
-            logsAtOnce = 1;
+            Logger::LogQueueStatus queueStatus = this->getLogQueueStatus();
+
+            if (queueStatus.condition == Logger::LogQueueColor::GREEN)
+            {
+                // default period for log thread
+                logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
+
+                // log one message per thread call or ramp down to 1
+                logsAtOnce = std::max(1, logsAtOnce - 1);
+            }
+
+            if (queueStatus.condition == Logger::LogQueueColor::ORANGE)
+            {
+                // decrease the period of log thread
+                logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+
+                // increase the number of meaaages per thread call by one (ramp up)
+                logsAtOnce = std::min(Logger::LOG_MESSAGE_QUEUE_SIZE, static_cast<const unsigned short>(logsAtOnce + 1));
+            }
+
+            if (queueStatus.condition == Logger::LogQueueColor::RED)
+            {
+                // decrease the period of log thread even more
+                logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
+
+                // increase the number of meaaages per thread call by 2 (ramp up faster)
+                logsAtOnce = std::min(Logger::LOG_MESSAGE_QUEUE_SIZE, static_cast<const unsigned short>(logsAtOnce + 2));
+            }
         }
 
-        if (this->logQueueStatus.condition == Logger::LogQueueColor::ORANGE)
+        if (!this->loggerStarted && this->logMessageOutputQueue.read_available() > 0)
         {
+            // speed up logging out to terminate this thread quickly
+            logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
             logsAtOnce = 10;
         }
 
-        if (this->logQueueStatus.condition == Logger::LogQueueColor::RED)
-        {
-            logsAtOnce = 50;
-        }
-
+        // log messages accordingly
         for (int i = 0; i < logsAtOnce; i++)
         {
             this->logNextMessage();
-        }
-    }
-}
-
-void Logger::logQueueMonThread()
-{
-    while (this->loggerStarted || this->logMessageOutputQueue.read_available() > 0)
-    {
-        // monitor the log-messagequeue twice as fast as the log-thread period
-        boost::this_thread::sleep_for(boost::chrono::microseconds(this->logThreadPeriod) / 2);
-
-        // get the current fill level of the message queue
-        this->logQueueStatus.fillLevel = this->logMessageOutputQueue.read_available();
-
-        // determine the message queue's condition
-        size_t orangeThrshld = (LOG_MESSAGE_Q_SIZE * ORANGE_WMARK_PERCENT) / 100;
-        size_t redThrshld = (LOG_MESSAGE_Q_SIZE * RED_WMARK_PERCENT) / 100;
-
-        if (this->logQueueStatus.fillLevel < orangeThrshld)
-        {
-            this->logQueueStatus.condition = Logger::LogQueueColor::GREEN;
-        }
-
-        if (this->logQueueStatus.fillLevel > orangeThrshld)
-        {
-            this->logQueueStatus.condition = Logger::LogQueueColor::ORANGE;
-        }
-
-        if (this->logQueueStatus.fillLevel > redThrshld || !this->loggerStarted) // quickly empty the queue, too, when logger ist stopped
-        {
-            this->logQueueStatus.condition = Logger::LogQueueColor::RED;
-        }
-
-        // adjust the log-thread period according to the condition color
-        if (this->logQueueStatus.condition == Logger::LogQueueColor::ORANGE)
-        {
-            this->logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
-        }
-        else if (this->logQueueStatus.condition == Logger::LogQueueColor::RED)
-        {
-            this->logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
-        }
-        else
-        {
-            this->logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
         }
     }
 }

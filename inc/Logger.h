@@ -12,10 +12,11 @@
 
 // std includes
 #include <ostream>
-#include <queue>
+#include <iostream>
 #include <sstream>
 #include <thread>
 #include <mutex>
+#include <queue>
 
 // boost includes
 #include <boost/lockfree/queue.hpp>
@@ -132,15 +133,15 @@ public:
 private:
     // private static members
     static std::ostream nirvana;
-    static unsigned short const MIN_LOGS_PER_FILE;
-    static unsigned short const MAX_LOGS_PER_FILE;
-    static unsigned long const GREEN_LOG_THREAD_PERIOD_US;
-    static unsigned long const ORANGE_LOG_THREAD_PERIOD_US;
-    static unsigned long const RED_LOG_THREAD_PERIOD_US;
-    static unsigned char const ORANGE_WMARK_PERCENT;
-    static unsigned char const RED_WMARK_PERCENT;
-    static std::string const logLevel2String[];
-#define LOG_MESSAGE_Q_SIZE 1024
+    static constexpr short unsigned MIN_LOGS_PER_FILE = 100;
+    static constexpr unsigned short MAX_LOGS_PER_FILE = 10000;
+    static constexpr unsigned short LOG_MESSAGE_QUEUE_SIZE = 1024;
+    static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 500000;
+    static constexpr unsigned long ORANGE_LOG_THREAD_PERIOD_US = 5000;
+    static constexpr unsigned long RED_LOG_THREAD_PERIOD_US = 50;
+    static constexpr unsigned char ORANGE_WMARK_PERCENT = 30;
+    static constexpr unsigned char RED_WMARK_PERCENT = 70;
+    static const std::string logLevel2String[];
 
     inline static std::string getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties);
 
@@ -154,7 +155,6 @@ private:
     unsigned long logDiscardCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
-    Logger::LogQueueStatus logQueueStatus;
     bool iniFileMode;
     bool logQMonEnabled;
     bool logQOverloadWait;
@@ -163,21 +163,17 @@ private:
     std::ostringstream userMessageStream;
     std::ostringstream fullMessageStream;
     std::ostream* logChannel;
-    //std::queue<std::string> logMessageOutputQueue;
-    boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<LOG_MESSAGE_Q_SIZE>> logMessageOutputQueue;
+    boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<Logger::LOG_MESSAGE_QUEUE_SIZE>> logMessageOutputQueue;
     boost::thread logThreadHandle;
-    boost::thread logQueueMonThreadHandle;
     unsigned long logThreadPeriod;
-    //boost::condition_variable logCv;
-    //boost::mutex logMtx;
 
     std::error_code parseConfigFile(const std::string& configFilename);
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
+    Logger::LogQueueStatus getLogQueueStatus();
     std::string formatLogMessage(Logger::RawMessage raw);
     void logNextMessage();
     void logThread();
-    void logQueueMonThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };
