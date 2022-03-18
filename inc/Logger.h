@@ -133,7 +133,7 @@ public:
 private:
     // private static members
     static std::ostream nirvana;
-    static constexpr short unsigned MIN_LOGS_PER_FILE = 100;
+    static constexpr unsigned short MIN_LOGS_PER_FILE = 100;
     static constexpr unsigned short MAX_LOGS_PER_FILE = 10000;
     static constexpr unsigned short LOG_MESSAGE_QUEUE_SIZE = 1024;
     static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 500000;
