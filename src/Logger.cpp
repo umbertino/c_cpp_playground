@@ -275,6 +275,12 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
                 else
                 {
                     // discard this log-message: discards can be identified by missing counter values
+                    this->logDiscardCounter++;
+
+                    // discard the stream
+                    this->userMessageStream.str(std::string("\r"));
+                    Logger::nirvana << this->userMessageStream.str();
+
                     return std::make_error_code(std::errc::operation_canceled);
                 }
             }
@@ -298,8 +304,9 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
 void Logger::start()
 {
     this->logInCounter = 0;
+    this->logDiscardCounter = 0;
     this->logFileCounter = 0;
-    this->logOutCounter = 1;
+    this->logOutCounter = 0;
     this->loggerStarted = true;
     this->logThreadHandle = boost::thread(&Logger::logThread, this);
 
@@ -343,6 +350,13 @@ std::error_code Logger::stop()
             return e.code();
         }
     }
+
+    // write Log-Session Statistics to log-channel
+    *(this->logChannel) << "\n\nLog-Session stopped at "
+                        << Logger::getTimeStr(std::chrono::system_clock::now(), this->timeStampProps) << std::endl
+                        << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
+                        << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
+                        << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl;
 
     return std::error_code(0, std::generic_category());
 }
@@ -458,9 +472,6 @@ Logger::LogLevel Logger::getLogLevel()
 
 std::string Logger::formatLogMessage(Logger::RawMessage raw)
 {
-    this->fullMessageStream.str(std::string("\r"));
-    Logger::nirvana << this->fullMessageStream.str();
-
     if (this->logTags & Logger::LogTag::COUNTER)
     {
         this->fullMessageStream << "[" << std::setw(5) << std::setfill('0') << raw.counter << "]";
@@ -489,13 +500,20 @@ std::string Logger::formatLogMessage(Logger::RawMessage raw)
 
     this->fullMessageStream << raw.userMessage;
 
-    return this->fullMessageStream.str();
+    std::string formattedMessage = this->fullMessageStream.str();
+
+    this->fullMessageStream.str(std::string("\r"));
+    Logger::nirvana << this->fullMessageStream.str();
+
+    return formattedMessage;
 }
 
 void Logger::logNextMessage()
 {
     if (this->logMessageOutputQueue.read_available() > 0)
     {
+        this->logOutCounter++;
+
         // if we have file logging check, whether we need to create a new file
         // this is the case at the very beginning and when the max allowed
         // logs per file is reached
@@ -517,7 +535,6 @@ void Logger::logNextMessage()
         // userLog to channel, remove queue element and increment the log-out counter
         *(this->logChannel) << this->formatLogMessage(this->logMessageOutputQueue.front());
         this->logMessageOutputQueue.pop();
-        this->logOutCounter++;
     }
 }
 

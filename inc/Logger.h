@@ -151,6 +151,7 @@ private:
     unsigned short logFileCounter;
     unsigned long logInCounter;
     unsigned long logOutCounter;
+    unsigned long logDiscardCounter;
     Logger::LogLevel logLevel;
     Logger::LogType logType;
     Logger::LogQueueStatus logQueueStatus;
