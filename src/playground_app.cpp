@@ -199,14 +199,14 @@ int main(void)
 
     for (int i = 0; i < LOOP; i++)
     {
-        //std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(150));
 
         std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
         std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
         dur[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-        std::cout << dur[i].count() << std::endl;
+        //std::cout << dur[i].count() << std::endl;
     }
 
     Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
@@ -221,9 +221,9 @@ int main(void)
 
     avgDur = avgDur / LOOP;
 
-    std::cout << "avgDur: " << avgDur << std::endl;
-
     myLogger.stop();
+
+    std::cout << "\n\navgDur: " << avgDur << std::endl;
 
     //ofs.close();
 
