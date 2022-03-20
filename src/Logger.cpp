@@ -156,7 +156,7 @@ std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
     return instance.userLog(Logger::LogLevel::FATAL, messageStream);
 }
 
-std::string Logger::getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties)
+std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties)
 {
     if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
     {
@@ -164,14 +164,14 @@ std::string Logger::getTimeStr(std::chrono::system_clock::time_point now, unsign
         // the current time
         //std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
         // the current time as epoch time
-        std::chrono::system_clock::duration duration = now.time_since_epoch();
+        boost::chrono::system_clock::duration duration = now.time_since_epoch();
 
         // get duration in different units
-        std::chrono::nanoseconds durationNanosecs = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+        boost::chrono::nanoseconds durationNanosecs = boost::chrono::duration_cast<boost::chrono::nanoseconds>(duration);
         unsigned long curSubSecondNs = durationNanosecs.count() % 1000000000;
 
         // transform current time to time_t format
-        time_t in_time_t = std::chrono::system_clock::to_time_t(now);
+        time_t in_time_t = boost::chrono::system_clock::to_time_t(now);
 
         std::stringstream ss;
 
@@ -240,7 +240,7 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
         if (!this->loggingSuppressed && level >= this->logLevel)
         {
             // get the time stamp as soon as possible
-            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+            boost::chrono::system_clock::time_point now = boost::chrono::system_clock::now();
             this->logInCounter++;
 
             // // check log messagequeue and overload policy
@@ -306,7 +306,7 @@ std::error_code Logger::stop()
 
     // write Log-Session Statistics to log-channel
     *(this->logChannel) << "\n\nLog-Session stopped at "
-                        << Logger::getTimeStr(std::chrono::system_clock::now(), this->timeStampProps) << std::endl
+                        << Logger::getTimeStr(boost::chrono::system_clock::now(), this->timeStampProps) << std::endl
                         << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
                         << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
                         << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl;
@@ -893,44 +893,91 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
 void Logger::logThread()
 {
-    unsigned short logsAtOnce = 1;
-    unsigned long logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
+    // start values for thread and queue control
+    unsigned short logsAtOnce = 10;
+    unsigned long logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+    Logger::LogQueueStatus queueStatus({this->logMessageOutputQueue.read_available(), Logger::LogQueueColor::ORANGE});
 
     while (this->loggerStarted || this->logMessageOutputQueue.read_available() > 0)
     {
-        boost::this_thread::sleep_for(boost::chrono::microseconds(logThreadPeriod));
-
         // Check Log-Queuestaus and adjust thread period and number of logs to log at once
         // This is only supported if Queue-Monitoring was activated
-        if (this->logQMonEnabled)
+        if (this->logQMonEnabled && this->logMessageOutputQueue.read_available() > 0)
         {
-            Logger::LogQueueStatus queueStatus = this->getLogQueueStatus();
-
             if (queueStatus.condition == Logger::LogQueueColor::GREEN)
             {
                 // default period for log thread
-                logThreadPeriod = Logger::GREEN_LOG_THREAD_PERIOD_US;
+                logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod + 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
 
                 // log one message per thread call or ramp down to 1
-                logsAtOnce = std::max(1, logsAtOnce - 1);
+                logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce - 1), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
             }
 
             if (queueStatus.condition == Logger::LogQueueColor::ORANGE)
             {
                 // decrease the period of log thread
-                logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
+                else if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 10)
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 10), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
+                else
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 1), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
 
                 // increase the number of meaaages per thread call by one (ramp up)
-                logsAtOnce = std::min(Logger::LOG_MESSAGE_QUEUE_SIZE, static_cast<const unsigned short>(logsAtOnce + 1));
+                logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce + 1), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
             }
 
             if (queueStatus.condition == Logger::LogQueueColor::RED)
             {
                 // decrease the period of log thread even more
-                logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
+                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 1000)
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 1000), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
+                else if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
+                else
+                {
+                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 10), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                }
 
                 // increase the number of meaaages per thread call by 2 (ramp up faster)
-                logsAtOnce = std::min(Logger::LOG_MESSAGE_QUEUE_SIZE, static_cast<const unsigned short>(logsAtOnce + 2));
+                logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce + 10), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
+            }
+
+            queueStatus = this->getLogQueueStatus();
+        }
+        else
+        {
+            // smoothly bring back to orange condition
+            queueStatus.condition = Logger::LogQueueColor::ORANGE;
+
+            if (logThreadPeriod > Logger::ORANGE_LOG_THREAD_PERIOD_US)
+            {
+                logThreadPeriod = logThreadPeriod + 100;
+            }
+
+            if (logThreadPeriod < Logger::ORANGE_LOG_THREAD_PERIOD_US)
+            {
+                logThreadPeriod = logThreadPeriod - 100;
+            }
+
+            if (logsAtOnce > 10)
+            {
+                logsAtOnce = logsAtOnce - 1;
+            }
+
+            if (logsAtOnce < 10)
+            {
+                logsAtOnce = logsAtOnce + 1;
             }
         }
 
@@ -946,13 +993,18 @@ void Logger::logThread()
         {
             this->logNextMessage();
         }
+
+        std::cout << std::setw(5) << this->logMessageOutputQueue.read_available() << " "
+                  << " Color: " << queueStatus.condition << " " << std::setw(8) << logThreadPeriod << "us " << logsAtOnce << std::endl;
+
+        boost::this_thread::sleep_for(boost::chrono::microseconds(logThreadPeriod));
     }
 }
 
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
-    std::string date = Logger::getTimeStr(std::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);
-    std::string time = Logger::getTimeStr(std::chrono::system_clock::now(), Logger::TimeStampProperty::SECS);
+    std::string date = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);
+    std::string time = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::SECS);
     boost::replace_all(time, ":", ".");
     std::stringstream fss;
     fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";

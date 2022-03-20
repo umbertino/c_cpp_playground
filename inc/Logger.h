@@ -14,13 +14,14 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
-#include <thread>
-#include <mutex>
-#include <queue>
+// #include <thread>
+// #include <mutex>
+// #include <queue>
 
 // boost includes
 #include <boost/lockfree/queue.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include <boost/chrono.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem/convenience.hpp>
 
@@ -79,7 +80,7 @@ public:
     {
         unsigned long counter;
         Logger::LogLevel level;
-        std::chrono::system_clock::time_point now;
+        boost::chrono::system_clock::time_point now;
         std::string userMessage;
     } RawMessage;
 
@@ -136,14 +137,14 @@ private:
     static constexpr unsigned short MIN_LOGS_PER_FILE = 100;
     static constexpr unsigned short MAX_LOGS_PER_FILE = 10000;
     static constexpr unsigned short LOG_MESSAGE_QUEUE_SIZE = 1024;
-    static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 500000;
-    static constexpr unsigned long ORANGE_LOG_THREAD_PERIOD_US = 5000;
-    static constexpr unsigned long RED_LOG_THREAD_PERIOD_US = 50;
-    static constexpr unsigned char ORANGE_WMARK_PERCENT = 30;
-    static constexpr unsigned char RED_WMARK_PERCENT = 70;
+    static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 1000000;
+    static constexpr unsigned long ORANGE_LOG_THREAD_PERIOD_US = 1000;
+    static constexpr unsigned long RED_LOG_THREAD_PERIOD_US = 10;
+    static constexpr unsigned char ORANGE_WMARK_PERCENT = 33;
+    static constexpr unsigned char RED_WMARK_PERCENT = 67;
     static const std::string logLevel2String[];
 
-    inline static std::string getTimeStr(std::chrono::system_clock::time_point now, unsigned char properties);
+    inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties);
 
     // private instance members
     unsigned char logTags;

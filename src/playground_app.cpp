@@ -1,5 +1,6 @@
 // Boost-Includes
 #include <boost/chrono.hpp>
+#include <boost/thread/thread.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -34,18 +35,19 @@ int main(void)
               << std::endl;
 
 #if SCRATCH_PAD
-    std::chrono::nanoseconds epochDur = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch());
 
-    //std::cout << std::put_time(std::localtime(&secsSinceEpoch), "%H:%M") << std::endl;
+    int a = 2;
 
-    std::cout << epochDur.count();
-    std::cout << std::endl;
-    unsigned long nanoSecs = epochDur.count() % 1000000000;
-    std::cout << std::setw(3) << std::setfill('0') << (nanoSecs / 1000000) << "."
-              << std::setw(3) << std::setfill('0') << (nanoSecs % 1000000) / 1000 << "."
-              << std::setw(3) << std::setfill('0') << (nanoSecs % 1000000) % 1000;
+    std::cout << a << std::endl;
 
-    std::cout << std::endl;
+    a += 2;
+
+    std::cout << a << std::endl;
+
+    std::cout << (a += 2) << std::endl;
+
+    std::cout << (a -= 2) << std::endl;
+
 #endif
 
 #if PRIME_EXAMPLE
@@ -195,16 +197,16 @@ int main(void)
 
     const unsigned short LOOP = 3000;
 
-    std::chrono::duration<int, std::micro> dur[LOOP];
+    boost::chrono::microseconds dur[LOOP];
 
     for (int i = 0; i < LOOP; i++)
     {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(150));
+        //boost::this_thread::sleep_for(boost::chrono::microseconds(1));
 
-        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+        boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
-        std::chrono::high_resolution_clock::time_point stop = std::chrono::high_resolution_clock::now();
-        dur[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        boost::chrono::high_resolution_clock::time_point stop = boost::chrono::high_resolution_clock::now();
+        dur[i] = boost::chrono::duration_cast<boost::chrono::microseconds>(stop - start);
 
         //std::cout << dur[i].count() << std::endl;
     }
