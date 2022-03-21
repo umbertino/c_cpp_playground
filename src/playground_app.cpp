@@ -201,7 +201,7 @@ int main(void)
 
     for (int i = 0; i < LOOP; i++)
     {
-        //boost::this_thread::sleep_for(boost::chrono::microseconds(1));
+        boost::this_thread::sleep_for(boost::chrono::nanoseconds(10));
 
         boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);

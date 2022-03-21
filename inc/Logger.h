@@ -134,14 +134,17 @@ public:
 private:
     // private static members
     static std::ostream nirvana;
+    static constexpr unsigned char ORANGE_WMARK_PERCENT = 33;
+    static constexpr unsigned char RED_WMARK_PERCENT = 67;
     static constexpr unsigned short MIN_LOGS_PER_FILE = 100;
     static constexpr unsigned short MAX_LOGS_PER_FILE = 10000;
     static constexpr unsigned short LOG_MESSAGE_QUEUE_SIZE = 1024;
-    static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 1000000;
+    static constexpr unsigned short LOG_MESSAGE_QUEUE_ORANGE_THRESHLD = (Logger::LOG_MESSAGE_QUEUE_SIZE * ORANGE_WMARK_PERCENT) / 100;
+    static constexpr unsigned short LOG_MESSAGE_QUEUE_RED_THRESHLD = (Logger::LOG_MESSAGE_QUEUE_SIZE * RED_WMARK_PERCENT) / 100;
+    static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 500000;
     static constexpr unsigned long ORANGE_LOG_THREAD_PERIOD_US = 1000;
     static constexpr unsigned long RED_LOG_THREAD_PERIOD_US = 10;
-    static constexpr unsigned char ORANGE_WMARK_PERCENT = 33;
-    static constexpr unsigned char RED_WMARK_PERCENT = 67;
+
     static const std::string logLevel2String[];
 
     inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties);
