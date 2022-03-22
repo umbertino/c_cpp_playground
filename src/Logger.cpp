@@ -315,7 +315,8 @@ std::error_code Logger::stop()
                         << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
                         << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
                         << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl
-                        << "Plausability     : " << std::setw(10) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK")
+                        << "Plausability     : " << std::setw(10) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
+                        //<< "Q Write-Avail    : " << std::setw(10) << this->logMessageOutputQueue.read_available() << std::endl
                         << std::endl;
 
     return std::error_code(0, std::generic_category());
@@ -886,10 +887,17 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
 void Logger::logThread()
 {
-    // start values for thread and queue control
-    // we start in Orange condition to have a good trade-off
-    unsigned short logsAtOnce = 10;
+    // start values
     unsigned long logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+    unsigned short logsAtOnce = 10;
+    Logger::LogQueueStatus queueStatus;
+
+    typedef enum
+    {
+        LOG,
+        WAIT,
+        EXIT
+    } threadState;
 
     auto getLogQStat = [this]() -> Logger::LogQueueStatus
     {
@@ -911,29 +919,40 @@ void Logger::logThread()
         }
     };
 
-    Logger::LogQueueStatus queueStatus = {getLogQStat().fillLevel, Logger::LogQueueColor::ORANGE};
-
-    while (true)
+    auto setThreadParams = [this, &queueStatus, &logThreadPeriod, &logsAtOnce]() -> threadState
     {
-        // std::cout << std::setw(5) << queueStatus.fillLevel << " "
-        //           << " Color: " << queueStatus.condition << " "
-        //           << std::setw(8) << logThreadPeriod << "us "
-        //           << logsAtOnce << std::endl;
-
-        // exit criteria for this thread
+        // Condition 1
+        // exit criteria for this thread,
+        // logger has been stopped and queue is empty
         if (!this->loggerStarted && queueStatus.fillLevel == 0)
         {
-            break;
+            return EXIT;
         }
 
-        // logger has been stopped thus log out remaining messages in Queue
+        // Condition 2
+        // logger has been stopped but queue still contains
+        // items, thus log out remaining messages in Queue
         if (!this->loggerStarted && queueStatus.fillLevel > 0)
         {
             // speed up logging out to terminate this thread quickly
             logThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
             logsAtOnce = 100;
+
+            return LOG;
         }
 
+        // Condition 3
+        // logger is started but queue is empty, stay prepared
+        if (this->loggerStarted && queueStatus.fillLevel == 0)
+        {
+            logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+            logsAtOnce = 10;
+
+            return WAIT;
+        }
+
+        // Condition 4
+        // logger is started and queue contains messages
         // Check Log-Queuestaus and adjust thread period and number of logs to log at once
         // This is only supported if Queue-Monitoring was activated
         if (this->logQMonEnabled && queueStatus.fillLevel > 0)
@@ -948,16 +967,14 @@ void Logger::logThread()
 
                 // log one message per thread call or ramp down to 1
                 logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce - 1), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
+
+                return LOG;
             }
 
             if (queueStatus.condition == Logger::LogQueueColor::ORANGE)
             {
                 // decrease the period of log thread
-                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 1000)
-                {
-                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 1000), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
-                }
-                else if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
+                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
                 {
                     logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
                 }
@@ -972,16 +989,14 @@ void Logger::logThread()
 
                 // increase the number of meaaages per thread call by one (ramp up)
                 logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce + 1), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
+
+                return LOG;
             }
 
             if (queueStatus.condition == Logger::LogQueueColor::RED)
             {
                 // decrease the period of log thread even more
-                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 10000)
-                {
-                    logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 10000), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
-                }
-                else if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 1000)
+                if (logThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 1000)
                 {
                     logThreadPeriod = std::clamp(static_cast<unsigned long>(logThreadPeriod - 1000), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
                 }
@@ -1000,34 +1015,43 @@ void Logger::logThread()
 
                 // increase the number of meaaages per thread call by 10 (ramp up faster)
                 logsAtOnce = std::clamp(static_cast<unsigned short>(logsAtOnce + 10), static_cast<unsigned short>(1), Logger::LOG_MESSAGE_QUEUE_SIZE);
+
+                return LOG;
             }
 
-            //queueStatus = getLogQStat();
+            return LOG;
         }
-        else
+
+        // Condition 5
+        // logger is started and queue contains messages
+        // keep thread period an logs at once constant
+        if (!this->logQMonEnabled && queueStatus.fillLevel > 0)
         {
-            // smoothly bring back to orange condition
-            queueStatus.condition = Logger::LogQueueColor::ORANGE;
+            logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+            logsAtOnce = 10;
 
-            if (logThreadPeriod > Logger::ORANGE_LOG_THREAD_PERIOD_US)
-            {
-                logThreadPeriod = logThreadPeriod - 100;
-            }
+            return LOG;
+        }
 
-            if (logThreadPeriod < Logger::ORANGE_LOG_THREAD_PERIOD_US)
-            {
-                logThreadPeriod = logThreadPeriod + 100;
-            }
+        return LOG;
+    };
 
-            if (logsAtOnce > 10)
-            {
-                logsAtOnce = logsAtOnce - 1;
-            }
+    while (true)
+    {
+        queueStatus = getLogQStat();
 
-            if (logsAtOnce < 10)
-            {
-                logsAtOnce = logsAtOnce + 1;
-            }
+        threadState state = setThreadParams();
+
+        this->logThreadPeriod = logThreadPeriod;
+
+        if (state == EXIT)
+        {
+            break;
+        }
+
+        if (state == WAIT)
+        {
+            continue;
         }
 
         // log messages accordingly
@@ -1035,8 +1059,6 @@ void Logger::logThread()
         {
             this->logNextMessage();
         }
-
-        queueStatus = getLogQStat();
 
         boost::this_thread::sleep_for(boost::chrono::microseconds(logThreadPeriod));
     }
