@@ -163,7 +163,7 @@ int main(void)
 
     //std::chrono::system_clock::time_point start, stop;
 
-    myLogger.start();
+    myLogger.userStartLog();
 
     std::cout << std::endl;
 
@@ -173,10 +173,10 @@ int main(void)
 
     myLogger.userLog(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     myLogger.userLog(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
-    myLogger.suppress();
+    myLogger.userSuppressLog();
     myLogger.userLog(Logger::LogLevel::DEBUG, GMS(myLogger) << __LOCATION__ << " 3 This is a debug message");
     myLogger.userLog(Logger::LogLevel::WARN, GMS(myLogger) << __LOCATION__ << " 4 This is a warning message");
-    myLogger.resume();
+    myLogger.userResumeLog();
     myLogger.userLog(Logger::LogLevel::ERR, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
     myLogger.userLog(Logger::LogLevel::INFO, GMS(myLogger) << __LOCATION__ << " 6 This is a info message");
 
@@ -223,7 +223,7 @@ int main(void)
 
     avgDur = avgDur / LOOP;
 
-    myLogger.stop();
+    myLogger.userStopLog();
 
     std::cout << "\n\navgDur: " << avgDur << std::endl;
 

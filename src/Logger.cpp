@@ -21,53 +21,63 @@
 #include <boost/date_time/local_time/local_time.hpp>
 
 // Initialization of static class members
-std::ostream Logger::nirvana(NULL);
+std::ostream Logger::nirvana(nullptr);
 const std::string Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
 
-// constructors and destructors
-Logger::Logger(std::ostream& strm) : iniFileMode(false),
-                                     logQMonEnabled(false),
-                                     logQOverloadWait(true),
-                                     loggerStarted(false),
-                                     loggingSuppressed(false),
-                                     logChannel(&strm),
-                                     logsPerFile(Logger::MAX_LOGS_PER_FILE),
-                                     logLevel(Logger::LogLevel::INFO),
-                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
-                                     timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF),
-                                     logThreadPeriod(Logger::GREEN_LOG_THREAD_PERIOD_US)
+/**
+ * @brief Construct a new Logger:: Logger object
+ *
+ */
+Logger::Logger() : iniFileMode(false),
+                   logQMonEnabled(false),
+                   logQOverloadWait(true),
+                   loggerStarted(false),
+                   loggerSuppressed(false),
+                   logOutChannel(&std::clog),
+                   logLevel(Logger::LogLevel::INFO),
+                   logTags(Logger::LogTag::ALL_TAGS_OFF | Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL),
+                   timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF | Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::MILISECS)
 {
 }
 
+/**
+ * @brief Construct a new Logger:: Logger object
+ *
+ * @param configFilename
+ */
 Logger::Logger(const std::string& configFilename) : iniFileMode(true),
                                                     logQMonEnabled(false),
                                                     logQOverloadWait(true),
                                                     loggerStarted(false),
-                                                    loggingSuppressed(false),
-                                                    logChannel(nullptr),
+                                                    loggerSuppressed(false),
+                                                    logOutChannel(nullptr),
                                                     logsPerFile(Logger::MAX_LOGS_PER_FILE),
                                                     logLevel(Logger::LogLevel::INFO),
                                                     logTags(Logger::LogTag::ALL_TAGS_OFF),
-                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF),
-                                                    logThreadPeriod(Logger::GREEN_LOG_THREAD_PERIOD_US)
+                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
 {
     std::error_code error = this->parseConfigFile(configFilename);
 
     if (error.value() != 0)
     {
         std::cerr << "Falling back to default console logger" << std::endl;
+
         // fall back to a default console logger
         this->iniFileMode = false;
-        this->logChannel = &std::clog;
+        this->logOutChannel = &std::clog;
         this->logLevel = Logger::LogLevel::INFO;
-        this->logTags = Logger::LogTag::ALL_TAGS_OFF;
-        this->timeStampProps = Logger::TimeStampProperty::ALL_PROPS_OFF;
+        this->logTags = Logger::LogTag::ALL_TAGS_OFF | Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL;
+        this->timeStampProps = Logger::TimeStampProperty::ALL_PROPS_OFF | Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::MILISECS;
     }
 }
 
+/**
+ * @brief Destroy the Logger:: Logger object
+ *
+ */
 Logger::~Logger()
 {
-    this->logChannel->flush();
+    this->logOutChannel->flush();
 
     this->loggerStarted = false;
 
@@ -84,84 +94,180 @@ Logger::~Logger()
     }
 }
 
-// static class members
-void Logger::LOG_START(Logger& instance)
+/**
+ * @brief
+ *
+ * @param instance
+ * @return std::error_code
+ */
+std::error_code Logger::LOG_START(Logger& instance)
 {
-    instance.start();
+    return instance.userStartLog();
 }
 
-void Logger::LOG_STOP(Logger& instance)
+/**
+ * @brief
+ *
+ * @param instance
+ * @return std::error_code
+ */
+std::error_code Logger::LOG_STOP(Logger& instance)
 {
-    instance.stop();
+    return instance.userStopLog();
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_RESUME(Logger& instance)
 {
-    return instance.resume();
+    return instance.userResumeLog();
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_SUPPRESS(Logger& instance)
 {
-    return instance.suppress();
+    return instance.userSuppressLog();
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param logTags
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
 {
     return instance.userSetLogTags(logTags);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param level
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
 {
     return instance.userSetLogLevel(level);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param properties
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
 {
     return instance.userSetTimeStampProperties(properties);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @return Logger::LogLevel
+ */
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
 {
-    return instance.getLogLevel();
+    return instance.userGetLogLevel();
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_TRACE(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::TRACE, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_DEBUG(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::DEBUG, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_INFO(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::INFO, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_WARN(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::WARN, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_ERROR(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::ERR, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param instance
+ * @param messageStream
+ * @return std::error_code
+ */
 std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::FATAL, messageStream);
 }
 
+/**
+ * @brief
+ *
+ * @param now
+ * @param properties
+ * @return std::string
+ */
 std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties)
 {
     if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
     {
-        //auto start = std::chrono::high_resolution_clock::now();
-        // the current time
-        //std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
         // the current time as epoch time
         boost::chrono::system_clock::duration duration = now.time_since_epoch();
 
@@ -205,10 +311,6 @@ std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsi
                 ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
             }
         }
-        // auto stop = std::chrono::high_resolution_clock::now();
-        // std::chrono::duration<int, std::micro> dur = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        // unsigned long dura = dur.count();
-        // std::cout << dura << std::endl;
 
         return ss.str();
     }
@@ -218,17 +320,22 @@ std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsi
     }
 }
 
-// instance members
-std::ostream& Logger::getMsgStream()
+/**
+ * @brief
+ *
+ * @return std::ostream&
+ */
+std::ostream& Logger::userGetMsgStream()
 {
     return this->userMessageStream;
 }
 
 /**
- * @brief Provides the logging metod for the user.
+ * @brief
  *
- * @param level The userLog message category of type Logger::LogLevel
- * @param msg The userLog message as a stream
+ * @param level
+ * @param msg
+ * @return std::error_code
  */
 std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
 {
@@ -236,7 +343,7 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
     {
         std::error_code ec(0, std::generic_category());
 
-        if (!this->loggingSuppressed && level >= this->logLevel)
+        if (!this->loggerSuppressed && level >= this->logLevel)
         {
             // get the time stamp as soon as possible
             boost::chrono::system_clock::time_point now = boost::chrono::system_clock::now();
@@ -269,7 +376,7 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
             }
         }
 
-        // discard the stream
+        // clear the stream for next usage
         this->userMessageStream.str(std::string("\r"));
         Logger::nirvana << this->userMessageStream.str();
 
@@ -281,7 +388,12 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
     }
 }
 
-void Logger::start()
+/**
+ * @brief
+ *
+ * @return std::error_code
+ */
+std::error_code Logger::userStartLog()
 {
     this->logInCounter = 0;
     this->logDiscardCounter = 0;
@@ -289,9 +401,16 @@ void Logger::start()
     this->logOutCounter = 0;
     this->loggerStarted = true;
     this->logThreadHandle = boost::thread(&Logger::logThread, this);
+
+    return std::error_code(0, std::generic_category());
 }
 
-std::error_code Logger::stop()
+/**
+ * @brief
+ *
+ * @return std::error_code
+ */
+std::error_code Logger::userStopLog()
 {
     this->loggerStarted = false;
 
@@ -310,23 +429,27 @@ std::error_code Logger::stop()
     }
 
     // write Log-Session Statistics to log-channel
-    *(this->logChannel) << "\n\nLog-Session stopped at "
-                        << Logger::getTimeStr(boost::chrono::system_clock::now(), this->timeStampProps) << std::endl
-                        << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
-                        << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
-                        << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl
-                        << "Plausability     : " << std::setw(10) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
-                        //<< "Q Write-Avail    : " << std::setw(10) << this->logMessageOutputQueue.read_available() << std::endl
-                        << std::endl;
+    *(this->logOutChannel) << "\n\nLog-Session stopped at "
+                           << Logger::getTimeStr(boost::chrono::system_clock::now(), this->timeStampProps) << std::endl
+                           << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
+                           << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
+                           << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl
+                           << "Plausability     : " << std::setw(10) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
+                           << std::endl;
 
     return std::error_code(0, std::generic_category());
 }
 
-std::error_code Logger::resume()
+/**
+ * @brief
+ *
+ * @return std::error_code
+ */
+std::error_code Logger::userResumeLog()
 {
     if (this->loggerStarted)
     {
-        this->loggingSuppressed = false;
+        this->loggerSuppressed = false;
     }
     else
     {
@@ -336,11 +459,16 @@ std::error_code Logger::resume()
     return std::error_code(0, std::generic_category());
 }
 
-std::error_code Logger::suppress()
+/**
+ * @brief
+ *
+ * @return std::error_code
+ */
+std::error_code Logger::userSuppressLog()
 {
     if (this->loggerStarted)
     {
-        this->loggingSuppressed = true;
+        this->loggerSuppressed = true;
     }
     else
     {
@@ -350,6 +478,12 @@ std::error_code Logger::suppress()
     return std::error_code(0, std::generic_category());
 }
 
+/**
+ * @brief
+ *
+ * @param logTags
+ * @return std::error_code
+ */
 std::error_code Logger::userSetLogTags(unsigned char logTags)
 {
     if (this->iniFileMode)
@@ -364,6 +498,12 @@ std::error_code Logger::userSetLogTags(unsigned char logTags)
     }
 }
 
+/**
+ * @brief
+ *
+ * @param level
+ * @return std::error_code
+ */
 std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
 {
     if (this->iniFileMode)
@@ -378,6 +518,12 @@ std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
     }
 }
 
+/**
+ * @brief
+ *
+ * @param properties
+ * @return std::error_code
+ */
 std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
 {
     if (this->iniFileMode)
@@ -392,16 +538,31 @@ std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
     }
 }
 
+/**
+ * @brief
+ *
+ * @param logTags
+ */
 void Logger::setLogTags(unsigned char logTags)
 {
     this->logTags = logTags;
 }
 
+/**
+ * @brief
+ *
+ * @param level
+ */
 void Logger::setLogLevel(Logger::LogLevel level)
 {
     this->logLevel = level;
 }
 
+/**
+ * @brief
+ *
+ * @param properties
+ */
 void Logger::setTimeStampProperties(unsigned char properties)
 {
     if (Logger::TimeStampProperty::NANOSECS & properties)
@@ -426,31 +587,22 @@ void Logger::setTimeStampProperties(unsigned char properties)
     }
 }
 
-Logger::LogLevel Logger::getLogLevel()
+/**
+ * @brief
+ *
+ * @return Logger::LogLevel
+ */
+Logger::LogLevel Logger::userGetLogLevel()
 {
     return this->logLevel;
 }
 
-Logger::LogQueueStatus Logger::getLogQueueStatus()
-{
-    // get the current fill level of the message queue
-    size_t queueFillLevel = this->logMessageOutputQueue.read_available();
-
-    if (queueFillLevel < Logger::LOG_MESSAGE_QUEUE_ORANGE_THRESHLD)
-    {
-        return Logger::LogQueueStatus({queueFillLevel, Logger::LogQueueColor::GREEN});
-    }
-    else if ((queueFillLevel >= Logger::LOG_MESSAGE_QUEUE_ORANGE_THRESHLD) &&
-             (queueFillLevel < Logger::LOG_MESSAGE_QUEUE_RED_THRESHLD))
-    {
-        return Logger::LogQueueStatus({queueFillLevel, Logger::LogQueueColor::ORANGE});
-    }
-    else
-    {
-        return Logger::LogQueueStatus({queueFillLevel, Logger::LogQueueColor::RED});
-    }
-}
-
+/**
+ * @brief
+ *
+ * @param raw
+ * @return std::string
+ */
 std::string Logger::formatLogMessage(Logger::RawMessage raw)
 {
     if (this->logTags & Logger::LogTag::COUNTER)
@@ -489,7 +641,11 @@ std::string Logger::formatLogMessage(Logger::RawMessage raw)
     return formattedMessage;
 }
 
-void Logger::logNextMessage()
+/**
+ * @brief
+ *
+ */
+void Logger::logOutNextMessage()
 {
     if (this->logMessageOutputQueue.read_available() > 0)
     {
@@ -502,23 +658,29 @@ void Logger::logNextMessage()
         {
             if (((this->logOutCounter % this->logsPerFile) == 1))
             {
-                if (!(this->logChannel == nullptr))
+                if (!(this->logOutChannel == nullptr))
                 {
                     // assure the rest is written to the current
                     // file before getting a new one
-                    this->logChannel->flush();
+                    this->logOutChannel->flush();
                 }
 
-                this->logChannel = Logger::getNewLogFile(++this->logFileCounter);
+                this->logOutChannel = Logger::getNewLogFile(++this->logFileCounter);
             }
         }
 
         // userLog to channel, remove queue element and increment the log-out counter
-        *(this->logChannel) << this->formatLogMessage(this->logMessageOutputQueue.front());
+        *(this->logOutChannel) << this->formatLogMessage(this->logMessageOutputQueue.front());
         this->logMessageOutputQueue.pop();
     }
 }
 
+/**
+ * @brief
+ *
+ * @param configFilename
+ * @return std::error_code
+ */
 std::error_code Logger::parseConfigFile(const std::string& configFilename)
 {
     std::ifstream iniFs;
@@ -675,28 +837,28 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
                 if ("stdlog" == logChannel)
                 {
-                    this->logChannel = &std::clog;
+                    this->logOutChannel = &std::clog;
                 }
                 else if ("stderr" == logChannel)
                 {
-                    this->logChannel = &std::cerr;
+                    this->logOutChannel = &std::cerr;
                 }
                 else if ("stdout" == logChannel)
                 {
-                    this->logChannel = &std::cout;
+                    this->logOutChannel = &std::cout;
                 }
                 else
                 {
                     std::cerr << "Configfile parse error:  No feasible value found for ConsoleLog.Channel. Defaulting std::log " << std::endl;
 
-                    this->logChannel = &std::clog;
+                    this->logOutChannel = &std::clog;
                 }
             }
             catch (const boost::property_tree::ptree_error& e)
             {
                 std::cerr << "Configfile parse exception: No ConsoleLog.Channel found. Defaulting std::log " << std::endl;
 
-                this->logChannel = &std::clog;
+                this->logOutChannel = &std::clog;
             }
         }
         // [FileLog] processing
@@ -719,8 +881,6 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
                 this->logsPerFile = Logger::MAX_LOGS_PER_FILE;
             }
-
-            // this->logChannel = this->getNewLogFile(++this->logFileCounter);
         }
         else
         {
@@ -885,9 +1045,13 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
     }
 }
 
+/**
+ * @brief
+ *
+ */
 void Logger::logThread()
 {
-    // start values
+    // start values for thread control
     unsigned long logThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
     unsigned short logsAtOnce = 10;
     Logger::LogQueueStatus queueStatus;
@@ -1042,8 +1206,6 @@ void Logger::logThread()
 
         threadState state = setThreadParams();
 
-        this->logThreadPeriod = logThreadPeriod;
-
         if (state == EXIT)
         {
             break;
@@ -1054,16 +1216,21 @@ void Logger::logThread()
             continue;
         }
 
-        // log messages accordingly
         for (int i = 0; i < logsAtOnce; i++)
         {
-            this->logNextMessage();
+            this->logOutNextMessage();
         }
 
         boost::this_thread::sleep_for(boost::chrono::microseconds(logThreadPeriod));
     }
 }
 
+/**
+ * @brief
+ *
+ * @param fileCounter
+ * @return std::ofstream*
+ */
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
     std::string date = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);

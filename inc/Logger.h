@@ -14,9 +14,6 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
-// #include <thread>
-// #include <mutex>
-// #include <queue>
 
 // boost includes
 #include <boost/lockfree/queue.hpp>
@@ -29,7 +26,7 @@
 #define __BASENAME__ (boost::filesystem::path(__FILE__).filename().string())
 #define __FILE_EXT__ (boost::filesystem::path(__FILE__).filename().extension().string())
 #define __LOCATION__ __BASENAME__ << ":" << __FUNCTION__ << ":" << __LINE__
-#define GMS(inst) inst.getMsgStream()
+#define GMS(inst) inst.userGetMsgStream()
 
 class Logger
 {
@@ -98,86 +95,237 @@ public:
     } LogQueueStatus;
 
     // constructors and destructors
-    Logger(std::ostream& strm);
+    Logger();
     Logger(const std::string& configFilename);
     ~Logger();
 
     // static public class members
-    static void LOG_START(Logger& instance);
-    static void LOG_STOP(Logger& instance);
-    static std::error_code LOG_RESUME(Logger& instance);
+    static std::error_code LOG_START(Logger& instance);
+    static std::error_code LOG_STOP(Logger& instance);
     static std::error_code LOG_SUPPRESS(Logger& instance);
+    static std::error_code LOG_RESUME(Logger& instance);
     static std::error_code LOG_SET_TAGS(Logger& instance, unsigned char logTags);
     static std::error_code LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
     static std::error_code LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
-    static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
-
     static std::error_code LOG_TRACE(Logger& instance, std::ostream& messageStream);
     static std::error_code LOG_DEBUG(Logger& instance, std::ostream& messageStream);
     static std::error_code LOG_INFO(Logger& instance, std::ostream& messageStream);
     static std::error_code LOG_WARN(Logger& instance, std::ostream& messageStream);
     static std::error_code LOG_ERROR(Logger& instance, std::ostream& messageStream);
     static std::error_code LOG_FATAL(Logger& instance, std::ostream& messageStream);
+    static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
 
     // public instance members
-    std::ostream& getMsgStream();
-    std::error_code userLog(Logger::LogLevel level, const std::ostream& msg);
-    void start();
-    std::error_code stop();
-    std::error_code resume();
-    std::error_code suppress();
+    std::ostream& userGetMsgStream();
+    std::error_code userStartLog();
+    std::error_code userStopLog();
+    std::error_code userResumeLog();
+    std::error_code userSuppressLog();
     std::error_code userSetLogTags(unsigned char logTags);
     std::error_code userSetLogLevel(Logger::LogLevel level);
     std::error_code userSetTimeStampProperties(unsigned char properties);
-    Logger::LogLevel getLogLevel();
+    std::error_code userLog(Logger::LogLevel level, const std::ostream& msg);
+    Logger::LogLevel userGetLogLevel();
 
 private:
     // private static members
-    static std::ostream nirvana;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned char ORANGE_WMARK_PERCENT = 33;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned char RED_WMARK_PERCENT = 67;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned short MIN_LOGS_PER_FILE = 100;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned short MAX_LOGS_PER_FILE = 10000;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned short LOG_MESSAGE_QUEUE_SIZE = 1024;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned short LOG_MESSAGE_QUEUE_ORANGE_THRESHLD = (Logger::LOG_MESSAGE_QUEUE_SIZE * ORANGE_WMARK_PERCENT) / 100;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned short LOG_MESSAGE_QUEUE_RED_THRESHLD = (Logger::LOG_MESSAGE_QUEUE_SIZE * RED_WMARK_PERCENT) / 100;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned long GREEN_LOG_THREAD_PERIOD_US = 500000;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned long ORANGE_LOG_THREAD_PERIOD_US = 1000;
+
+    /**
+     * @brief
+     *
+     */
     static constexpr unsigned long RED_LOG_THREAD_PERIOD_US = 10;
 
+    /**
+     * @brief
+     *
+     */
+    static std::ostream nirvana;
+
+    /**
+     * @brief
+     *
+     */
     static const std::string logLevel2String[];
 
     inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties);
 
     // private instance members
+
+    /**
+     * @brief
+     *
+     */
     unsigned char logTags;
+
+    /**
+     * @brief
+     *
+     */
     unsigned char timeStampProps;
+
+    /**
+     * @brief
+     *
+     */
     unsigned short logsPerFile;
+
+    /**
+     * @brief
+     *
+     */
     unsigned short logFileCounter;
+
+    /**
+     * @brief
+     *
+     */
     unsigned long logInCounter;
+
+    /**
+     * @brief
+     *
+     */
     unsigned long logOutCounter;
+
+    /**
+     * @brief
+     *
+     */
     unsigned long logDiscardCounter;
+
+    /**
+     * @brief
+     *
+     */
     Logger::LogLevel logLevel;
+
+    /**
+     * @brief
+     *
+     */
     Logger::LogType logType;
+
+    /**
+     * @brief
+     *
+     */
     bool iniFileMode;
+
+    /**
+     * @brief
+     *
+     */
     bool logQMonEnabled;
+
+    /**
+     * @brief
+     *
+     */
     bool logQOverloadWait;
+
+    /**
+     * @brief
+     *
+     */
     bool loggerStarted;
-    bool loggingSuppressed;
+
+    /**
+     * @brief
+     *
+     */
+    bool loggerSuppressed;
+
+    /**
+     * @brief
+     *
+     */
     std::ostringstream userMessageStream;
+
+    /**
+     * @brief
+     *
+     */
     std::ostringstream fullMessageStream;
-    std::ostream* logChannel;
+
+    /**
+     * @brief
+     *
+     */
+    std::ostream* logOutChannel;
+
+    /**
+     * @brief
+     *
+     */
     boost::lockfree::spsc_queue<Logger::RawMessage, boost::lockfree::capacity<Logger::LOG_MESSAGE_QUEUE_SIZE>> logMessageOutputQueue;
+
+    /**
+     * @brief
+     *
+     */
     boost::thread logThreadHandle;
-    unsigned long logThreadPeriod;
 
     std::error_code parseConfigFile(const std::string& configFilename);
     void setLogTags(unsigned char logTags);
     void setLogLevel(Logger::LogLevel level);
     void setTimeStampProperties(unsigned char properties);
-    Logger::LogQueueStatus getLogQueueStatus();
     std::string formatLogMessage(Logger::RawMessage raw);
-    void logNextMessage();
+    void logOutNextMessage();
     void logThread();
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };
