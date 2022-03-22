@@ -24,10 +24,6 @@
 std::ostream Logger::nirvana(nullptr);
 const std::string Logger::logLevel2String[] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
 
-/**
- * @brief Construct a new Logger:: Logger object
- *
- */
 Logger::Logger() : iniFileMode(false),
                    logQMonEnabled(false),
                    logQOverloadWait(true),
@@ -40,11 +36,6 @@ Logger::Logger() : iniFileMode(false),
 {
 }
 
-/**
- * @brief Construct a new Logger:: Logger object
- *
- * @param configFilename
- */
 Logger::Logger(const std::string& configFilename) : iniFileMode(true),
                                                     logQMonEnabled(false),
                                                     logQOverloadWait(true),
@@ -71,10 +62,6 @@ Logger::Logger(const std::string& configFilename) : iniFileMode(true),
     }
 }
 
-/**
- * @brief Destroy the Logger:: Logger object
- *
- */
 Logger::~Logger()
 {
     this->logOutChannel->flush();
@@ -94,176 +81,76 @@ Logger::~Logger()
     }
 }
 
-/**
- * @brief
- *
- * @param instance
- * @return std::error_code
- */
 std::error_code Logger::LOG_START(Logger& instance)
 {
     return instance.userStartLog();
 }
 
-/**
- * @brief
- *
- * @param instance
- * @return std::error_code
- */
 std::error_code Logger::LOG_STOP(Logger& instance)
 {
     return instance.userStopLog();
 }
 
-/**
- * @brief
- *
- * @param instance
- * @return std::error_code
- */
 std::error_code Logger::LOG_RESUME(Logger& instance)
 {
     return instance.userResumeLog();
 }
 
-/**
- * @brief
- *
- * @param instance
- * @return std::error_code
- */
 std::error_code Logger::LOG_SUPPRESS(Logger& instance)
 {
     return instance.userSuppressLog();
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param logTags
- * @return std::error_code
- */
 std::error_code Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
 {
     return instance.userSetLogTags(logTags);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param level
- * @return std::error_code
- */
 std::error_code Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
 {
     return instance.userSetLogLevel(level);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param properties
- * @return std::error_code
- */
 std::error_code Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
 {
     return instance.userSetTimeStampProperties(properties);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @return Logger::LogLevel
- */
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
 {
     return instance.userGetLogLevel();
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_TRACE(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::TRACE, messageStream);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_DEBUG(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::DEBUG, messageStream);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_INFO(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::INFO, messageStream);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_WARN(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::WARN, messageStream);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_ERROR(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::ERR, messageStream);
 }
 
-/**
- * @brief
- *
- * @param instance
- * @param messageStream
- * @return std::error_code
- */
 std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
 {
     return instance.userLog(Logger::LogLevel::FATAL, messageStream);
 }
 
-/**
- * @brief
- *
- * @param now
- * @param properties
- * @return std::string
- */
 std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties)
 {
     if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
@@ -320,23 +207,11 @@ std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsi
     }
 }
 
-/**
- * @brief
- *
- * @return std::ostream&
- */
 std::ostream& Logger::userGetMsgStream()
 {
     return this->userMessageStream;
 }
 
-/**
- * @brief
- *
- * @param level
- * @param msg
- * @return std::error_code
- */
 std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
 {
     if (this->loggerStarted)
@@ -388,11 +263,6 @@ std::error_code Logger::userLog(Logger::LogLevel level, const std::ostream& msg)
     }
 }
 
-/**
- * @brief
- *
- * @return std::error_code
- */
 std::error_code Logger::userStartLog()
 {
     this->logInCounter = 0;
@@ -405,11 +275,6 @@ std::error_code Logger::userStartLog()
     return std::error_code(0, std::generic_category());
 }
 
-/**
- * @brief
- *
- * @return std::error_code
- */
 std::error_code Logger::userStopLog()
 {
     this->loggerStarted = false;
@@ -440,11 +305,6 @@ std::error_code Logger::userStopLog()
     return std::error_code(0, std::generic_category());
 }
 
-/**
- * @brief
- *
- * @return std::error_code
- */
 std::error_code Logger::userResumeLog()
 {
     if (this->loggerStarted)
@@ -459,11 +319,6 @@ std::error_code Logger::userResumeLog()
     return std::error_code(0, std::generic_category());
 }
 
-/**
- * @brief
- *
- * @return std::error_code
- */
 std::error_code Logger::userSuppressLog()
 {
     if (this->loggerStarted)
@@ -478,12 +333,6 @@ std::error_code Logger::userSuppressLog()
     return std::error_code(0, std::generic_category());
 }
 
-/**
- * @brief
- *
- * @param logTags
- * @return std::error_code
- */
 std::error_code Logger::userSetLogTags(unsigned char logTags)
 {
     if (this->iniFileMode)
@@ -498,12 +347,6 @@ std::error_code Logger::userSetLogTags(unsigned char logTags)
     }
 }
 
-/**
- * @brief
- *
- * @param level
- * @return std::error_code
- */
 std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
 {
     if (this->iniFileMode)
@@ -518,12 +361,6 @@ std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
     }
 }
 
-/**
- * @brief
- *
- * @param properties
- * @return std::error_code
- */
 std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
 {
     if (this->iniFileMode)
@@ -538,31 +375,16 @@ std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
     }
 }
 
-/**
- * @brief
- *
- * @param logTags
- */
 void Logger::setLogTags(unsigned char logTags)
 {
     this->logTags = logTags;
 }
 
-/**
- * @brief
- *
- * @param level
- */
 void Logger::setLogLevel(Logger::LogLevel level)
 {
     this->logLevel = level;
 }
 
-/**
- * @brief
- *
- * @param properties
- */
 void Logger::setTimeStampProperties(unsigned char properties)
 {
     if (Logger::TimeStampProperty::NANOSECS & properties)
@@ -587,22 +409,11 @@ void Logger::setTimeStampProperties(unsigned char properties)
     }
 }
 
-/**
- * @brief
- *
- * @return Logger::LogLevel
- */
 Logger::LogLevel Logger::userGetLogLevel()
 {
     return this->logLevel;
 }
 
-/**
- * @brief
- *
- * @param raw
- * @return std::string
- */
 std::string Logger::formatLogMessage(Logger::RawMessage raw)
 {
     if (this->logTags & Logger::LogTag::COUNTER)
@@ -641,10 +452,6 @@ std::string Logger::formatLogMessage(Logger::RawMessage raw)
     return formattedMessage;
 }
 
-/**
- * @brief
- *
- */
 void Logger::logOutNextMessage()
 {
     if (this->logMessageOutputQueue.read_available() > 0)
@@ -675,12 +482,6 @@ void Logger::logOutNextMessage()
     }
 }
 
-/**
- * @brief
- *
- * @param configFilename
- * @return std::error_code
- */
 std::error_code Logger::parseConfigFile(const std::string& configFilename)
 {
     std::ifstream iniFs;
@@ -1045,10 +846,6 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
     }
 }
 
-/**
- * @brief
- *
- */
 void Logger::logThread()
 {
     // start values for thread control
@@ -1225,12 +1022,6 @@ void Logger::logThread()
     }
 }
 
-/**
- * @brief
- *
- * @param fileCounter
- * @return std::ofstream*
- */
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
     std::string date = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);

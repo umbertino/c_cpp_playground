@@ -31,6 +31,10 @@
 class Logger
 {
 public:
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         TRACE,
@@ -41,6 +45,10 @@ public:
         FATAL
     } LogLevel;
 
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         ALL_TAGS_OFF = 0b00000000,
@@ -50,12 +58,20 @@ public:
         ALL_TAGS_ON = 0x11111111
     } LogTag;
 
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         CONSOLE,
         FILE
     } LogType;
 
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         ALL_PROPS_OFF = 0b00000000,
@@ -67,12 +83,20 @@ public:
         ALL_PROPS_ON = 0b11111111
     } TimeStampProperty;
 
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         DATE_MASK = 0b00000001,
         TIME_MASK = 0b00011110
     } Masks;
 
+    /**
+     * @brief
+     *
+     */
     typedef struct
     {
         unsigned long counter;
@@ -81,6 +105,10 @@ public:
         std::string userMessage;
     } RawMessage;
 
+    /**
+     * @brief
+     *
+     */
     typedef enum
     {
         GREEN,
@@ -88,43 +116,229 @@ public:
         RED
     } LogQueueColor;
 
+    /**
+     * @brief 
+     *
+     */
     typedef struct
     {
         size_t fillLevel;
         Logger::LogQueueColor condition;
     } LogQueueStatus;
 
-    // constructors and destructors
+    /**
+     * @brief Construct a new Logger object
+     *
+     */
     Logger();
+
+    /**
+     * @brief Construct a new Logger object
+     *
+     * @param configFilename
+     */
     Logger(const std::string& configFilename);
+
+    /**
+     * @brief Destroy the Logger object
+     *
+     */
     ~Logger();
 
-    // static public class members
+    /**
+     * @brief
+     *
+     * @param instance
+     * @return std::error_code
+     */
     static std::error_code LOG_START(Logger& instance);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @return std::error_code
+     */
     static std::error_code LOG_STOP(Logger& instance);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @return std::error_code
+     */
     static std::error_code LOG_SUPPRESS(Logger& instance);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @return std::error_code
+     */
     static std::error_code LOG_RESUME(Logger& instance);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param logTags
+     * @return std::error_code
+     */
     static std::error_code LOG_SET_TAGS(Logger& instance, unsigned char logTags);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param level
+     * @return std::error_code
+     */
     static std::error_code LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param properties
+     * @return std::error_code
+     */
     static std::error_code LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_TRACE(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_DEBUG(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_INFO(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_WARN(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_ERROR(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @param messageStream
+     * @return std::error_code
+     */
     static std::error_code LOG_FATAL(Logger& instance, std::ostream& messageStream);
+
+    /**
+     * @brief
+     *
+     * @param instance
+     * @return Logger::LogLevel
+     */
     static Logger::LogLevel LOG_GET_LEVEL(Logger& instance);
 
-    // public instance members
+    /**
+     * @brief
+     *
+     * @return std::ostream&
+     */
     std::ostream& userGetMsgStream();
+
+    /**
+     * @brief
+     *
+     * @return std::error_code
+     */
     std::error_code userStartLog();
+
+    /**
+     * @brief
+     *
+     * @return std::error_code
+     */
     std::error_code userStopLog();
+
+    /**
+     * @brief
+     *
+     * @return std::error_code
+     */
     std::error_code userResumeLog();
+
+    /**
+     * @brief
+     *
+     * @return std::error_code
+     */
     std::error_code userSuppressLog();
+
+    /**
+     * @brief
+     *
+     * @param logTags
+     * @return std::error_code
+     */
     std::error_code userSetLogTags(unsigned char logTags);
+
+    /**
+     * @brief
+     *
+     * @param level
+     * @return std::error_code
+     */
     std::error_code userSetLogLevel(Logger::LogLevel level);
+
+    /**
+     * @brief
+     *
+     * @param properties
+     * @return std::error_code
+     */
     std::error_code userSetTimeStampProperties(unsigned char properties);
+
+    /**
+     * @brief
+     *
+     * @param level
+     * @param msg
+     * @return std::error_code
+     */
     std::error_code userLog(Logger::LogLevel level, const std::ostream& msg);
+
+    /**
+     * @brief
+     *
+     * @return Logger::LogLevel
+     */
     Logger::LogLevel userGetLogLevel();
 
 private:
@@ -202,9 +416,14 @@ private:
      */
     static const std::string logLevel2String[];
 
+    /**
+     * @brief Get the Time Str object
+     *
+     * @param now
+     * @param properties
+     * @return std::string
+     */
     inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties);
-
-    // private instance members
 
     /**
      * @brief
@@ -320,12 +539,60 @@ private:
      */
     boost::thread logThreadHandle;
 
+    /**
+     * @brief
+     *
+     * @param configFilename
+     * @return std::error_code
+     */
     std::error_code parseConfigFile(const std::string& configFilename);
+
+    /**
+     * @brief Set the Log Tags object
+     *
+     * @param logTags
+     */
     void setLogTags(unsigned char logTags);
+
+    /**
+     * @brief Set the Log Level object
+     *
+     * @param level
+     */
     void setLogLevel(Logger::LogLevel level);
+
+    /**
+     * @brief Set the Time Stamp Properties object
+     *
+     * @param properties
+     */
     void setTimeStampProperties(unsigned char properties);
+
+    /**
+     * @brief
+     *
+     * @param raw
+     * @return std::string
+     */
     std::string formatLogMessage(Logger::RawMessage raw);
+
+    /**
+     * @brief
+     *
+     */
     void logOutNextMessage();
+
+    /**
+     * @brief
+     *
+     */
     void logThread();
+
+    /**
+     * @brief Get the New Log File object
+     *
+     * @param fileCounter
+     * @return std::ofstream*
+     */
     inline static std::ofstream* getNewLogFile(unsigned short fileCounter);
 };
