@@ -854,8 +854,8 @@ void Logger::logThread()
     // start values for thread control
     unsigned long newLogThreadPeriod = Logger::DEFAULT_THREAD_PERIOD_US;
     unsigned long prevLogThreadPeriod = Logger::DEFAULT_THREAD_PERIOD_US;
-    unsigned short newLogsAtOnce = Logger::DEFAULT_LOGS_AT_ONCE;
-    unsigned short prevLogsAtOnce = Logger::DEFAULT_LOGS_AT_ONCE;
+    unsigned short newLogsAtOnce = Logger::LOG_DEFAULT_LOGS_AT_ONCE;
+    unsigned short prevLogsAtOnce = Logger::LOG_DEFAULT_LOGS_AT_ONCE;
     Logger::LogQueueStatus currQueueStatus;
 
     typedef enum
@@ -902,7 +902,7 @@ void Logger::logThread()
         if (!this->loggerStarted && currQueueStatus.fillLevel > 0)
         {
             // speed up logging out to terminate this thread quickly
-            newLogThreadPeriod = Logger::RED_LOG_THREAD_PERIOD_US;
+            newLogThreadPeriod = Logger::LOG_RED_THREAD_PERIOD_US;
             newLogsAtOnce = 100;
 
             return LOG;
@@ -912,7 +912,7 @@ void Logger::logThread()
         // logger is started but queue is empty, stay prepared
         if (this->loggerStarted && currQueueStatus.fillLevel == 0)
         {
-            newLogThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+            newLogThreadPeriod = Logger::LOG_ORANGE_THREAD_PERIOD_US;
             newLogsAtOnce = 10;
 
             return WAIT;
@@ -926,10 +926,10 @@ void Logger::logThread()
         {
             if (currQueueStatus.condition == Logger::LogQueueColor::GREEN)
             {
-                if (newLogThreadPeriod < Logger::GREEN_LOG_THREAD_PERIOD_US - 100)
+                if (newLogThreadPeriod < Logger::LOG_GREEN_THREAD_PERIOD_US - 100)
                 {
                     // default period for log thread
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod + 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod + 100), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
 
                 // log one message per thread call or ramp down to 1
@@ -941,17 +941,17 @@ void Logger::logThread()
             if (currQueueStatus.condition == Logger::LogQueueColor::ORANGE)
             {
                 // decrease the period of log thread
-                if (newLogThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
+                if (newLogThreadPeriod >= Logger::LOG_RED_THREAD_PERIOD_US + 100)
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 100), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
-                else if (newLogThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 10)
+                else if (newLogThreadPeriod >= Logger::LOG_RED_THREAD_PERIOD_US + 10)
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 10), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 10), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
                 else
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
 
                 // increase the number of meaaages per thread call by one (ramp up)
@@ -963,21 +963,21 @@ void Logger::logThread()
             if (currQueueStatus.condition == Logger::LogQueueColor::RED)
             {
                 // decrease the period of log thread even more
-                if (newLogThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 1000)
+                if (newLogThreadPeriod >= Logger::LOG_RED_THREAD_PERIOD_US + 1000)
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1000), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1000), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
-                else if (newLogThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 100)
+                else if (newLogThreadPeriod >= Logger::LOG_RED_THREAD_PERIOD_US + 100)
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 100), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 100), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
-                else if (newLogThreadPeriod >= Logger::RED_LOG_THREAD_PERIOD_US + 10)
+                else if (newLogThreadPeriod >= Logger::LOG_RED_THREAD_PERIOD_US + 10)
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 10), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 10), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
                 else
                 {
-                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1), Logger::RED_LOG_THREAD_PERIOD_US, Logger::GREEN_LOG_THREAD_PERIOD_US);
+                    newLogThreadPeriod = std::clamp(static_cast<unsigned long>(newLogThreadPeriod - 1), Logger::LOG_RED_THREAD_PERIOD_US, Logger::LOG_GREEN_THREAD_PERIOD_US);
                 }
 
                 // increase the number of meaaages per thread call by 10 (ramp up faster)
@@ -994,7 +994,7 @@ void Logger::logThread()
         // keep thread period an logs at once constant
         if (!this->logQMonEnabled && currQueueStatus.fillLevel > 0)
         {
-            newLogThreadPeriod = Logger::ORANGE_LOG_THREAD_PERIOD_US;
+            newLogThreadPeriod = Logger::LOG_ORANGE_THREAD_PERIOD_US;
             newLogsAtOnce = 10;
 
             return LOG;
@@ -1020,8 +1020,8 @@ void Logger::logThread()
         if (!this->loggerStarted && currQueueStatus.fillLevel > 0)
         {
             // speed up logging out to terminate this thread quickly
-            newLogThreadPeriod = Logger::MIN_THREAD_PERIOD_US;
-            newLogsAtOnce = Logger::MAX_LOGS_AT_ONCE;
+            newLogThreadPeriod = Logger::LOG_MIN_THREAD_PERIOD_US;
+            newLogsAtOnce = Logger::LOG_MAX_LOGS_AT_ONCE;
 
             return LOG;
         }
@@ -1031,7 +1031,7 @@ void Logger::logThread()
         if (this->loggerStarted && currQueueStatus.fillLevel == 0)
         {
             newLogThreadPeriod = Logger::DEFAULT_THREAD_PERIOD_US;
-            newLogsAtOnce = Logger::DEFAULT_LOGS_AT_ONCE;
+            newLogsAtOnce = Logger::LOG_DEFAULT_LOGS_AT_ONCE;
 
             return WAIT;
         }
@@ -1044,26 +1044,26 @@ void Logger::logThread()
         {
             // This is a linear function to determin a thread period in microseconds depending on the queue fill-level.
             // It calculates a shift value between in a way to calculate the period time as 2^shift
-            // between Logger::MIN_THREAD_PERIOD_US and Logger::MAX_THREAD_PERIOD_US
-            // The shortest period shall be reached at Logger::RED_WMARK_PERCENT
+            // between Logger::LOG_MIN_THREAD_PERIOD_US and Logger::LOG_MAX_THREAD_PERIOD_US
+            // The shortest period shall be reached at Logger::LOG_MESSAGE_RED_WMARK_PERCENT
             // In order to not loose precision we temporarily shift up by eight and down later after the division
-            unsigned short slope = ((Logger::MAX_THREAD_PERIOD_LD - Logger::MIN_THREAD_PERIOD_LD) * 100) / Logger::RED_WMARK_PERCENT;
+            unsigned short slope = ((Logger::LOG_MAX_THREAD_PERIOD_LD - Logger::LOG_MIN_THREAD_PERIOD_LD) * 100) / Logger::LOG_MESSAGE_RED_WMARK_PERCENT;
             unsigned short shift = ((((slope * currQueueStatus.fillLevel) << 7) / Logger::LOG_MESSAGE_QUEUE_SIZE) >> 7);
-            shift = Logger::MAX_THREAD_PERIOD_LD - shift;
-            shift = std::clamp(static_cast<unsigned short>(shift), Logger::MIN_THREAD_PERIOD_LD, Logger::MAX_THREAD_PERIOD_LD);
+            shift = Logger::LOG_MAX_THREAD_PERIOD_LD - shift;
+            shift = std::clamp(static_cast<unsigned short>(shift), Logger::LOG_MIN_THREAD_PERIOD_LD, Logger::LOG_MAX_THREAD_PERIOD_LD);
 
             if (currQueueStatus.fillLevel >= Logger::LOG_MESSAGE_QUEUE_SIZE)
             {
-                shift = Logger::MIN_THREAD_PERIOD_LD;
+                shift = Logger::LOG_MIN_THREAD_PERIOD_LD;
             }
 
             // finally the new log thread period is the average of the new and previous one
-            newLogThreadPeriod = (std::clamp(static_cast<unsigned long>(1 << shift), Logger::MIN_THREAD_PERIOD_US, Logger::MAX_THREAD_PERIOD_US) + prevLogThreadPeriod) >> 1;
+            newLogThreadPeriod = (std::clamp(static_cast<unsigned long>(1 << shift), Logger::LOG_MIN_THREAD_PERIOD_US, Logger::LOG_MAX_THREAD_PERIOD_US) + prevLogThreadPeriod) >> 1;
             prevLogThreadPeriod = newLogThreadPeriod;
 
             // This is a linear function to determine the number of log message to output at once from the queue
             // It takes the current queue fill level as input and returns a fourth of it. The return is clamped.
-            newLogsAtOnce = (std::clamp(static_cast<unsigned short>(currQueueStatus.fillLevel >> 2), Logger::MIN_LOGS_AT_ONCE, Logger::MAX_LOGS_AT_ONCE) + prevLogsAtOnce) >> 1;
+            newLogsAtOnce = (std::clamp(static_cast<unsigned short>(currQueueStatus.fillLevel >> 2), Logger::LOG_MIN_LOGS_AT_ONCE, Logger::LOG_MAX_LOGS_AT_ONCE) + prevLogsAtOnce) >> 1;
             prevLogsAtOnce = newLogsAtOnce;
 
             return LOG;
@@ -1075,7 +1075,7 @@ void Logger::logThread()
         if (!this->logQMonEnabled && currQueueStatus.fillLevel > 0)
         {
             newLogThreadPeriod = Logger::DEFAULT_THREAD_PERIOD_US;
-            newLogsAtOnce = Logger::DEFAULT_LOGS_AT_ONCE;
+            newLogsAtOnce = Logger::LOG_DEFAULT_LOGS_AT_ONCE;
 
             return LOG;
         }
@@ -1095,7 +1095,7 @@ void Logger::logThread()
             break;
         }
 
-        std::cout << "Queue-Fill: " << std::setw(4) << currQueueStatus.fillLevel << " Th.Period: " << std::setw(6) << newLogThreadPeriod << " LogsAtOnce: " << std::setw(4) << newLogsAtOnce << std::endl;
+        //std::cout << "Queue-Fill: " << std::setw(4) << currQueueStatus.fillLevel << " Th.Period: " << std::setw(6) << newLogThreadPeriod << " LogsAtOnce: " << std::setw(4) << newLogsAtOnce << std::endl;
 
         if (state == WAIT)
         {
@@ -1116,8 +1116,9 @@ void Logger::logThread()
 
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
-    std::string date = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::DATE);
-    std::string time = Logger::getTimeStr(boost::chrono::system_clock::now(), Logger::TimeStampProperty::SECS);
+    boost::chrono::system_clock::time_point now = boost::chrono::system_clock::now();
+    std::string date = Logger::getTimeStr(now, Logger::TimeStampProperty::DATE);
+    std::string time = Logger::getTimeStr(now, Logger::TimeStampProperty::SECS);
     boost::replace_all(time, ":", ".");
     std::stringstream fss;
     fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";
