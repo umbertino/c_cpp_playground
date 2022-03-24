@@ -6,6 +6,7 @@
 #include <boost/scoped_ptr.hpp>
 
 // Std-Includes
+#include <algorithm>
 #include <iostream>
 #include <ostream>
 #include <fstream>
@@ -35,18 +36,40 @@ int main(void)
               << std::endl;
 
 #if SCRATCH_PAD
+    const unsigned short Q_SIZE = 1024;
+    unsigned short level = 0;
 
-    int a = 2;
+    unsigned char red_mark = 80;
+    unsigned short max_ld = 19;
+    unsigned short min_ld = 3;
+    unsigned short slope = ((max_ld - min_ld) * 100) / red_mark;
+    boost::chrono::nanoseconds t;
 
-    std::cout << a << std::endl;
+    for (level = 0; level <= Q_SIZE; level++)
+    {
+        boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
-    a += 2;
+        unsigned short s;
 
-    std::cout << a << std::endl;
+        if (level < Q_SIZE)
+        {
+            s = ((((slope * level) << 7) / Q_SIZE) >> 7);
+            s = max_ld - s;
+            s = std::clamp(static_cast<unsigned short>(s), min_ld, max_ld);
+        }
+        else
+        {
+            s = min_ld;
+        }
 
-    std::cout << (a += 2) << std::endl;
+        unsigned long period = 1 << s;
 
-    std::cout << (a -= 2) << std::endl;
+        boost::chrono::high_resolution_clock::time_point stop = boost::chrono::high_resolution_clock::now();
+
+        t = boost::chrono::duration_cast<boost::chrono::nanoseconds>(stop - start);
+
+        std::cout << "Level: " << std::setw(4) << level << " Shift: " << std::setw(2) << s << " Period: " << std::setw(6) << (period) << " CalcTime: " << std::setw(6) << t.count() << std::endl;
+    }
 
 #endif
 

@@ -14,6 +14,7 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <string_view>
 
 // boost includes
 #include <boost/lockfree/queue.hpp>
@@ -117,7 +118,7 @@ public:
     } LogQueueColor;
 
     /**
-     * @brief 
+     * @brief
      *
      */
     typedef struct
@@ -408,13 +409,67 @@ private:
      * @brief
      *
      */
-    static std::ostream nirvana;
+    static constexpr unsigned short MIN_THREAD_PERIOD_LD = 3;
 
     /**
      * @brief
      *
      */
-    static const std::string logLevel2String[];
+    static constexpr unsigned long MIN_THREAD_PERIOD_US = 1 << Logger::MIN_THREAD_PERIOD_LD;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned short MAX_THREAD_PERIOD_LD = 18;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned long MAX_THREAD_PERIOD_US = 1 << Logger::MAX_THREAD_PERIOD_LD;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned char DEFAULT_THREAD_PERIOD_LD = 10;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned long DEFAULT_THREAD_PERIOD_US = 1 << Logger::DEFAULT_THREAD_PERIOD_LD;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned short MIN_LOGS_AT_ONCE = 1;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned short MAX_LOGS_AT_ONCE = Logger::LOG_MESSAGE_QUEUE_SIZE >> 2;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr unsigned short DEFAULT_LOGS_AT_ONCE = Logger::MAX_LOGS_AT_ONCE >> 1;
+
+    /**
+     * @brief
+     *
+     */
+    static constexpr std::string_view LOG_LEVEL_2_STRING[6] = {"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+
+    /**
+     * @brief
+     *
+     */
+    static std::ostream nirvana;
 
     /**
      * @brief Get the Time Str object
@@ -580,7 +635,7 @@ private:
      * @brief
      *
      */
-    void logOutNextMessage();
+    unsigned short logOutNextMessage();
 
     /**
      * @brief
