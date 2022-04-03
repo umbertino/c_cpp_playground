@@ -54,6 +54,6 @@ add_executable(${TST_BIN_NAME} ${TST_SRCS})
 add_custom_target(tests DEPENDS ${TST_BIN_NAME})
 add_dependencies(${TST_BIN_NAME} prime scopeguard)
 include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
-target_link_libraries(${TST_BIN_NAME}  ${CMAKE_THREAD_LIBS_INIT} gtest gtest_main gmock gmock_main prime scopeguard logger)
+target_link_libraries(${TST_BIN_NAME} ${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES} prime scopeguard logger)
 
 gtest_discover_tests(${TST_BIN_NAME})
