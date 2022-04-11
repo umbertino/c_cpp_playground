@@ -22,12 +22,11 @@ file(GLOB TST_SRCS "${TST_DIR}/*.cpp" "${TST_DIR}/*.c")
 
 set(CMAKE_CXX_STANDARD 17)
 
-SET(Boost_USE_STATIC_LIBS ON)
-
 find_package(Threads REQUIRED)
-find_package(Boost 1.78.0 COMPONENTS filesystem log log_setup REQUIRED)
+find_package(GTest 1.11.0 REQUIRED)
+find_package(Boost 1.78.0 COMPONENTS filesystem thread REQUIRED)
 
-# build Prime-Libraryoost_INCLUDE_DIRS
+# build Prime-Library
 add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
 target_link_libraries(prime ${Boost_LIBRARIES})
 
@@ -47,13 +46,12 @@ include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
 target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard logger)
 
 # Unit Test executable
-find_package(GTest 1.11.0 REQUIRED)
 include(GoogleTest)
 enable_testing()
 add_executable(${TST_BIN_NAME} ${TST_SRCS})
 add_custom_target(tests DEPENDS ${TST_BIN_NAME})
-add_dependencies(${TST_BIN_NAME} prime scopeguard)
-include_directories(${Boost_INCLUDE_DIRS} ${GTEST_INCLUDE_DIR} ${INC_DIR})
-target_link_libraries(${TST_BIN_NAME} ${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES} prime scopeguard logger)
+add_dependencies(${TST_BIN_NAME} prime)
+include_directories(${Boost_INCLUDE_DIRS} ${PTHREAD_INC} ${GTEST_INCLUDE_DIR} ${INC_DIR})
+target_link_libraries(${TST_BIN_NAME} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${GTEST_BOTH_LIBRARIES} prime)
 
 gtest_discover_tests(${TST_BIN_NAME})
