@@ -30,8 +30,8 @@ Logger::Logger() : iniFileMode(false),
                    loggerSuppressed(false),
                    logOutChannel(&std::clog),
                    logLevel(Logger::LogLevel::INFO),
-                   logTags(Logger::LogTag::ALL_TAGS_OFF | Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL),
-                   timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF | Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::MILISECS)
+                   logTags({true, true, true, true}),
+                   timeStampResolution(Logger::TimeStampResolution::SEC)
 {
 }
 
@@ -43,8 +43,8 @@ Logger::Logger(const std::string& configFilename) : iniFileMode(true),
                                                     logOutChannel(nullptr),
                                                     logsPerFile(Logger::MAX_LOGS_PER_FILE),
                                                     logLevel(Logger::LogLevel::INFO),
-                                                    logTags(Logger::LogTag::ALL_TAGS_OFF),
-                                                    timeStampProps(Logger::TimeStampProperty::ALL_PROPS_OFF)
+                                                    logTags({true, true, true, true}),
+                                                    timeStampResolution(Logger::TimeStampResolution::SEC)
 {
     std::error_code error = this->parseConfigFile(configFilename);
 
@@ -56,8 +56,8 @@ Logger::Logger(const std::string& configFilename) : iniFileMode(true),
         this->iniFileMode = false;
         this->logOutChannel = &std::clog;
         this->logLevel = Logger::LogLevel::INFO;
-        this->logTags = Logger::LogTag::ALL_TAGS_OFF | Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP | Logger::LogTag::LEVEL;
-        this->timeStampProps = Logger::TimeStampProperty::ALL_PROPS_OFF | Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::MILISECS;
+        this->logTags = {true, true, true, true};
+        this->timeStampResolution = Logger::TimeStampResolution::SEC;
     }
 }
 
@@ -100,7 +100,7 @@ std::error_code Logger::LOG_SUPPRESS(Logger& instance)
     return instance.userSuppressLog();
 }
 
-std::error_code Logger::LOG_SET_TAGS(Logger& instance, unsigned char logTags)
+std::error_code Logger::LOG_SET_TAGS(Logger& instance, Logger::LogTag logTags)
 {
     return instance.userSetLogTags(logTags);
 }
@@ -110,9 +110,9 @@ std::error_code Logger::LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level)
     return instance.userSetLogLevel(level);
 }
 
-std::error_code Logger::LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties)
+std::error_code Logger::LOG_SET_TIME_STAMP_RESOLUTION(Logger& instance, Logger::TimeStampResolution resolution)
 {
-    return instance.userSetTimeStampProperties(properties);
+    return instance.userSetTimeStampResolution(resolution);
 }
 
 Logger::LogLevel Logger::LOG_GET_LEVEL(Logger& instance)
@@ -150,60 +150,51 @@ std::error_code Logger::LOG_FATAL(Logger& instance, std::ostream& messageStream)
     return instance.userLog(Logger::LogLevel::FATAL, messageStream);
 }
 
-std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties)
+std::string Logger::getDateStr(boost::chrono::system_clock::time_point now)
 {
-    if ((properties | Logger::TimeStampProperty::DATE) || (properties | Logger::TimeStampProperty::SECS))
+    // transform current time to time_t format
+    time_t in_time_t = boost::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
+
+    return ss.str();
+}
+
+std::string Logger::getTimeStr(boost::chrono::system_clock::time_point now, Logger::TimeStampResolution resolution)
+{
+    // the current time as epoch time
+    boost::chrono::system_clock::duration duration = now.time_since_epoch();
+
+    // get duration in nanoseconds
+    boost::chrono::nanoseconds durationNanosecs = boost::chrono::duration_cast<boost::chrono::nanoseconds>(duration);
+    unsigned long curSubSecondNs = durationNanosecs.count() % 1000000000;
+
+    // transform current time to time_t format
+    time_t in_time_t = boost::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+
+    ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
+
+    if (resolution == Logger::TimeStampResolution::NANO)
     {
-        // the current time as epoch time
-        boost::chrono::system_clock::duration duration = now.time_since_epoch();
-
-        // get duration in different units
-        boost::chrono::nanoseconds durationNanosecs = boost::chrono::duration_cast<boost::chrono::nanoseconds>(duration);
-        unsigned long curSubSecondNs = durationNanosecs.count() % 1000000000;
-
-        // transform current time to time_t format
-        time_t in_time_t = boost::chrono::system_clock::to_time_t(now);
-
-        std::stringstream ss;
-
-        // return the time string like desired
-        if (properties & Logger::TimeStampProperty::DATE)
-        {
-            ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d"); // Date
-        }
-
-        if ((properties & Logger::TimeStampProperty::DATE) && (properties & Logger::TIME_MASK))
-        {
-            ss << " ";
-        }
-
-        if (properties & Logger::TIME_MASK)
-        {
-            ss << std::put_time(std::localtime(&in_time_t), "%X"); // Time
-
-            if (properties & Logger::TimeStampProperty::NANOSECS)
-            {
-                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000 // microseconds
-                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) % 1000; // nanoseconds
-            }
-            else if (properties & Logger::TimeStampProperty::MICROSECS)
-            {
-                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
-                   << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000; // microseconds
-            }
-            else if (properties & Logger::TimeStampProperty::MILISECS)
-            {
-                ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
-            }
-        }
-
-        return ss.str();
+        ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
+           << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000 // microseconds
+           << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) % 1000; // nanoseconds
     }
-    else
+    else if (resolution == Logger::TimeStampResolution::MICRO)
     {
-        return "";
+        ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000) // miliseconds
+           << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs % 1000000) / 1000; // microseconds
     }
+    else if (resolution == Logger::TimeStampResolution::MILI)
+    {
+        ss << "." << std::setw(3) << std::setfill('0') << (curSubSecondNs / 1000000); // miliseconds
+    }
+
+    return ss.str();
 }
 
 std::ostream& Logger::userGetMsgStream()
@@ -270,13 +261,19 @@ std::error_code Logger::userStartLog()
     this->logOutCounter = 0;
     this->loggerStarted = true;
     this->logThreadHandle = boost::thread(&Logger::logThread, this);
+    this->loggerStartTime = boost::chrono::system_clock::now();
 
     return std::error_code(0, std::generic_category());
 }
 
 std::error_code Logger::userStopLog()
 {
+    this->loggerStopTime = boost::chrono::system_clock::now();
     this->loggerStarted = false;
+    boost::chrono::hours logSessDurHrs = boost::chrono::duration_cast<boost::chrono::hours>(this->loggerStopTime - this->loggerStartTime);
+    boost::chrono::minutes logSessDurMin = boost::chrono::duration_cast<boost::chrono::minutes>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::minutes>(logSessDurHrs));
+    boost::chrono::seconds logSessDurSec = boost::chrono::duration_cast<boost::chrono::seconds>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::seconds>(logSessDurMin));
+    boost::chrono::milliseconds logSessDurMs = boost::chrono::duration_cast<boost::chrono::milliseconds>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::milliseconds>(logSessDurSec));
 
     try
     {
@@ -293,12 +290,14 @@ std::error_code Logger::userStopLog()
     }
 
     // write Log-Session Statistics to log-channel
-    *(this->logOutChannel) << "\n\nLog-Session stopped at "
-                           << Logger::getTimeStr(boost::chrono::system_clock::now(), this->timeStampProps) << std::endl
-                           << "User Log-Attempts: " << std::setw(10) << this->logInCounter << std::endl
-                           << "Successful Logs  : " << std::setw(10) << this->logOutCounter << std::endl
-                           << "Discarded Logs   : " << std::setw(10) << this->logDiscardCounter << std::endl
-                           << "Plausability     : " << std::setw(10) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
+    *(this->logOutChannel) << "\n\n"
+                           << "Log-Session start    : " << Logger::getDateStr(this->loggerStartTime) << " " << Logger::getTimeStr(this->loggerStartTime, Logger::TimeStampResolution::MILI) << std::endl
+                           << "Log-Session end      : " << Logger::getDateStr(this->loggerStopTime) << " " << Logger::getTimeStr(this->loggerStopTime, Logger::TimeStampResolution::MILI) << std::endl
+                           << "Log-Session duration : " << std::setw(13) << logSessDurHrs.count() << ":" << std::setw(2) << std::setfill('0') << logSessDurMin.count() << ":" << std::setw(2) << logSessDurSec.count() << "." << std::setw(3) << logSessDurMs.count() << std::endl
+                           << "User Log-Attempts    : " << std::setfill(' ') << std::setw(23) << this->logInCounter << std::endl
+                           << "Successful Logs      : " << std::setw(23) << this->logOutCounter << std::endl
+                           << "Discarded Logs       : " << std::setw(23) << this->logDiscardCounter << std::endl
+                           << "Plausability         : " << std::setw(23) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
                            << std::endl;
 
     return std::error_code(0, std::generic_category());
@@ -332,7 +331,7 @@ std::error_code Logger::userSuppressLog()
     return std::error_code(0, std::generic_category());
 }
 
-std::error_code Logger::userSetLogTags(unsigned char logTags)
+std::error_code Logger::userSetLogTags(Logger::LogTag logTags)
 {
     if (this->iniFileMode)
     {
@@ -360,7 +359,7 @@ std::error_code Logger::userSetLogLevel(Logger::LogLevel level)
     }
 }
 
-std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
+std::error_code Logger::userSetTimeStampResolution(Logger::TimeStampResolution resolution)
 {
     if (this->iniFileMode)
     {
@@ -368,13 +367,13 @@ std::error_code Logger::userSetTimeStampProperties(unsigned char properties)
     }
     else
     {
-        this->setTimeStampProperties(properties);
+        this->setTimeStampResolution(resolution);
 
         return std::error_code(0, std::generic_category());
     }
 }
 
-void Logger::setLogTags(unsigned char logTags)
+void Logger::setLogTags(Logger::LogTag logTags)
 {
     this->logTags = logTags;
 }
@@ -384,28 +383,9 @@ void Logger::setLogLevel(Logger::LogLevel level)
     this->logLevel = level;
 }
 
-void Logger::setTimeStampProperties(unsigned char properties)
+void Logger::setTimeStampResolution(Logger::TimeStampResolution resolution)
 {
-    if (Logger::TimeStampProperty::NANOSECS & properties)
-    {
-        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::NANOSECS;
-    }
-    else if (Logger::TimeStampProperty::MICROSECS & properties)
-    {
-        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::MICROSECS;
-    }
-    else if (Logger::TimeStampProperty::MILISECS & properties)
-    {
-        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::MILISECS;
-    }
-    else if (Logger::TimeStampProperty::SECS & properties)
-    {
-        this->timeStampProps = (properties & ~Logger::TIME_MASK) | Logger::TimeStampProperty::SECS;
-    }
-    else
-    {
-        this->timeStampProps = (properties & ~Logger::TIME_MASK);
-    }
+    this->timeStampResolution = resolution;
 }
 
 Logger::LogLevel Logger::userGetLogLevel()
@@ -415,28 +395,31 @@ Logger::LogLevel Logger::userGetLogLevel()
 
 std::string Logger::formatLogMessage(Logger::RawMessage raw)
 {
-    if (this->logTags & Logger::LogTag::COUNTER)
+    if (this->logTags.counter)
     {
         this->fullMessageStream << "[" << std::setw(5) << std::setfill('0') << raw.counter << "]";
     }
 
-    if ((this->logTags & Logger::LogTag::TIME_STAMP) &&
-        (this->timeStampProps != Logger::TimeStampProperty::ALL_PROPS_OFF))
+    if (this->logTags.date)
     {
-        std::string timeStr = this->getTimeStr(raw.now, this->timeStampProps);
+        std::string dateStr = this->getDateStr(raw.now);
 
-        if (!timeStr.empty())
-        {
-            this->fullMessageStream << "[" << timeStr << "]";
-        }
+        this->fullMessageStream << "[" << dateStr << "]";
     }
 
-    if (this->logTags & Logger::LogTag::LEVEL)
+    if (this->logTags.timeStamp)
+    {
+        std::string timeStr = this->getTimeStr(raw.now, this->timeStampResolution);
+
+        this->fullMessageStream << "[" << timeStr << "]";
+    }
+
+    if (this->logTags.level)
     {
         this->fullMessageStream << "[" << Logger::LOG_LEVEL_2_STRING[raw.level] << "]";
     }
 
-    if (this->logTags != Logger::LogTag::ALL_TAGS_OFF)
+    if (this->logTags.counter || this->logTags.date || this->logTags.timeStamp || this->logTags.level)
     {
         this->fullMessageStream << " ";
     }
@@ -694,7 +677,7 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
         }
 
         // [LogTag.Counter] processing
-        unsigned char logTags = Logger::LogTag::ALL_TAGS_OFF;
+        Logger::LogTag logTags = {false, false, false, false};
 
         try
         {
@@ -703,7 +686,7 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagCounter)
             {
-                logTags = logTags | Logger::LogTag::COUNTER;
+                logTags.counter = true;
             }
             else if ("off" != logTagCounter)
             {
@@ -723,7 +706,7 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagTimeStamp)
             {
-                logTags = logTags | Logger::LogTag::TIME_STAMP;
+                logTags.timeStamp = true;
             }
             else if ("off" != logTagTimeStamp)
             {
@@ -733,8 +716,6 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
         catch (const boost::property_tree::ptree_error& e)
         {
             std::cerr << "Configfile parse exception: No LogTag.TimeStamp found. Defaulting to OFF " << std::endl;
-
-            this->logTags = this->logTags & ~Logger::LogTag::TIME_STAMP;
         }
 
         // [LogTag.Level] processing
@@ -745,7 +726,7 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
 
             if ("on" == logTagLevel)
             {
-                logTags = logTags | Logger::LogTag::LEVEL;
+                logTags.level = true;
             }
             else if ("off" != logTagLevel)
             {
@@ -757,90 +738,63 @@ std::error_code Logger::parseConfigFile(const std::string& configFilename)
             std::cerr << "Configfile parse exception: No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
         }
 
+        // [LogTag.Date] processing
+        try
+        {
+            std::string logTagDate = iniTree.get<std::string>("LogTag.Date");
+            boost::to_lower(logTagDate);
+
+            if ("on" == logTagDate)
+            {
+                logTags.date = true;
+            }
+            else if ("off" != logTagDate)
+            {
+                std::cerr << "Configfile parse error: No feasible value found for LogTag.Date. Defaulting to OFF " << std::endl;
+            }
+        }
+        catch (const boost::property_tree::ptree_error& e)
+        {
+            std::cerr << "Configfile parse exception: No feasible LogTag.Level found. Defaulting to OFF " << std::endl;
+        }
+
         this->setLogTags(logTags);
 
-        if (this->logTags & Logger::LogTag::TIME_STAMP)
+        // this is only needed if we have a timestamp-tag set
+        if (this->logTags.timeStamp)
         {
-            // [TimeStampFormat] processing
-            unsigned char timeStampProperties = Logger::TimeStampProperty::ALL_PROPS_OFF;
-
-            // [TimeStampFormat.Date] processing
             try
             {
-                std::string timeStampDate = iniTree.get<std::string>("TimeStampFormat.Date");
-                boost::to_lower(timeStampDate);
+                std::string timeStampResolution = iniTree.get<std::string>("TimeStampOption.Resolution");
+                boost::to_lower(timeStampResolution);
 
-                if ("on" == timeStampDate)
+                if ("secs" == timeStampResolution)
                 {
-                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::DATE;
+                    this->timeStampResolution = Logger::TimeStampResolution::SEC;
                 }
-                else if ("off" != timeStampDate)
+                else if ("milis" == timeStampResolution)
                 {
-                    std::cerr << "Configfile parse error: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
+                    this->timeStampResolution = Logger::TimeStampResolution::MILI;
+                }
+                else if ("micros" == timeStampResolution)
+                {
+                    this->timeStampResolution = Logger::TimeStampResolution::MICRO;
+                }
+                else if ("nanos" == timeStampResolution)
+                {
+                    this->timeStampResolution = Logger::TimeStampResolution::NANO;
+                }
+                else
+                {
+                    std::cerr << "Configfile parse error: No feasible TimeStampOption.Resolution found. Defaulting to secs" << std::endl;
+                    this->timeStampResolution = Logger::TimeStampResolution::SEC;
                 }
             }
             catch (const boost::property_tree::ptree_error& e)
             {
-                std::cerr << "Configfile parse exception: No feasible TimeStampFormat.Date found. Defaulting to OFF " << std::endl;
+                std::cerr << "Configfile parse exception: No feasible TimeStampOption.Resolution found. Defaulting to secs" << std::endl;
+                this->timeStampResolution = Logger::TimeStampResolution::SEC;
             }
-
-            // [TimeStampFormat.Time] processing
-            try
-            {
-                std::string timeStampTime = iniTree.get<std::string>("TimeStampFormat.Time");
-                boost::to_lower(timeStampTime);
-
-                if ("on" == timeStampTime)
-                {
-                    timeStampProperties = timeStampProperties | Logger::TimeStampProperty::SECS;
-                }
-                else if ("off" != timeStampTime)
-                {
-                    std::cerr << "Configfile parse error: No feasible TimeStampTime.Date found. Defaulting to OFF " << std::endl;
-                }
-            }
-            catch (const boost::property_tree::ptree_error& e)
-            {
-                std::cerr << "Configfile parse exception: No TimeStampFormat.Time found. Defaulting to OFF " << std::endl;
-            }
-
-            // this is only needed if Time proprty is set
-            if (timeStampProperties & Logger::TimeStampProperty::SECS)
-            {
-                // [TimeStampFormat.TimeResolution] processing
-                try
-                {
-                    std::string timeResolution = iniTree.get<std::string>("TimeStampFormat.TimeResolution");
-                    boost::to_lower(timeResolution);
-
-                    if ("secs" == timeResolution)
-                    {
-                        // nothing to do, already covered by Logger::TimeStampProperty::TIME
-                    }
-                    else if ("milis" == timeResolution)
-                    {
-                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::MILISECS;
-                    }
-                    else if ("micros" == timeResolution)
-                    {
-                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::MICROSECS;
-                    }
-                    else if ("nanos" == timeResolution)
-                    {
-                        timeStampProperties = timeStampProperties | Logger::TimeStampProperty::NANOSECS;
-                    }
-                    else
-                    {
-                        std::cerr << "Configfile parse error: No feasible value found for TimeStampFormat.Resolution. Defaulting to seconds " << std::endl;
-                    }
-                }
-                catch (const boost::property_tree::ptree_error& e)
-                {
-                    std::cerr << "Configfile parse exception: No TimeStampFormat.Resolution found. Defaulting to seconds " << std::endl;
-                }
-            }
-
-            this->setTimeStampProperties(timeStampProperties);
         }
 
         iniFs.close();
@@ -1117,8 +1071,8 @@ void Logger::logThread()
 std::ofstream* Logger::getNewLogFile(unsigned short fileCounter)
 {
     boost::chrono::system_clock::time_point now = boost::chrono::system_clock::now();
-    std::string date = Logger::getTimeStr(now, Logger::TimeStampProperty::DATE);
-    std::string time = Logger::getTimeStr(now, Logger::TimeStampProperty::SECS);
+    std::string date = Logger::getDateStr(now);
+    std::string time = Logger::getTimeStr(now, Logger::TimeStampResolution::SEC);
     boost::replace_all(time, ":", ".");
     std::stringstream fss;
     fss << date << "_" << time << "_" << std::setw(3) << std::setfill('0') << std::to_string(fileCounter) << ".log";
