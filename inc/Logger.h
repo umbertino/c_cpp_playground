@@ -47,44 +47,28 @@ public:
     } LogLevel;
 
     /**
-     * @brief A set of bit-mask to set/unset counter, timestamp and level tags.
-     *        It is possible to bit-OR them
+     * @brief A structure type containing flags to handle the logger's tags
      *
      */
-    typedef enum
+    typedef struct
     {
-        ALL_TAGS_OFF = 0b00000000,
-        COUNTER = 0b00000001,
-        TIME_STAMP = 0b00000010,
-        LEVEL = 0b00000100,
-        ALL_TAGS_ON = 0x11111111
+        bool counter : 1;
+        bool date : 1;
+        bool timeStamp : 1;
+        bool level : 1;
     } LogTag;
 
     /**
-     * @brief A set of bit-masks to configure the timestamp appearance
+     * @brief An enumeration type to determine the resolution of the timestamp
      *
      */
     typedef enum
     {
-        ALL_PROPS_OFF = 0b00000000,
-        DATE = 0b00000001, //YYYY-MM-DD
-        SECS = 0b00000010, //HH:MM:SS
-        MILISECS = 0b00000100, // HH:MM:SS.mmm
-        MICROSECS = 0b00001000, // HH:MM:SS.mmm.uuu
-        NANOSECS = 0b00010000, // HH:MM:SS.mmm.uuu.nnn
-        ALL_PROPS_ON = 0b11111111
-    } TimeStampProperty;
-
-    /**
-     * @brief 2 additional bitmasks to help differentiate between
-     *        date- and time-part of the timestamp property bits
-     *
-     */
-    typedef enum
-    {
-        DATE_MASK = 0b00000001,
-        TIME_MASK = 0b00011110
-    } Masks;
+        SEC = 0,
+        MILI = 1,
+        MICRO = 2,
+        NANO = 3
+    } TimeStampResolution;
 
     /**
      * @brief determine whether logging is done via console or file
@@ -198,10 +182,10 @@ public:
      *        This method can be used only for a default logger
      *
      * @param instance the logger instance that shall be configured regarding log-tags
-     * @param logTags bit-ored values of type Logger::LogTag
+     * @param logTags the log-tags flags to be set/reset
      * @return std::error_code (0, std::generic_category()) on success
      */
-    static std::error_code LOG_SET_TAGS(Logger& instance, unsigned char logTags);
+    static std::error_code LOG_SET_TAGS(Logger& instance, Logger::LogTag logTags);
 
     /**
      * @brief User method to determine the log-severity to be logged
@@ -216,14 +200,14 @@ public:
     static std::error_code LOG_SET_LEVEL(Logger& instance, Logger::LogLevel level);
 
     /**
-     * @brief User method to configure the appearance of the timestamp tag
+     * @brief User method to set the timestamp's resolution
      *        This method can be used only for a default logger
      *
      * @param instance the logger instance that shall be configured regarding timestamp properties
-     * @param properties bit-ored values of type Logger::TimeStampProperty
+     * @param resolution the resolution of the timestamp to be set
      * @return std::error_code (0, std::generic_category()) on success
      */
-    static std::error_code LOG_SET_TIME_STAMP_PROPS(Logger& instance, unsigned char properties);
+    static std::error_code LOG_SET_TIME_STAMP_RESOLUTION(Logger& instance, Logger::TimeStampResolution resolution);
 
     /**
      * @brief User method to log out a method of severity "TRACE"
@@ -343,10 +327,10 @@ public:
     /**
      * @brief Alternative user method for Logger::LOG_SET_TAGS
      *
-     * @param logTags bit-ored values of type Logger::LogTag
+     * @param logTags the log-tags flags to be set/reset
      * @return std::error_code  (0, std::generic_category()) on success
      */
-    std::error_code userSetLogTags(unsigned char logTags);
+    std::error_code userSetLogTags(Logger::LogTag logTags);
 
     /**
      * @brief Alternative user method for Logger::LOG_SET_LEVEL
@@ -358,12 +342,12 @@ public:
     std::error_code userSetLogLevel(Logger::LogLevel level);
 
     /**
-     * @brief Alternative user method for Logger::LOG_SET_TIME_STAMP_PROPS
+     * @brief Alternative user method for Logger::LOG_SET_TIME_STAMP_RESOLUTION
      *
-     * @param properties bit-ored values of type Logger::TimeStampProperty
+     * @param resolution the resolution of the timestamp to be set
      * @return std::error_code (0, std::generic_category()) on success
      */
-    std::error_code userSetTimeStampProperties(unsigned char properties);
+    std::error_code userSetTimeStampResolution(Logger::TimeStampResolution resolution);
 
     /**
      * @brief User method to log a message
@@ -522,25 +506,45 @@ private:
     static std::ostream nirvana;
 
     /**
-     * @brief Returns a timestamp string based on a time point and properties
+     * @brief Returns date string based on a time point
+     *
+     * @param now
+     * @return std::string
+     */
+    inline static std::string getDateStr(boost::chrono::system_clock::time_point now);
+
+    /**
+     * @brief Returns a timestamp string based on a time point and desired resolution
      *
      * @param now the timepoint to be considered
-     * @param properties Bit-ORed properties of type Logger::TimeStampProperty
+     * @param resolution the desired resolution of the timestamp
      * @return std::string the desired timestamp
      */
-    inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, unsigned char properties);
+    inline static std::string getTimeStr(boost::chrono::system_clock::time_point now, Logger::TimeStampResolution resolution);
 
     /**
      * @brief Represents the log-tags configured. Can be queried using Logger::LogTag
      *
      */
-    unsigned char logTags;
+    Logger::LogTag logTags;
 
     /**
-     * @brief Represents the timestamp properties configured. Can be queried using Logger::TimeStampProperty
+     * @brief The point in time the logger was started
      *
      */
-    unsigned char timeStampProps;
+    boost::chrono::system_clock::time_point loggerStartTime;
+
+    /**
+     * @brief The point in time the logger was stopped
+     *
+     */
+    boost::chrono::system_clock::time_point loggerStopTime;
+
+        /**
+     * @brief Represents the timestamp's resolution configured.
+     *
+     */
+        Logger::TimeStampResolution timeStampResolution;
 
     /**
      * @brief Represents the number of logs configured per log-file
@@ -666,9 +670,9 @@ private:
     /**
      * @brief Sets the logger's log-tags
      *
-     * @param logTags bit-ored values of type Logger::LogTag
+     * @param logTags the log-tags flags to be set/reset
      */
-    void setLogTags(unsigned char logTags);
+    void setLogTags(Logger::LogTag logTags);
 
     /**
      * @brief Set the logger's severity level
@@ -679,11 +683,11 @@ private:
     void setLogLevel(Logger::LogLevel level);
 
     /**
-     * @brief Set the logger's timestamp properties
+     * @brief Set the logger's timestamp resolution
      *
-     * @param properties bit-ored values of type Logger::TimeStampProperty
+     * @param resolution the resolution of the timestamp to be set
      */
-    void setTimeStampProperties(unsigned char properties);
+    void setTimeStampResolution(Logger::TimeStampResolution resolution);
 
     /**
      * @brief A message that transforms a log-queue element into a full log-message
