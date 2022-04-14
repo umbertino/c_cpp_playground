@@ -270,10 +270,13 @@ std::error_code Logger::userStopLog()
 {
     this->loggerStopTime = boost::chrono::system_clock::now();
     this->loggerStarted = false;
-    boost::chrono::hours logSessDurHrs = boost::chrono::duration_cast<boost::chrono::hours>(this->loggerStopTime - this->loggerStartTime);
-    boost::chrono::minutes logSessDurMin = boost::chrono::duration_cast<boost::chrono::minutes>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::minutes>(logSessDurHrs));
-    boost::chrono::seconds logSessDurSec = boost::chrono::duration_cast<boost::chrono::seconds>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::seconds>(logSessDurMin));
-    boost::chrono::milliseconds logSessDurMs = boost::chrono::duration_cast<boost::chrono::milliseconds>(this->loggerStopTime - this->loggerStartTime - boost::chrono::duration_cast<boost::chrono::milliseconds>(logSessDurSec));
+
+    // calculate the log session's duration
+    boost::chrono::milliseconds logSessDur = boost::chrono::duration_cast<boost::chrono::milliseconds>(this->loggerStopTime - this->loggerStartTime);
+    unsigned long logSessDurHrs = logSessDur.count() / 3600000; // full hours
+    unsigned long logSessDurMin = (logSessDur.count() % 3600000) / 60000; // full minutes
+    unsigned long logSessDurSec = ((logSessDur.count() % 3600000) % 60000) / 1000; // full seconds
+    unsigned long logSessDurMs = ((logSessDur.count() % 3600000) % 60000) % 1000; // full miliseconds
 
     try
     {
@@ -293,7 +296,7 @@ std::error_code Logger::userStopLog()
     *(this->logOutChannel) << "\n\n"
                            << "Log-Session start    : " << Logger::getDateStr(this->loggerStartTime) << " " << Logger::getTimeStr(this->loggerStartTime, Logger::TimeStampResolution::MILI) << std::endl
                            << "Log-Session end      : " << Logger::getDateStr(this->loggerStopTime) << " " << Logger::getTimeStr(this->loggerStopTime, Logger::TimeStampResolution::MILI) << std::endl
-                           << "Log-Session duration : " << std::setw(13) << logSessDurHrs.count() << ":" << std::setw(2) << std::setfill('0') << logSessDurMin.count() << ":" << std::setw(2) << logSessDurSec.count() << "." << std::setw(3) << logSessDurMs.count() << std::endl
+                           << "Log-Session duration : " << std::setw(13) << logSessDurHrs << ":" << std::setw(2) << std::setfill('0') << logSessDurMin << ":" << std::setw(2) << logSessDurSec << "." << std::setw(3) << logSessDurMs << std::endl
                            << "User Log-Attempts    : " << std::setfill(' ') << std::setw(23) << this->logInCounter << std::endl
                            << "Successful Logs      : " << std::setw(23) << this->logOutCounter << std::endl
                            << "Discarded Logs       : " << std::setw(23) << this->logDiscardCounter << std::endl
