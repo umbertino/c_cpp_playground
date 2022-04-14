@@ -190,9 +190,9 @@ int main(void)
 
     std::cout << std::endl;
 
-    myLogger.userSetLogTags(Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    myLogger.userSetLogTags({true, false, true, false});
     myLogger.userSetLogLevel(Logger::LogLevel::INFO);
-    myLogger.userSetTimeStampProperties(Logger::TimeStampProperty::DATE | Logger::TimeStampProperty::NANOSECS);
+    myLogger.userSetTimeStampResolution(Logger::TimeStampResolution::NANO);
 
     myLogger.userLog(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     myLogger.userLog(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
@@ -205,9 +205,9 @@ int main(void)
 
     std::cout << std::endl;
 
-    Logger::LOG_SET_TAGS(myLogger, Logger::LogTag::COUNTER | Logger::LogTag::TIME_STAMP);
+    Logger::LOG_SET_TAGS(myLogger, {true, false, true, false});
     Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
-    Logger::LOG_SET_TIME_STAMP_PROPS(myLogger, Logger::TimeStampProperty::SECS | Logger::TimeStampProperty::NANOSECS);
+    Logger::LOG_SET_TIME_STAMP_RESOLUTION(myLogger, Logger::TimeStampResolution::NANO);
 
     Logger::LOG_TRACE(myLogger, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
     Logger::LOG_FATAL(myLogger, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
@@ -224,7 +224,7 @@ int main(void)
 
     for (int i = 0; i < LOOP; i++)
     {
-        boost::this_thread::sleep_for(boost::chrono::nanoseconds(10));
+        boost::this_thread::sleep_for(boost::chrono::seconds(2));
 
         boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
         Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
