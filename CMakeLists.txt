@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(Threads REQUIRED)
 find_package(GTest 1.11.0 REQUIRED)
-find_package(Boost 1.78.0 COMPONENTS filesystem thread REQUIRED)
+find_package(Boost 1.78.0 COMPONENTS chrono filesystem thread REQUIRED)
 
 # build Prime-Library
 add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
