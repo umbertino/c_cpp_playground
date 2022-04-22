@@ -268,15 +268,36 @@ std::error_code Logger::userStartLog()
 
 std::error_code Logger::userStopLog()
 {
-    this->loggerStopTime = boost::chrono::system_clock::now();
     this->loggerStarted = false;
+    this->loggerStopTime = boost::chrono::system_clock::now();
 
-    // calculate the log session's duration
-    boost::chrono::milliseconds logSessDur = boost::chrono::duration_cast<boost::chrono::milliseconds>(this->loggerStopTime - this->loggerStartTime);
-    unsigned long logSessDurHrs = logSessDur.count() / 3600000; // full hours
-    unsigned long logSessDurMin = (logSessDur.count() % 3600000) / 60000; // full minutes
-    unsigned long logSessDurSec = ((logSessDur.count() % 3600000) % 60000) / 1000; // full seconds
-    unsigned long logSessDurMs = ((logSessDur.count() % 3600000) % 60000) % 1000; // full miliseconds
+    auto printLogSessionStatistics = [this](std::ostream* logChannel, boost::chrono::system_clock::time_point start, boost::chrono::system_clock::time_point stop) -> std::error_code
+    {
+        if (start > stop)
+        {
+            return std::make_error_code(std::errc::invalid_argument);
+        }
+
+        // calculate the log session's duration
+        boost::chrono::milliseconds logSessDur = boost::chrono::duration_cast<boost::chrono::milliseconds>(stop - start);
+        unsigned long logSessDurHrs = logSessDur.count() / 3600000; // full hours
+        unsigned long logSessDurMin = (logSessDur.count() % 3600000) / 60000; // full minutes
+        unsigned long logSessDurSec = ((logSessDur.count() % 3600000) % 60000) / 1000; // full seconds
+        unsigned long logSessDurMs = ((logSessDur.count() % 3600000) % 60000) % 1000; // full miliseconds
+
+        // write Log-Session Statistics to log-channel
+        *logChannel << "\n\n"
+                    << "Log-Session start    : " << Logger::getDateStr(this->loggerStartTime) << " " << Logger::getTimeStr(this->loggerStartTime, Logger::TimeStampResolution::MILI) << std::endl
+                    << "Log-Session end      : " << Logger::getDateStr(this->loggerStopTime) << " " << Logger::getTimeStr(this->loggerStopTime, Logger::TimeStampResolution::MILI) << std::endl
+                    << "Log-Session duration : " << std::setw(13) << logSessDurHrs << ":" << std::setw(2) << std::setfill('0') << logSessDurMin << ":" << std::setw(2) << logSessDurSec << "." << std::setw(3) << logSessDurMs << std::endl
+                    << "User Log-Attempts    : " << std::setfill(' ') << std::setw(23) << this->logInCounter << std::endl
+                    << "Successful Logs      : " << std::setw(23) << this->logOutCounter << std::endl
+                    << "Discarded Logs       : " << std::setw(23) << this->logDiscardCounter << std::endl
+                    << "Plausability         : " << std::setw(23) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
+                    << std::endl;
+
+        return std::error_code(0, std::generic_category());
+    };
 
     try
     {
@@ -292,18 +313,7 @@ std::error_code Logger::userStopLog()
         return e.code();
     }
 
-    // write Log-Session Statistics to log-channel
-    *(this->logOutChannel) << "\n\n"
-                           << "Log-Session start    : " << Logger::getDateStr(this->loggerStartTime) << " " << Logger::getTimeStr(this->loggerStartTime, Logger::TimeStampResolution::MILI) << std::endl
-                           << "Log-Session end      : " << Logger::getDateStr(this->loggerStopTime) << " " << Logger::getTimeStr(this->loggerStopTime, Logger::TimeStampResolution::MILI) << std::endl
-                           << "Log-Session duration : " << std::setw(13) << logSessDurHrs << ":" << std::setw(2) << std::setfill('0') << logSessDurMin << ":" << std::setw(2) << logSessDurSec << "." << std::setw(3) << logSessDurMs << std::endl
-                           << "User Log-Attempts    : " << std::setfill(' ') << std::setw(23) << this->logInCounter << std::endl
-                           << "Successful Logs      : " << std::setw(23) << this->logOutCounter << std::endl
-                           << "Discarded Logs       : " << std::setw(23) << this->logDiscardCounter << std::endl
-                           << "Plausability         : " << std::setw(23) << ((this->logOutCounter + this->logDiscardCounter == this->logInCounter) ? "OK" : "NOK") << std::endl
-                           << std::endl;
-
-    return std::error_code(0, std::generic_category());
+    return printLogSessionStatistics(this->logOutChannel, this->loggerStartTime, this->loggerStopTime);
 }
 
 std::error_code Logger::userResumeLog()
@@ -1052,7 +1062,7 @@ void Logger::logThread()
             break;
         }
 
-        //std::cout << "Queue-Fill: " << std::setw(4) << currQueueStatus.fillLevel << " Th.Period: " << std::setw(6) << newLogThreadPeriod << " LogsAtOnce: " << std::setw(4) << newLogsAtOnce << std::endl;
+        // std::cout << "Queue-Fill: " << std::setw(4) << currQueueStatus.fillLevel << " Th.Period: " << std::setw(6) << newLogThreadPeriod << " LogsAtOnce: " << std::setw(4) << newLogsAtOnce << std::endl;
 
         if (state == WAIT)
         {
