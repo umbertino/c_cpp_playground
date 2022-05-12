@@ -34,16 +34,16 @@ target_link_libraries(prime ${Boost_LIBRARIES})
 add_library(scopeguard STATIC ${SRC_DIR}/ScopeGuard.cpp)
 target_link_libraries(scopeguard ${Boost_LIBRARIES})
 
-# build Logger-Library
-add_library(logger STATIC ${SRC_DIR}/Logger.cpp)
-target_link_libraries(logger ${Boost_LIBRARIES})
+# build CustomErrorCodes-Library
+add_library(customErrorCodes STATIC ${SRC_DIR}/CustomErrorCodes.cpp)
+target_link_libraries(customErrorCodes ${Boost_LIBRARIES})
 
 # The main playground executable
 add_executable(${APP_BIN_NAME} ${SRC_DIR}/playground_app.cpp)
 add_custom_target(application DEPENDS ${APP_BIN_NAME})
-add_dependencies(${APP_BIN_NAME} prime scopeguard logger)
+add_dependencies(${APP_BIN_NAME} prime scopeguard customErrorCodes)
 include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
-target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard logger)
+target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard customErrorCodes)
 
 # Unit Test executable
 include(GoogleTest)

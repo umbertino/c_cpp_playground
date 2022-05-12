@@ -21,14 +21,12 @@
 // Own Includes
 #include "Prime.h"
 #include "ScopeGuard.h"
-#include "Logger.h"
+#include "CustomErrorCodes.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 0
+#define SCRATCH_PAD 1
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
-#define LOGGER_EXAMPLE 1
-#define QUEUE_EXAMPLE 0
 
 int main(void)
 {
@@ -36,41 +34,11 @@ int main(void)
               << std::endl;
 
 #if SCRATCH_PAD
-    const unsigned short Q_SIZE = 1024;
-    unsigned short level = 0;
+    std::error_code ec = FlightsErrc::InvertedDates;
 
-    unsigned char red_mark = 80;
-    unsigned short max_ld = 19;
-    unsigned short min_ld = 3;
-    unsigned short slope = ((max_ld - min_ld) * 100) / red_mark;
-    boost::chrono::nanoseconds t;
-
-    for (level = 0; level <= Q_SIZE; level++)
-    {
-        boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
-
-        unsigned short s;
-
-        if (level < Q_SIZE)
-        {
-            s = ((((slope * level) << 7) / Q_SIZE) >> 7);
-            s = max_ld - s;
-            s = std::clamp(static_cast<unsigned short>(s), min_ld, max_ld);
-        }
-        else
-        {
-            s = min_ld;
-        }
-
-        unsigned long period = 1 << s;
-
-        boost::chrono::high_resolution_clock::time_point stop = boost::chrono::high_resolution_clock::now();
-
-        t = boost::chrono::duration_cast<boost::chrono::nanoseconds>(stop - start);
-
-        std::cout << "Level: " << std::setw(4) << level << " Shift: " << std::setw(2) << s << " Period: " << std::setw(6) << (period) << " CalcTime: " << std::setw(6) << t.count() << std::endl;
-    }
-
+    std::cout << "Error-Category: " << ec.category().name() << std::endl;
+    std::cout << "Error-message : " << ec.message() << std::endl;
+    std::cout << "Error-Value   : " << ec.value() << std::endl;
 #endif
 
 #if PRIME_EXAMPLE
@@ -171,109 +139,6 @@ int main(void)
     {
         std::cerr << "Boost-Exception caught: " << e.what() << std::endl;
     }
-
-    std::cout << std::endl;
-#endif
-
-#if LOGGER_EXAMPLE
-
-    Logger myLogger("logging.ini"); //(new Logger(std::clog));
-    //Logger myLogger(std::clog);
-
-    //std::ofstream ofs("test.txt", std::ofstream::out);
-
-    //Logger myLogger(ofs);
-
-    //std::chrono::system_clock::time_point start, stop;
-
-    myLogger.userStartLog();
-
-    std::cout << std::endl;
-
-    myLogger.userSetLogTags({true, false, true, false});
-    myLogger.userSetLogLevel(Logger::LogLevel::INFO);
-    myLogger.userSetTimeStampResolution(Logger::TimeStampResolution::NANO);
-
-    myLogger.userLog(Logger::LogLevel::TRACE, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
-    myLogger.userLog(Logger::LogLevel::FATAL, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
-    myLogger.userSuppressLog();
-    myLogger.userLog(Logger::LogLevel::DEBUG, GMS(myLogger) << __LOCATION__ << " 3 This is a debug message");
-    myLogger.userLog(Logger::LogLevel::WARN, GMS(myLogger) << __LOCATION__ << " 4 This is a warning message");
-    myLogger.userResumeLog();
-    myLogger.userLog(Logger::LogLevel::ERR, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
-    myLogger.userLog(Logger::LogLevel::INFO, GMS(myLogger) << __LOCATION__ << " 6 This is a info message");
-
-    std::cout << std::endl;
-
-    Logger::LOG_SET_TAGS(myLogger, {true, false, true, false});
-    Logger::LOG_SET_LEVEL(myLogger, Logger::TRACE);
-    Logger::LOG_SET_TIME_STAMP_RESOLUTION(myLogger, Logger::TimeStampResolution::NANO);
-
-    Logger::LOG_TRACE(myLogger, GMS(myLogger) << __LOCATION__ << " 1 This is a trace message");
-    Logger::LOG_FATAL(myLogger, GMS(myLogger) << __LOCATION__ << " 2 This is a fatal message");
-    Logger::LOG_SUPPRESS(myLogger);
-    Logger::LOG_DEBUG(myLogger, GMS(myLogger) << __LOCATION__ << " 3 This is a debug message");
-    Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 4 This is a warning message");
-    Logger::LOG_RESUME(myLogger);
-    Logger::LOG_ERROR(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
-    Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " 6 This is a fatal message");
-
-    const unsigned short LOOP = 3000;
-
-    boost::chrono::microseconds dur[LOOP];
-
-    for (int i = 0; i < LOOP; i++)
-    {
-        boost::this_thread::sleep_for(boost::chrono::seconds(2));
-
-        boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
-        Logger::LOG_INFO(myLogger, GMS(myLogger) << __LOCATION__ << " This is an info message " << i);
-        boost::chrono::high_resolution_clock::time_point stop = boost::chrono::high_resolution_clock::now();
-        dur[i] = boost::chrono::duration_cast<boost::chrono::microseconds>(stop - start);
-
-        //std::cout << dur[i].count() << std::endl;
-    }
-
-    Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 5 This is an error message");
-    Logger::LOG_WARN(myLogger, GMS(myLogger) << __LOCATION__ << " 6 This is a fatal message");
-
-    int avgDur(0);
-
-    for (int i = 0; i < LOOP; i++)
-    {
-        avgDur = avgDur + dur[i].count();
-    }
-
-    avgDur = avgDur / LOOP;
-
-    myLogger.userStopLog();
-
-    std::cout << "\n\navgDur: " << avgDur << std::endl;
-
-    //ofs.close();
-
-    std::cout << std::endl;
-#endif
-
-#if QUEUE_EXAMPLE
-    std::queue<std::ostringstream> mq;
-
-    mq.emplace(std::ostringstream(""));
-    mq.emplace(std::ostringstream("world "));
-
-    std::cout << mq.front().str() << std::endl;
-
-    mq.front() << "gone mad ";
-
-    std::cout << mq.front().str() << std::endl;
-
-    mq.front() << "and crazy";
-
-    std::cout << mq.front().str() << std::endl;
-
-    mq.front() << " for all people";
-
-    std::cout << mq.front().str() << std::endl;
 
     std::cout << std::endl;
 #endif
