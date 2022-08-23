@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <queue>
 #include <thread>
+#include <future>
 
 // Own Includes
 #include "Prime.h"
@@ -24,9 +25,19 @@
 #include "CustomErrorCodes.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 1
+#define SCRATCH_PAD 0
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
+#define FUTURE_PROMISE_EXAMPLE 1
+
+std::ostream* logOutChannel;
+
+std::ostream& print()
+{
+    logOutChannel = &std::cout;
+
+    return *logOutChannel;
+}
 
 int main(void)
 {
@@ -34,11 +45,51 @@ int main(void)
               << std::endl;
 
 #if SCRATCH_PAD
+
+    std::ostringstream myStream;
+
+    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
+
+    if (myStream.str().empty())
+    {
+        std::cout << "myStream is empty" << std::endl;
+    }
+
+    myStream << "Hello";
+
+    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
+
+    if (!myStream.str().empty())
+    {
+        std::cout << "myStream is not empty" << std::endl;
+    }
+
+    myStream.flush();
+
+    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
+
+    if (!myStream.str().empty())
+    {
+        std::cout << "myStream is not empty" << std::endl;
+    }
+
+    myStream.str("");
+
+    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
+
+    if (myStream.str().empty())
+    {
+        std::cout << "myStream is empty" << std::endl;
+    }
+
     std::error_code ec = FlightsErrc::InvertedDates;
 
     std::cout << "Error-Category: " << ec.category().name() << std::endl;
     std::cout << "Error-message : " << ec.message() << std::endl;
     std::cout << "Error-Value   : " << ec.value() << std::endl;
+
+    print() << "Hello" << std::endl;
+    print() << "Du da!" << std::endl;
 #endif
 
 #if PRIME_EXAMPLE
@@ -141,6 +192,49 @@ int main(void)
     }
 
     std::cout << std::endl;
+#endif
+
+#if FUTURE_PROMISE_EXAMPLE
+
+    std::promise<int> prom;
+    std::future<int> fut = prom.get_future();
+
+    auto magic = std::async(std::launch::async, []()
+                            {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        return 42; });
+
+    auto magic2 = std::async(std::launch::async, [&]()
+                             {
+        std::this_thread::sleep_for(std::chrono::seconds(6));
+        prom.set_value(10); });
+
+    std::cout << "Waiting";
+
+    while (fut.wait_for(std::chrono::seconds(0)) != std::future_status::ready && magic.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+    {
+        std::cout << ".";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    std::cout << std::endl;
+
+    try
+    {
+        std::cout << magic.get() << std::endl;
+        std::cout << fut.get() << std::endl;
+
+        if (fut.valid() && magic.valid())
+        { // cannot consume any more, raises exception
+            std::cout << magic.get() << std::endl;
+            std::cout << fut.get() << std::endl;
+        }
+    }
+    catch (std::exception& ex)
+    {
+        std::cout << "Exception caught: " << ex.what();
+    }
+
 #endif
 
     return 0;
