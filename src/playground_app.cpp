@@ -195,23 +195,26 @@ int main(void)
 #endif
 
 #if FUTURE_PROMISE_EXAMPLE
-
+    std::atomic<bool> magic1Ready(false);
+    std::atomic<bool> magic2Ready(false);
     std::promise<int> prom;
     std::future<int> fut = prom.get_future();
 
-    auto magic = std::async(std::launch::async, []()
-                            {
+    auto magic1 = std::async(std::launch::async, [&]()
+                             {
         std::this_thread::sleep_for(std::chrono::seconds(5));
+        magic1Ready.store(true);
         return 42; });
 
     auto magic2 = std::async(std::launch::async, [&]()
                              {
-        std::this_thread::sleep_for(std::chrono::seconds(6));
-        prom.set_value(10); });
+        std::this_thread::sleep_for(std::chrono::seconds(8));
+        prom.set_value(10);
+        magic2Ready.store(true); });
 
     std::cout << "Waiting";
 
-    while (fut.wait_for(std::chrono::seconds(0)) != std::future_status::ready && magic.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+    while (!magic1Ready.load() || !magic2Ready.load())
     {
         std::cout << ".";
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -221,12 +224,12 @@ int main(void)
 
     try
     {
-        std::cout << magic.get() << std::endl;
+        std::cout << magic1.get() << std::endl;
         std::cout << fut.get() << std::endl;
 
-        if (fut.valid() && magic.valid())
+        if (fut.valid() && magic1.valid())
         { // cannot consume any more, raises exception
-            std::cout << magic.get() << std::endl;
+            std::cout << magic1.get() << std::endl;
             std::cout << fut.get() << std::endl;
         }
     }
