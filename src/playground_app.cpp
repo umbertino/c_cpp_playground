@@ -15,6 +15,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <memory>
 #include <queue>
 #include <thread>
 #include <future>
@@ -23,12 +24,14 @@
 #include "Prime.h"
 #include "ScopeGuard.h"
 #include "CustomErrorCodes.h"
+#include "MemoryPool.h"
 
 // switches to activate / deactivate examples
 #define SCRATCH_PAD 0
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
-#define FUTURE_PROMISE_EXAMPLE 1
+#define FUTURE_PROMISE_EXAMPLE 0
+#define MEMORY_POOL_EXAMPLE 1
 
 std::ostream* logOutChannel;
 
@@ -202,15 +205,17 @@ int main(void)
 
     auto magic1 = std::async(std::launch::async, [&]()
                              {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        magic1Ready.store(true);
-        return 42; });
+                                 std::this_thread::sleep_for(std::chrono::seconds(5));
+                                 magic1Ready.store(true);
+                                 return 42;
+                             });
 
     auto magic2 = std::async(std::launch::async, [&]()
                              {
-        std::this_thread::sleep_for(std::chrono::seconds(8));
-        prom.set_value(10);
-        magic2Ready.store(true); });
+                                 std::this_thread::sleep_for(std::chrono::seconds(8));
+                                 prom.set_value(10);
+                                 magic2Ready.store(true);
+                             });
 
     std::cout << "Waiting";
 
@@ -238,6 +243,21 @@ int main(void)
         std::cout << "Exception caught: " << ex.what();
     }
 
+#endif
+
+#if MEMORY_POOL_EXAMPLE
+    std::allocator<char> memoPool;
+    std::cout << "memoPool.max_size(): " << memoPool.max_size() << "GB" << std::endl;
+    char* charArray = memoPool.allocate(100);
+
+    std::cout << "charArray[4]: " << charArray[4] << std::endl;
+
+    charArray[4] = 'a';
+
+    std::cout << "charArray[4]: " << charArray[4] << std::endl;
+
+    calibratable<int> a;
+    calibratable<long> b(9);
 #endif
 
     return 0;

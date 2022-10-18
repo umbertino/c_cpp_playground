@@ -7,6 +7,7 @@ set(TST_BIN_NAME ${PROJECT_NAME}_tst)
 
 set(GTEST_INCLUDE_DIR $ENV{GTEST_ROOT}/include)
 set(GTEST_LIBRARY_DIR $ENV{GTEST_ROOT}/lib)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 set(INC_DIR inc)
 set(SRC_DIR src)
@@ -44,6 +45,8 @@ add_custom_target(application DEPENDS ${APP_BIN_NAME})
 add_dependencies(${APP_BIN_NAME} prime scopeguard customErrorCodes)
 include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
 target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard customErrorCodes)
+# create a dedicated map-file for each configuration, too
+target_link_options(${APP_BIN_NAME} PRIVATE "/MAP:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${APP_BIN_NAME}.map")
 
 # Unit Test executable
 include(GoogleTest)
