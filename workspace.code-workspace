@@ -119,7 +119,8 @@
 			"__threading_support": "cpp",
 			"__tree": "cpp",
 			"__tuple": "cpp",
-			"stack": "cpp"
+			"stack": "cpp",
+			"*.tpp": "cpp"
 		},
 		"cSpell.words": [
 			"myvector"

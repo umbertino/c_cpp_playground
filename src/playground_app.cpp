@@ -246,18 +246,28 @@ int main(void)
 #endif
 
 #if MEMORY_POOL_EXAMPLE
-    std::allocator<char> memoPool;
-    std::cout << "memoPool.max_size(): " << memoPool.max_size() << "GB" << std::endl;
-    char* charArray = memoPool.allocate(100);
+    MemPoolLib::calibratable<std::uint16_t> a;
+    MemPoolLib::calibratable<std::uint8_t> b;
+    MemPoolLib::calibratable<std::uint8_t> c;
+    MemPoolLib::calibratable<std::uint32_t> d;
+    MemPoolLib::calibratable<std::uint64_t> e;
 
-    std::cout << "charArray[4]: " << charArray[4] << std::endl;
+    a.set(16);
+    b.set(8);
+    c.set(8);
+    d.set(32);
+    e.set(64);
 
-    charArray[4] = 'a';
+    std::cout << "RefPageStartAddress: " << static_cast<void*>(MemPoolLib::getRefPageStartAddress()) << std::endl;
 
-    std::cout << "charArray[4]: " << charArray[4] << std::endl;
+    std::cout << std::endl;
 
-    calibratable<int> a;
-    calibratable<long> b(9);
+    std::uint8_t x;
+    std::uint16_t y;
+    std::uint32_t z;
+
+    std::cout << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << std::endl;
+
 #endif
 
     return 0;

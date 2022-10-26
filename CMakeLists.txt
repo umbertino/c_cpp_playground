@@ -17,7 +17,7 @@ set(LIB_DIR lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY lib)
 
-file(GLOB APP_INCS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
+file(GLOB APP_INCS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp" "${INC_DIR}/*.tpp")
 file(GLOB APP_SRCS "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.c")
 file(GLOB TST_SRCS "${TST_DIR}/*.cpp" "${TST_DIR}/*.c")
 
