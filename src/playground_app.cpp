@@ -4,6 +4,7 @@
 #include <boost/container/vector.hpp>
 #include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/core/typeinfo.hpp>
 
 // Std-Includes
 #include <algorithm>
@@ -209,15 +210,13 @@ int main(void)
                              {
                                  std::this_thread::sleep_for(std::chrono::seconds(5));
                                  magic1Ready.store(true);
-                                 return 42;
-                             });
+                                 return 42; });
 
     auto magic2 = std::async(std::launch::async, [&]()
                              {
                                  std::this_thread::sleep_for(std::chrono::seconds(8));
                                  prom.set_value(10);
-                                 magic2Ready.store(true);
-                             });
+                                 magic2Ready.store(true); });
 
     std::cout << "Waiting";
 
@@ -257,24 +256,40 @@ int main(void)
     MemPoolLib::calibratable<std::uint32_t> d;
     MemPoolLib::calibratable<std::uint64_t> e;
     MemPoolLib::calibratable<std::uint8_t> f;
+    MemPoolLib::calibratable<std::float_t> g;
+    MemPoolLib::calibratable<std::double_t> h;
 
-    //std::cout << MemPoolLib::applicationName;
     a.set(16);
     b.set(8);
     c.set(8);
     d.set(32);
     e.set(64);
     f.set(8);
+    g.set(98765);
+    h.set(67843);
 
     std::cout << "RefPageStartAddress: " << static_cast<void*>(MemPoolLib::getRefPageStartAddress()) << std::endl;
 
     std::cout << std::endl;
 
-    std::uint8_t x;
-    std::uint16_t y;
-    std::uint32_t z;
 
-    std::cout << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
+    std::cout << "Hexdump for :" <<
+    MemPoolLib::getRefPageNumVariables() << " Variables" << std::endl;
+
+    std::uint8_t* pageStartAddress = MemPoolLib::getRefPageStartAddress();
+
+    for (std::uint32_t i = 0; i < MemPoolLib::getRefPageCurrentSize(); i++)
+    {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << +pageStartAddress[i] << " ";
+    }
+
+    std::cout << std::endl;
+
+    std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
+
+    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(std::uint64_t);
+
+    std::cout << boost::core::demangled_name(ti) << std::endl;
 
 #endif
 

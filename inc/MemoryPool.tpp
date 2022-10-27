@@ -17,58 +17,169 @@
 
 std::uint8_t* getRefPageStartAddress()
 {
-    if (refMemPool == nullptr)
+    if (refMemoryPool == nullptr)
     {
         return nullptr;
     }
     else
     {
-        return refMemPool->getPoolStartAddress();
+        return refMemoryPool->getPoolStartAddress();
+    }
+}
+
+std::uint32_t getRefPageNumVariables()
+{
+    if (refMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return refMemoryPool->getPoolNumVariables();
+    }
+}
+
+std::uint32_t getRefPageTotalSize()
+{
+    if (refMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return refMemoryPool->getPoolTotalSize();
+    }
+}
+
+std::uint32_t getRefPageCurrentSize()
+{
+    if (refMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return refMemoryPool->getPoolCurrentSize();
     }
 }
 
 std::uint8_t* getWrkPageStartAddress()
 {
-    if (wrkMemPool == nullptr)
+    if (wrkMemoryPool == nullptr)
     {
         return nullptr;
     }
     else
     {
-        return wrkMemPool->getPoolStartAddress();
+        return wrkMemoryPool->getPoolStartAddress();
     }
 }
 
-std::uint8_t* getMeasVarStartAddress()
+std::uint32_t getWrkPageNumVariables()
 {
-    if (measMemPool == nullptr)
+    if (wrkMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return wrkMemoryPool->getPoolNumVariables();
+    }
+}
+
+std::uint32_t getWrkPageTotalSize()
+{
+    if (wrkMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return wrkMemoryPool->getPoolTotalSize();
+    }
+}
+
+std::uint32_t getWrkPageCurrentSize()
+{
+    if (wrkMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return wrkMemoryPool->getPoolCurrentSize();
+    }
+}
+
+std::uint8_t* getMeasPageStartAddress()
+{
+    if (measMemoryPool == nullptr)
     {
         return nullptr;
     }
     else
     {
-        return measMemPool->getPoolStartAddress();
+        return measMemoryPool->getPoolStartAddress();
+    }
+}
+
+std::uint32_t getMeasPageNumVariables()
+{
+    if (measMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return measMemoryPool->getPoolNumVariables();
+    }
+}
+
+std::uint32_t getMeasPageTotalSize()
+{
+    if (measMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return measMemoryPool->getPoolTotalSize();
+    }
+}
+
+std::uint32_t getMeasPageCurrentSize()
+{
+    if (measMemoryPool == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return measMemoryPool->getPoolCurrentSize();
     }
 }
 
 // implementation of MemoryPool
-MemoryPool::MemoryPool(MemoryPoolType type) : currentMemSize(0), poolMemory(nullptr)
+MemoryPool::MemoryPool(MemoryPoolType type) : usedMemPoolSize(0), numVariablesInMemPool(0), poolMemory(nullptr)
 {
     switch (type)
     {
         case MemoryPoolType::referencePage:
         {
-            this->poolMemory = refPageMem;
+            this->poolMemory = refPageMemory;
+            this->totalMemPoolSize = CAL_MEM_POOL_SIZE;
             break;
         }
         case MemoryPoolType::workingPage:
         {
-            this->poolMemory = wrkPageMem;
+            this->poolMemory = wrkPageMemory;
+            this->totalMemPoolSize = CAL_MEM_POOL_SIZE;
             break;
         }
-        case MemoryPoolType::measurementMemory:
+        case MemoryPoolType::measurementPage:
         {
-            this->poolMemory = measMem;
+            this->poolMemory = measPageMemory;
+            this->totalMemPoolSize = MEAS_MEM_POOL_SIZE;
         }
     }
 }
@@ -78,17 +189,47 @@ std::uint8_t* MemoryPool::getPoolStartAddress()
     return this->poolMemory;
 }
 
+std::uint32_t MemoryPool::getPoolNumVariables()
+{
+    return this->numVariablesInMemPool;
+}
+
+std::uint32_t MemoryPool::getPoolTotalSize()
+{
+    return this->totalMemPoolSize;
+}
+
+std::uint32_t MemoryPool::getPoolCurrentSize()
+{
+    return this->usedMemPoolSize;
+}
+
 template <class T>
 T* MemoryPool::addVariable(T testVar)
 {
-    //TODO: Check for available Memory !!!!
+    if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
+    {
+        return nullptr;
+    }
+    else
+    {
+        T* ptrToPoolMemory = reinterpret_cast<T*>(this->poolMemory + this->usedMemPoolSize);
 
-    T* ptrToPoolMemory = reinterpret_cast<T*>(this->poolMemory + this->currentMemSize);
-    this->currentMemSize = this->currentMemSize + sizeof(testVar);
+        std::string varName = applicationName + "." + __FUNCTION__ + "." + std::to_string(this->usedMemPoolSize);
+        VarIdentifier varId;
+        varId.type = typeid(T).name();
+        varId.size = sizeof(testVar);
+        varId.relativeAddressOffset = this->usedMemPoolSize;
 
-    std::cout << "Allocated variable of size " << sizeof(testVar) << " @0x" << static_cast<void*>(ptrToPoolMemory) << std::endl;
+        this->variableList.insert(std::pair<std::string, VarIdentifier>(varName, varId));
 
-    return ptrToPoolMemory;
+        this->usedMemPoolSize = this->usedMemPoolSize + sizeof(testVar);
+        this->numVariablesInMemPool++;
+
+        std::cout << "Allocated variable of size " << sizeof(testVar) << " @0x" << static_cast<void*>(ptrToPoolMemory) << std::endl;
+
+        return ptrToPoolMemory;
+    }
 }
 
 template <class T>
@@ -110,16 +251,16 @@ std::uint32_t calibratable<T>::numVars(0);
 template <class T>
 calibratable<T>::calibratable()
 {
-    if (refMemPool == nullptr)
+    if (refMemoryPool == nullptr)
     {
-        refMemPool = new MemoryPool(MemoryPoolType::referencePage);
+        refMemoryPool = new MemoryPool(MemoryPoolType::referencePage);
     }
 
     std::cout << "Var-Type: " << typeid(T).name() << std::endl;
 
     T temp(0);
 
-    this->valPtr = refMemPool->addVariable(temp);
+    this->valPtr = refMemoryPool->addVariable(temp);
 
     *(this->valPtr) = 0;
 }
@@ -129,23 +270,19 @@ calibratable<T>::~calibratable()
 {
 }
 
-// // initialization of measurable static members
-// template <class T>
-// MemoryPool* measurable<T>::measMemPool = nullptr;
-
 // implementation of measurable
 template <class T>
 measurable<T>::measurable()
 {
-    if (measMemPool == nullptr)
+    if (measMemoryPool == nullptr)
     {
-        measMemPool = new MemoryPool(MemoryPoolType::measurementMemory);
+        measMemoryPool = new MemoryPool(MemoryPoolType::measurementPage);
     }
 
     std::cout << "Var-Type: " << typeid(this->valPtr).name() << std::endl;
     T temp;
 
-    this->valPtr = measMemPool->addVariable(temp);
+    this->valPtr = measMemoryPool->addVariable(temp);
 
     this->valPtr = 0;
 }

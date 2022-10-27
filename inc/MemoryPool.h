@@ -13,6 +13,9 @@
 
 #pragma once
 
+#include <typeinfo>
+#include <map>
+
 namespace MemPoolLib
 {
 extern const std::string applicationName;
@@ -27,13 +30,13 @@ static constexpr std::uint16_t CAL_MEM_POOL_SIZE = 8192;
  * @brief
  *
  */
-static std::uint8_t refPageMem[CAL_MEM_POOL_SIZE];
+static std::uint8_t refPageMemory[CAL_MEM_POOL_SIZE];
 
 /**
  * @brief
  *
  */
-static std::uint8_t wrkPageMem[CAL_MEM_POOL_SIZE];
+static std::uint8_t wrkPageMemory[CAL_MEM_POOL_SIZE];
 
 /**
  * @brief
@@ -45,7 +48,7 @@ static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
  * @brief
  *
  */
-static std::uint8_t measMem[MEAS_MEM_POOL_SIZE];
+static std::uint8_t measPageMemory[MEAS_MEM_POOL_SIZE];
 
 /**
  * @brief Get the Ref Page Start Address object
@@ -55,6 +58,27 @@ static std::uint8_t measMem[MEAS_MEM_POOL_SIZE];
 std::uint8_t* getRefPageStartAddress();
 
 /**
+ * @brief Get the Ref Page Num Variable object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getRefPageNumVariables();
+
+/**
+ * @brief Get the Ref Page Total Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getRefPageTotalSize();
+
+/**
+ * @brief Get the Ref Page Current Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getRefPageCurrentSize();
+
+/**
  * @brief Get the Wrk Page Start Address object
  *
  * @return char*
@@ -62,11 +86,53 @@ std::uint8_t* getRefPageStartAddress();
 std::uint8_t* getWrkPageStartAddress();
 
 /**
+ * @brief Get the Wrk Page Num Variable object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getWrkPageNumVariables();
+
+/**
+ * @brief Get the Wrk Page Total Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getWrkPageTotalSize();
+
+/**
+ * @brief Get the Wrk Page Current Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getWrkPageCurrentSize();
+
+/**
  * @brief Get the Meas Var Start Address object
  *
  * @return char*
  */
-std::uint8_t* getMeasVarStartAddress();
+std::uint8_t* getMeasPageStartAddress();
+
+/**
+ * @brief Get the Meas Page Num Variable object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getMeasPageNumVariables();
+
+/**
+ * @brief Get the Meas Page Total Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getMeasPageTotalSize();
+
+/**
+ * @brief Get the Meas Page Current Size object
+ *
+ * @return std::uint32_t
+ */
+std::uint32_t getMeasPageCurrentSize();
 
 /**
  * @brief
@@ -76,7 +142,21 @@ enum class MemoryPoolType
 {
     referencePage = 0,
     workingPage = 1,
-    measurementMemory = 2,
+    measurementPage = 2,
+};
+
+/**
+ * @brief
+ *
+ */
+class VarIdentifier
+{
+private:
+public:
+    //std::string fullName;
+    std::string type;
+    std::uint8_t size;
+    std::uint32_t relativeAddressOffset;
 };
 
 /**
@@ -91,13 +171,19 @@ private:
      * @brief
      *
      */
-    std::uint32_t totalMemSize;
+    std::uint32_t totalMemPoolSize;
 
     /**
      * @brief
      *
      */
-    std::uint32_t currentMemSize;
+    std::uint32_t usedMemPoolSize;
+
+    /**
+     * @brief
+     *
+     */
+    std::uint32_t numVariablesInMemPool;
 
     /**
      * @brief
@@ -105,20 +191,47 @@ private:
      */
     std::uint8_t* poolMemory;
 
+    /**
+     * @brief
+     *
+     */
+    std::map<std::string, VarIdentifier> variableList;
+
 public:
     /**
      * @brief Construct a new memory Pool object
      *
-     * @param size
+     * @param type
      */
     MemoryPool(MemoryPoolType type);
 
     /**
      * @brief Get the Pool Start Address object
      *
-     * @return char*
+     * @return std::uint8_t*
      */
     std::uint8_t* getPoolStartAddress();
+
+    /**
+     * @brief Get the Pool Num Vars object
+     *
+     * @return std::uint32_t
+     */
+    std::uint32_t getPoolNumVariables();
+
+    /**
+     * @brief Get the Pool Tital Size object
+     *
+     * @return std::uint32_t
+     */
+    std::uint32_t getPoolTotalSize();
+
+    /**
+     * @brief Get the Pool Current Size object
+     *
+     * @return std::uint32_t
+     */
+    std::uint32_t getPoolCurrentSize();
 
     /**
      * @brief
@@ -135,19 +248,19 @@ public:
  * @brief
  *
  */
-static MemoryPool* refMemPool = nullptr;
+static MemoryPool* refMemoryPool = nullptr;
 
 /**
  * @brief
  *
  */
-static MemoryPool* wrkMemPool = nullptr;
+static MemoryPool* wrkMemoryPool = nullptr;
 
 /**
  * @brief
  *
  */
-static MemoryPool* measMemPool = nullptr;
+static MemoryPool* measMemoryPool = nullptr;
 
 /**
  * @brief
@@ -206,7 +319,7 @@ public:
      *
      * @param val
      */
-    //calibratable(T val);
+    // calibratable(T val);
 
     /**
      * @brief Destroy the calibratable object
@@ -236,20 +349,13 @@ public:
      *
      * @param val
      */
-    //measurable(T val);
+    // measurable(T val);
 
     /**
      * @brief Destroy the measurable object
      *
      */
     ~measurable();
-};
-
-class VarIdentifier
-{
-private:
-public:
-    std::string fullName;
 };
 
 #include "MemoryPool.tpp"
