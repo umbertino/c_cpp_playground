@@ -120,7 +120,10 @@
 			"__tree": "cpp",
 			"__tuple": "cpp",
 			"stack": "cpp",
-			"*.tpp": "cpp"
+			"*.tpp": "cpp",
+			"coroutine": "cpp",
+			"resumable": "cpp",
+			"future": "cpp"
 		},
 		"cSpell.words": [
 			"myvector"

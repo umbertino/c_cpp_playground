@@ -1,11 +1,21 @@
+/**
+ * @file MemoryPool.tpp
+ * @author Umberto Cancedda ()
+ * @brief Implementation of memory pool library functions
+ * @version 0.1
+ * @date 2022-10-27
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 // Std-Includes
 #include <iostream>
 #include <limits>
 
 // Own Includes
 
-
-char* getRefPageStartAddress()
+std::uint8_t* getRefPageStartAddress()
 {
     if (refMemPool == nullptr)
     {
@@ -17,7 +27,7 @@ char* getRefPageStartAddress()
     }
 }
 
-char* getWrkPageStartAddress()
+std::uint8_t* getWrkPageStartAddress()
 {
     if (wrkMemPool == nullptr)
     {
@@ -29,7 +39,7 @@ char* getWrkPageStartAddress()
     }
 }
 
-char* getMeasVarStartAddress()
+std::uint8_t* getMeasVarStartAddress()
 {
     if (measMemPool == nullptr)
     {
@@ -41,14 +51,29 @@ char* getMeasVarStartAddress()
     }
 }
 
-
 // implementation of MemoryPool
-MemoryPool::MemoryPool(std::uint32_t size) : totalMemSize(size), currentMemSize(0), poolMemory(nullptr)
+MemoryPool::MemoryPool(MemoryPoolType type) : currentMemSize(0), poolMemory(nullptr)
 {
-    this->poolMemory = this->pool.allocate(totalMemSize);
+    switch (type)
+    {
+        case MemoryPoolType::referencePage:
+        {
+            this->poolMemory = refPageMem;
+            break;
+        }
+        case MemoryPoolType::workingPage:
+        {
+            this->poolMemory = wrkPageMem;
+            break;
+        }
+        case MemoryPoolType::measurementMemory:
+        {
+            this->poolMemory = measMem;
+        }
+    }
 }
 
-char* MemoryPool::getPoolStartAddress()
+std::uint8_t* MemoryPool::getPoolStartAddress()
 {
     return this->poolMemory;
 }
@@ -87,7 +112,7 @@ calibratable<T>::calibratable()
 {
     if (refMemPool == nullptr)
     {
-        refMemPool = new MemoryPool(CAL_MEM_POOL_SIZE);
+        refMemPool = new MemoryPool(MemoryPoolType::referencePage);
     }
 
     std::cout << "Var-Type: " << typeid(T).name() << std::endl;
@@ -114,7 +139,7 @@ measurable<T>::measurable()
 {
     if (measMemPool == nullptr)
     {
-        measMemPool = new MemoryPool(MEAS_MEM_POOL_SIZE);
+        measMemPool = new MemoryPool(MemoryPoolType::measurementMemory);
     }
 
     std::cout << "Var-Type: " << typeid(this->valPtr).name() << std::endl;

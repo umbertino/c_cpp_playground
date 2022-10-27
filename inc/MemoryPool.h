@@ -1,7 +1,22 @@
+/**
+ * @file MemoryPool.h
+ * @author Umberto Cancedda ()
+ * @brief A memory management library that provides measurement and calibration functionality
+ *        on application level. In contrast to classic approaches measurement and calibration
+ *        variables do not need to be defined globally any more.
+ * @version 0.1
+ * @date 2022-10-27
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #pragma once
 
 namespace MemPoolLib
 {
+extern const std::string applicationName;
+
 /**
  * @brief
  *
@@ -12,28 +27,57 @@ static constexpr std::uint16_t CAL_MEM_POOL_SIZE = 8192;
  * @brief
  *
  */
+static std::uint8_t refPageMem[CAL_MEM_POOL_SIZE];
+
+/**
+ * @brief
+ *
+ */
+static std::uint8_t wrkPageMem[CAL_MEM_POOL_SIZE];
+
+/**
+ * @brief
+ *
+ */
 static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
+
+/**
+ * @brief
+ *
+ */
+static std::uint8_t measMem[MEAS_MEM_POOL_SIZE];
 
 /**
  * @brief Get the Ref Page Start Address object
  *
  * @return char*
  */
-char* getRefPageStartAddress();
+std::uint8_t* getRefPageStartAddress();
 
 /**
  * @brief Get the Wrk Page Start Address object
  *
  * @return char*
  */
-char* getWrkPageStartAddress();
+std::uint8_t* getWrkPageStartAddress();
 
 /**
  * @brief Get the Meas Var Start Address object
  *
  * @return char*
  */
-char* getMeasVarStartAddress();
+std::uint8_t* getMeasVarStartAddress();
+
+/**
+ * @brief
+ *
+ */
+enum class MemoryPoolType
+{
+    referencePage = 0,
+    workingPage = 1,
+    measurementMemory = 2,
+};
 
 /**
  * @brief
@@ -59,13 +103,7 @@ private:
      * @brief
      *
      */
-    std::allocator<char> pool;
-
-    /**
-     * @brief
-     *
-     */
-    char* poolMemory;
+    std::uint8_t* poolMemory;
 
 public:
     /**
@@ -73,14 +111,14 @@ public:
      *
      * @param size
      */
-    MemoryPool(std::uint32_t size);
+    MemoryPool(MemoryPoolType type);
 
     /**
      * @brief Get the Pool Start Address object
      *
      * @return char*
      */
-    char* getPoolStartAddress();
+    std::uint8_t* getPoolStartAddress();
 
     /**
      * @brief
@@ -205,6 +243,13 @@ public:
      *
      */
     ~measurable();
+};
+
+class VarIdentifier
+{
+private:
+public:
+    std::string fullName;
 };
 
 #include "MemoryPool.tpp"

@@ -42,6 +42,8 @@ std::ostream& print()
     return *logOutChannel;
 }
 
+const std::string MemPoolLib::applicationName = "SuperApplication";
+
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl
@@ -246,17 +248,23 @@ int main(void)
 #endif
 
 #if MEMORY_POOL_EXAMPLE
+
+    std::cout << "Starting " << MemPoolLib::applicationName << std::endl;
+
     MemPoolLib::calibratable<std::uint16_t> a;
     MemPoolLib::calibratable<std::uint8_t> b;
     MemPoolLib::calibratable<std::uint8_t> c;
     MemPoolLib::calibratable<std::uint32_t> d;
     MemPoolLib::calibratable<std::uint64_t> e;
+    MemPoolLib::calibratable<std::uint8_t> f;
 
+    //std::cout << MemPoolLib::applicationName;
     a.set(16);
     b.set(8);
     c.set(8);
     d.set(32);
     e.set(64);
+    f.set(8);
 
     std::cout << "RefPageStartAddress: " << static_cast<void*>(MemPoolLib::getRefPageStartAddress()) << std::endl;
 
@@ -266,7 +274,7 @@ int main(void)
     std::uint16_t y;
     std::uint32_t z;
 
-    std::cout << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << std::endl;
+    std::cout << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
 
 #endif
 
