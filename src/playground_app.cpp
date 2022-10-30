@@ -250,46 +250,37 @@ int main(void)
 
     std::cout << "Starting " << MemPoolLib::applicationName << std::endl;
 
-    MemPoolLib::calibratable<std::uint16_t> a;
-    MemPoolLib::calibratable<std::uint8_t> b;
-    MemPoolLib::calibratable<std::uint8_t> c;
-    MemPoolLib::calibratable<std::uint32_t> d;
-    MemPoolLib::calibratable<std::uint64_t> e;
-    MemPoolLib::calibratable<std::uint8_t> f;
-    MemPoolLib::calibratable<std::float_t> g;
-    MemPoolLib::calibratable<std::double_t> h;
+    MemPoolLib::calibratable<std::uint16_t> a("main.a");
+    MemPoolLib::calibratable<std::uint8_t> b("main.b");
+    MemPoolLib::calibratable<std::uint8_t> c("main.c");
+    MemPoolLib::calibratable<std::uint32_t> d("moduleA.d");
+    MemPoolLib::calibratable<std::uint64_t> e("modulB.e");
+    MemPoolLib::calibratable<bool> f("classC.f");
+    MemPoolLib::calibratable<std::float_t> g("func1.g");
+    MemPoolLib::calibratable<std::double_t> h("func2.h");
 
     a.set(16);
     b.set(8);
     c.set(8);
     d.set(32);
     e.set(64);
-    f.set(8);
+    f.set(true);
     g.set(98765);
     h.set(67843);
 
-    std::cout << "RefPageStartAddress: " << static_cast<void*>(MemPoolLib::getRefPageStartAddress()) << std::endl;
-
     std::cout << std::endl;
 
+    std::uint8_t* pageStartAddress = MemPoolLib::RefMemoryPool->getPoolStartAddress();
+    std::cout << "Hexdump for " << MemPoolLib::RefMemoryPool->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
 
-    std::cout << "Hexdump for :" <<
-    MemPoolLib::getRefPageNumVariables() << " Variables" << std::endl;
+    MemPoolLib::RefMemoryPool->dumpPoolMemory();
 
-    std::uint8_t* pageStartAddress = MemPoolLib::getRefPageStartAddress();
-
-    for (std::uint32_t i = 0; i < MemPoolLib::getRefPageCurrentSize(); i++)
-    {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << +pageStartAddress[i] << " ";
-    }
+    //std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
 
     std::cout << std::endl;
+    std::cout << "Ref-Page list of variables"<< std::endl;
 
-    std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
-
-    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(std::uint64_t);
-
-    std::cout << boost::core::demangled_name(ti) << std::endl;
+    MemPoolLib::RefMemoryPool->dumpListOfvariables();
 
 #endif
 
