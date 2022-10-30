@@ -268,19 +268,53 @@ int main(void)
     g.set(98765);
     h.set(67843);
 
+    MemPoolLib::measurable<std::uint16_t> ma("main.ma");
+    MemPoolLib::measurable<std::uint8_t> mb("main.b");
+    MemPoolLib::measurable<std::uint8_t> mc("main.c");
+    MemPoolLib::measurable<std::uint32_t> md("moduleA.d");
+    MemPoolLib::measurable<std::uint64_t> me("modulB.e");
+    MemPoolLib::measurable<bool> mf("classC.f");
+    MemPoolLib::measurable<std::float_t> mg("func1.g");
+    MemPoolLib::measurable<std::double_t> mh("func2.h");
+
+    ma.set(16);
+    mb.set(8);
+    mc.set(8);
+    md.set(32);
+    me.set(64);
+    mf.set(true);
+    mg.set(98765);
+    mh.set(67843);
+
     std::cout << std::endl;
 
-    std::uint8_t* pageStartAddress = MemPoolLib::RefMemoryPool->getPoolStartAddress();
-    std::cout << "Hexdump for " << MemPoolLib::RefMemoryPool->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
+    std::uint8_t* pageStartAddress = MemPoolLib::CalibrationObject->getPoolStartAddress();
+    std::cout << "Hexdump for " << MemPoolLib::CalibrationObject->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
 
-    MemPoolLib::RefMemoryPool->dumpPoolMemory();
+    MemPoolLib::CalibrationObject->dumpPoolMemory();
 
-    //std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
+    // std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
 
     std::cout << std::endl;
-    std::cout << "Ref-Page list of variables"<< std::endl;
+    std::cout << "Ref-Page list of variables" << std::endl;
 
-    MemPoolLib::RefMemoryPool->dumpListOfvariables();
+    MemPoolLib::CalibrationObject->dumpListOfvariables();
+
+    std::cout << std::endl;
+
+    ///////
+
+    pageStartAddress = MemPoolLib::MeasurementObject->getPoolStartAddress();
+    std::cout << "Hexdump for " << MemPoolLib::MeasurementObject->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
+
+    MemPoolLib::MeasurementObject->dumpPoolMemory();
+
+    // std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Measurement list of variables" << std::endl;
+
+    MemPoolLib::MeasurementObject->dumpListOfvariables();
 
 #endif
 

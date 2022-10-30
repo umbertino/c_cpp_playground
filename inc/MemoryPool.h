@@ -20,289 +20,339 @@
 
 namespace MemPoolLib
 {
-    /**
+/**
  * @brief The name of the application. Needs to be defined by user
  *
  */
-    extern const std::string applicationName;
+extern const std::string applicationName;
 
-    /**
+/**
  * @brief The size of the calibration memory in Bytes
  *
  */
-    static constexpr std::uint16_t CAL_MEM_POOL_SIZE = 8192;
+static constexpr std::uint16_t CAL_MEM_POOL_SIZE = 8192;
 
-    /**
+/**
  * @brief The rteference page memory
  *
  */
-    static std::uint8_t refPageMemory[CAL_MEM_POOL_SIZE];
+static std::uint8_t referencePageMemory[CAL_MEM_POOL_SIZE];
 
-    /**
+/**
  * @brief The working page memory
  *
  */
-    static std::uint8_t wrkPageMemory[CAL_MEM_POOL_SIZE];
+static std::uint8_t workingPageMemory[CAL_MEM_POOL_SIZE];
 
-    /**
+/**
  * @brief The size of the memory foe measurement data in Bytes
  *
  */
-    static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
+static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
 
-    /**
+/**
  * @brief The memory for the measurement data
  *
  */
-    static std::uint8_t measPageMemory[MEAS_MEM_POOL_SIZE];
+static std::uint8_t measurementPageMemory[MEAS_MEM_POOL_SIZE];
 
-    /**
+/**
  * @brief Defines the types of memory a pool is associated to
  *
  */
-    enum class MemoryPoolType
-    {
-        referencePage = 0,
-        workingPage = 1,
-        measurementPage = 2,
-    };
+enum class MemoryPoolType
+{
+    calibration = 0,
+    measurement = 1,
+};
 
-    /**
- * @brief Defines the category a pool variable belongs to
+/**
+ * @brief A type that helps to distinguish between reference and working data
  *
  */
-    enum class VariableCategory
-    {
-        calibration = 0,
-        measurement = 1,
-    };
+enum class CalibrationPageType
+{
+    reference = 0,
+    working = 2
+};
 
-    /**
- * @brief
+/**
+ * @brief Meta data to clearly identify a variable
  *
  */
-    class VariableIdentifier
-    {
-    private:
-    public:
-        std::string type;
-        std::uint8_t size;
-        std::uint32_t relativeAddressOffset;
-        VariableCategory category;
-    };
+class VariableIdentifier
+{
+private:
+public:
+    std::string type;
+    std::uint8_t size;
+    std::uint32_t relativeAddressOffset;
+    MemoryPoolType category;
+};
 
-    /**
- * @brief
+/**
+ * @brief A memory pool class
  *
- * @tparam T
- */
-    class MemoryPool
-    {
-    private:
-        /**
-     * @brief
-     *
-     */
-        std::uint32_t totalMemPoolSize;
-
-        /**
-     * @brief
-     *
-     */
-        std::uint32_t usedMemPoolSize;
-
-        /**
-     * @brief
-     *
-     */
-        std::uint32_t numVariablesInMemPool;
-
-        /**
-     * @brief
-     *
-     */
-        std::uint8_t* poolMemoryStartAddress;
-
-        /**
-     * @brief
-     *
-     */
-        std::map<std::string, VariableIdentifier> variableList;
-
-    public:
-        /**
-     * @brief Construct a new memory Pool object
-     *
-     * @param type
-     */
-        MemoryPool(MemoryPoolType type);
-
-        /**
-     * @brief Get the Pool Start Address object
-     *
-     * @return std::uint8_t*
-     */
-        std::uint8_t* getPoolStartAddress();
-
-        /**
-     * @brief Get the Pool Num Vars object
-     *
-     * @return std::uint32_t
-     */
-        std::uint32_t getPoolNumVariables();
-
-        /**
-     * @brief Get the Pool Tital Size object
-     *
-     * @return std::uint32_t
-     */
-        std::uint32_t getPoolTotalSize();
-
-        /**
-     * @brief Get the Pool Current Size object
-     *
-     * @return std::uint32_t
-     */
-        std::uint32_t getPoolCurrentSize();
-
-        /**
-     * @brief
-     *
-     */
-        bool dumpListOfvariables();
-
-        /**
-     * @brief
-     *
-     * @return true
-     * @return false
-     */
-        bool dumpPoolMemory();
-
-        /**
-     * @brief
-     *
-     * @tparam T
-     * @param type
-     * @return T&
-     */
-        template<typename T>
-        T* addVariable(T testVar, std::string label, VariableCategory category);
-    };
-
-    /**
- * @brief
+ * @details This is the base class for memory pools. It cannot be instatiated and thus must be inherited.
+ *          It monitors its used size comaring against total size and maintains a list of all
+ *          used variables' meta data. On construction of a derived object a static memory area
+ *          needs to be assigned to it.
  *
  */
-    static MemoryPool* RefMemoryPool = nullptr;
+class MemoryPool
+{
+protected:
+    /**
+     * @brief The size of the memory pool in Bytes
+     *
+     */
+    std::uint32_t totalMemPoolSize;
 
     /**
- * @brief
- *
- */
-    static MemoryPool* WrkMemoryPool = nullptr;
+     * @brief The amount of memory currently used in Bytes
+     *
+     */
+    std::uint32_t usedMemPoolSize;
 
     /**
- * @brief
- *
- */
-    static MemoryPool* MeasMemoryPool = nullptr;
+     * @brief The number of variables maintained in this pool
+     *
+     */
+    std::uint32_t numVariablesInMemPool;
 
     /**
- * @brief
- *
- * @tparam T
- */
-    template<class T>
-    class memPoolVariable
-    {
-        static_assert(std::is_arithmetic<T>::value, "Type must be numeric");
+     * @brief A pointer to the memory associated to thi pool
+     *
+     */
+    std::uint8_t* poolMemoryStartAddress;
 
-    private:
-    protected:
-        /**
+    /**
+     * @brief The list of all variables handled by this memory pool
+     *
+     */
+    std::map<std::string, VariableIdentifier> variableList;
+
+    /**
+     * @brief The default constructor
+     *
+     */
+    MemoryPool();
+
+    /**
+     * @brief The default destructor
+     *
+     */
+    ~MemoryPool();
+
+public:
+    /**
+     * @brief Get the pool's memory start address
+     *
+     * @return The start address
+     */
+    std::uint8_t* getPoolStartAddress();
+
+    /**
+     * @brief Get the pool's number of variables handles by this pool
+     *
+     * @return The number of variables handled by this pool
+     */
+    std::uint32_t getPoolNumVariables();
+
+    /**
+     * @brief Get the total size of the memory associated to this pool
+     *
+     * @return The total size of this pool's memory in Bytes
+     */
+    std::uint32_t getPoolTotalSize();
+
+    /**
+     * @brief Get the size of the used memory of this pool
+     *
+     * @return The size of this pool's memory in use in Bytes
+     */
+    std::uint32_t getPoolCurrentSize();
+
+    /**
+     * @brief Dump a list of all variables handled by this memory pool
+     *
+     * @return true The list could be dumped successfully
+     * @return false The list is empty
+     */
+    bool dumpListOfvariables();
+
+    /**
+     * @brief Dump a hex-output of the used pool memory
+     *
+     * @return true Memory could be dumped successfully
+     * @return false Memory is not used, i.e. it is empty
+     */
+    bool dumpPoolMemory();
+    /**
      * @brief
      *
+     * @tparam T The type of the variable
+     * @param testVar the variable to be added
+     * @param label A unique name
+     * @param category The category type of the variable to be added
+     * @return T* The address of the variable in the pool's memory, a nullptr on failure
      */
-        T* valPtr;
+    template <typename T>
+    T* addVariable(T testVar, std::string label, MemoryPoolType category);
+};
 
-    public:
-        /**
-     * @brief Construct a new set object
+/**
+ * @brief A calibration memory pool class
+ *
+ * @details This is a concrete class that can be instatiated and may contain
+ *          specifics related to calibration
+ */
+class CalibrationMemoryPool : public MemoryPool
+{
+private:
+    /**
+     * @brief Contains the current active page information
      *
-     * @param value
      */
-        void set(T value);
+    CalibrationPageType activePage;
 
-        /**
-     * @brief
+public:
+    /**
+     * @brief The default constructor
      *
-     * @return T
      */
-        T get();
-    };
+    CalibrationMemoryPool();
 
     /**
- * @brief
+     * @brief Switches to another memory with alternative data content
+     *
+     * @param page The type of page to switch to
+     * @return true Switching was successful
+     * @return false Switching failed
+     */
+    bool switchPage(CalibrationPageType page);
+};
+
+/**
+ * @brief A memory pool class for measurement data
  *
- * @tparam T
+ * @details This is a concrete class that can be instatiated and may contain
+ *          specifics related to measurement
+ *
  */
-    template<class T>
-    class calibratable : public memPoolVariable<T>
-    {
-    private:
-        // static std::uint32_t numVars;
-
-    public:
-        /**
-     * @brief Construct a new calibratable object
+class MeasurementMemoryPool : public MemoryPool
+{
+private:
+public:
+    /**
+     * @brief The default constructor
      *
      */
-        calibratable(std::string label);
+    MeasurementMemoryPool();
+};
 
-        /**
-     * @brief Construct a new calibratable object
-     *
-     * @param val
-     */
-        // calibratable(T val);
+/**
+ * @brief The pointer to the memory pool object related to calibration
+ *
+ * @details This object is created as soon as the first variable is added to it.
+ *
+ */
+static MemoryPool* CalibrationObject = nullptr;
 
-        /**
-     * @brief Destroy the calibratable object
+/**
+ * @brief The pointer to the memory pool object related to measurement
+ *
+ * @details This object is created as soon as the first variable is added to it.
+ *
+ */
+static MemoryPool* MeasurementObject = nullptr;
+
+/**
+ * @brief A base class representing a variable located in a memory pool. This class
+ *        cannot be instatiated and thus needs to be derived
+ *
+ * @details The type of allowed variables (template type) is restricted to arithmetic types
+ *
+ * @tparam T The type of the variable (template type)
+ */
+template <class T>
+class memPoolVariable
+{
+    static_assert(std::is_arithmetic<T>::value, "Type must be numeric");
+
+private:
+protected:
+    /**
+     * @brief The address of the variable in its memory pool
      *
      */
-        ~calibratable();
-    };
+    T* valPtr;
+
+    memPoolVariable();
+
+public:
+    /**
+     * @brief Set the value of a memory pool variable
+     *
+     * @param value The value to be set
+     */
+    void set(T value);
 
     /**
- * @brief
+     * @brief Return the current value of a memory pool variable
+     *
+     * @return The value of the memory pool variable
+     */
+    T get();
+};
+
+/**
+ * @brief A class that represents a calibration variable within a memory pool
  *
- * @tparam T
+ * @tparam The varaible type (template type)
  */
-    template<class T>
-    class measurable : public memPoolVariable<T>
-    {
-    private:
-    public:
-        /**
-     * @brief Construct a new measurable object
+template <class T>
+class calibratable : public memPoolVariable<T>
+{
+private:
+public:
+    /**
+     * @brief Constructs a new calibration variable
      *
+     * @param label A human readible identifier / name for the variable
      */
-        measurable();
+    calibratable(std::string label);
 
-        /**
-     * @brief Construct a new measurable object
+    /**
+     * @brief The default destructor
      *
-     * @param val
      */
-        // measurable(T val);
+    ~calibratable();
+};
 
-        /**
-     * @brief Destroy the measurable object
+/**
+ * @brief A class that represents a measurement variable within a memory pool
+ *
+ * @tparam The varaible type (template type)
+ */
+template <class T>
+class measurable : public memPoolVariable<T>
+{
+private:
+public:
+    /**
+     * @brief Constructs a new measurement variable
+     *
+     * @param label A human readible identifier / name for the variable
+     */
+    measurable(std::string label);
+
+    /**
+     * @brief The default destructor
      *
      */
-        ~measurable();
-    };
+    ~measurable();
+};
 
 #include "MemoryPool.tpp"
 }

@@ -46,7 +46,7 @@ add_dependencies(${APP_BIN_NAME} prime scopeguard customErrorCodes)
 include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
 target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} prime scopeguard customErrorCodes)
 # create a dedicated map-file for each configuration, too
-target_link_options(${APP_BIN_NAME} PRIVATE "/MAP:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${APP_BIN_NAME}.map")
+#target_link_options(${APP_BIN_NAME} PRIVATE "/MAP:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${APP_BIN_NAME}.map")
 
 # Unit Test executable
 include(GoogleTest)

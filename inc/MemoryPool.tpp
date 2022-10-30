@@ -17,28 +17,8 @@
 // Own Includes
 
 // implementation of MemoryPool
-MemoryPool::MemoryPool(MemoryPoolType type) : usedMemPoolSize(0), numVariablesInMemPool(0), poolMemoryStartAddress(nullptr)
+MemoryPool::MemoryPool() : usedMemPoolSize(0), numVariablesInMemPool(0), poolMemoryStartAddress(nullptr)
 {
-    switch (type)
-    {
-        case MemoryPoolType::referencePage:
-        {
-            this->poolMemoryStartAddress = refPageMemory;
-            this->totalMemPoolSize = CAL_MEM_POOL_SIZE;
-            break;
-        }
-        case MemoryPoolType::workingPage:
-        {
-            this->poolMemoryStartAddress = wrkPageMemory;
-            this->totalMemPoolSize = CAL_MEM_POOL_SIZE;
-            break;
-        }
-        case MemoryPoolType::measurementPage:
-        {
-            this->poolMemoryStartAddress = measPageMemory;
-            this->totalMemPoolSize = MEAS_MEM_POOL_SIZE;
-        }
-    }
 }
 
 std::uint8_t* MemoryPool::getPoolStartAddress()
@@ -71,7 +51,7 @@ bool MemoryPool::dumpListOfvariables()
     {
         for (auto const var : this->variableList)
         {
-            std::string category = (var.second.category == VariableCategory::calibration) ? "calibration" : "measurement";
+            std::string category = (var.second.category == MemoryPoolType::calibration) ? "calibration" : "measurement";
             std::cout << std::setfill(' ') << std::setw(32) << std::left << var.first << "\t" << std::setw(18) << var.second.type << "\t" << +var.second.size << " Byte"
                       << "\t"
                       << "Offset: " << std::right << std::setw(8) << var.second.relativeAddressOffset
@@ -126,7 +106,7 @@ bool MemoryPool::dumpPoolMemory()
 }
 
 template <class T>
-T* MemoryPool::addVariable(T testVar, std::string label, VariableCategory category)
+T* MemoryPool::addVariable(T testVar, std::string label, MemoryPoolType category)
 {
     if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
     {
@@ -154,6 +134,49 @@ T* MemoryPool::addVariable(T testVar, std::string label, VariableCategory catego
     }
 }
 
+CalibrationMemoryPool::CalibrationMemoryPool()
+{
+    this->poolMemoryStartAddress = referencePageMemory;
+    this->totalMemPoolSize = CAL_MEM_POOL_SIZE;
+    this->activePage = CalibrationPageType::reference;
+}
+
+bool CalibrationMemoryPool::switchPage(CalibrationPageType page)
+{
+    switch (page)
+    {
+        case CalibrationPageType::reference:
+        {
+            this->poolMemoryStartAddress = referencePageMemory;
+            this->activePage = CalibrationPageType::reference;
+
+            return true;
+        }
+        case CalibrationPageType::working:
+        {
+            this->poolMemoryStartAddress = workingPageMemory;
+            this->activePage = CalibrationPageType::working;
+
+            return true;
+        }
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+MeasurementMemoryPool::MeasurementMemoryPool()
+{
+    this->poolMemoryStartAddress = measurementPageMemory;
+    this->totalMemPoolSize = MEAS_MEM_POOL_SIZE;
+}
+
+template <class T>
+memPoolVariable<T>::memPoolVariable()
+{
+}
+
 template <class T>
 void memPoolVariable<T>::set(T value)
 {
@@ -170,16 +193,14 @@ T memPoolVariable<T>::get()
 template <class T>
 calibratable<T>::calibratable(std::string label)
 {
-    if (RefMemoryPool == nullptr)
+    if (CalibrationObject == nullptr)
     {
-        RefMemoryPool = new MemoryPool(MemoryPoolType::referencePage);
+        CalibrationObject = new CalibrationMemoryPool();
     }
-
-    // std::cout << "Var-Type: " << typeid(T).name() << std::endl;
 
     T temp(0);
 
-    this->valPtr = RefMemoryPool->addVariable(temp, label, VariableCategory::calibration);
+    this->valPtr = CalibrationObject->addVariable(temp, label, MemoryPoolType::calibration);
 
     *(this->valPtr) = 0;
 }
@@ -191,23 +212,22 @@ calibratable<T>::~calibratable()
 
 // implementation of measurable
 template <class T>
-measurable<T>::measurable()
+measurable<T>::measurable(std::string label)
 {
-    if (MeasMemoryPool == nullptr)
+    if (MeasurementObject == nullptr)
     {
-        MeasMemoryPool = new MemoryPool(MemoryPoolType::measurementPage);
+        MeasurementObject = new MeasurementMemoryPool();
     }
 
-    std::cout << "Var-Type: " << typeid(this->valPtr).name() << std::endl;
-    T temp;
+    T temp(0);
 
-    this->valPtr = MeasMemoryPool->addVariable(temp, label, VariableCategory::measurement);
+    this->valPtr = MeasurementObject->addVariable(temp, label, MemoryPoolType::measurement);
 
-    this->valPtr = 0;
+    *(this->valPtr) = 0;
 }
 
 template <class T>
 measurable<T>::~measurable()
 {
-    this->valPtr = std::numeric_limits<T>::max();
+    // this->valPtr = std::numeric_limits<T>::max();
 }
