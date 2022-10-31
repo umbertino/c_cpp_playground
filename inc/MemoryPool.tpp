@@ -5,7 +5,7 @@
  * @version 0.1
  * @date 2022-10-27
  *
- * @copyright Copyright (c)2022
+ * @copyright Copyright (c) 2022
  *
  */
 
@@ -115,11 +115,11 @@ T* MemoryPool::addVariable(T testVar, std::string label, MemoryPoolType category
     else
     {
         std::string varName = applicationName + "." + label;
-        std::map<std::string, VariableIdentifier>::iterator it = this->variableList.find(varName);
+        std::map<std::string, VariableIdentifier>::iterator search = this->variableList.find(varName);
         T* ptrToPoolMemory;
 
         // check if variable is already registered in this memory pool
-        if (it == this->variableList.end())
+        if (search == this->variableList.end())
         {
             VariableIdentifier varId;
             varId.type = typeid(T).name();
@@ -134,7 +134,7 @@ T* MemoryPool::addVariable(T testVar, std::string label, MemoryPoolType category
         }
         else
         {
-            ptrToPoolMemory = reinterpret_cast<T*>(this->getPoolStartAddress() + it->second.relativeAddressOffset);
+            ptrToPoolMemory = reinterpret_cast<T*>(this->getPoolStartAddress() + search->second.relativeAddressOffset);
         }
 
         return ptrToPoolMemory;
