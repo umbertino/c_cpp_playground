@@ -51,7 +51,7 @@ bool MemoryPool::dumpListOfvariables()
     {
         for (auto const var : this->variableList)
         {
-            std::string category = (var.second.category == MemoryPoolType::calibration) ? "calibration" : "measurement";
+            std::string category = (var.second.category == CategoryType::calibration) ? "calibration" : "measurement";
             std::cout << std::setfill(' ') << std::setw(32) << std::left << var.first << "\t" << std::setw(18) << var.second.type << "\t" << +var.second.size << " Byte"
                       << "\t"
                       << "Offset: " << std::right << std::setw(8) << var.second.relativeAddressOffset
@@ -106,7 +106,7 @@ bool MemoryPool::dumpPoolMemory()
 }
 
 template <class T>
-T* MemoryPool::addVariable(T testVar, std::string label, MemoryPoolType category)
+T* MemoryPool::addVariable(T testVar, std::string label, CategoryType category)
 {
     if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
     {
@@ -209,7 +209,7 @@ calibratable<T>::calibratable(T value, std::string label)
     }
 
     this->label = label;
-    this->valPtr = CalibrationObject->addVariable(value, label, MemoryPoolType::calibration);
+    this->valPtr = CalibrationObject->addVariable(value, label, CategoryType::calibration);
     *(this->valPtr) = value;
 }
 
@@ -229,7 +229,7 @@ measurable<T>::measurable(std::string label)
 
     this->label = label;
     T temp(0);
-    this->valPtr = MeasurementObject->addVariable(temp, label, MemoryPoolType::measurement);
+    this->valPtr = MeasurementObject->addVariable(temp, label, CategoryType::measurement);
     *(this->valPtr) = 0;
 }
 

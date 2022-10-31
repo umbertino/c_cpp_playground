@@ -57,12 +57,21 @@ static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
 static std::uint8_t measurementPageMemory[MEAS_MEM_POOL_SIZE];
 
 /**
- * @brief Defines the types of memory a pool is associated to
+ * @brief Defines the category an item is associated to
  *
  */
-enum class MemoryPoolType
+enum class CategoryType
 {
+    /**
+     * @brief Identifies a calibration item
+     *
+     */
     calibration = 0,
+
+    /**
+     * @brief Identifies a measurement item
+     *
+     */
     measurement = 1,
 };
 
@@ -72,7 +81,16 @@ enum class MemoryPoolType
  */
 enum class CalibrationPageType
 {
+    /**
+     * @brief Identifies the read-only reference calibration data
+     *
+     */
     reference = 0,
+
+    /**
+     * @brief Identifies the read-write working calibration data
+     *
+     */
     working = 2
 };
 
@@ -84,10 +102,29 @@ class VariableIdentifier
 {
 private:
 public:
+    /**
+     * @brief The type of the variable
+     *
+     */
     std::string type;
+
+    /**
+     * @brief The size of the variable in Bytes
+     *
+     */
     std::uint8_t size;
+
+    /**
+     * @brief The address offset relative to the base address
+     *
+     */
     std::uint32_t relativeAddressOffset;
-    MemoryPoolType category;
+
+    /**
+     * @brief Identifies the category the variable belongs to
+     *
+     */
+    CategoryType category;
 };
 
 /**
@@ -203,7 +240,7 @@ public:
      * @return T* The address of the variable in the pool's memory, a nullptr on failure
      */
     template <typename T>
-    T* addVariable(T testVar, std::string label, MemoryPoolType category);
+    T* addVariable(T testVar, std::string label, CategoryType category);
 };
 
 /**
