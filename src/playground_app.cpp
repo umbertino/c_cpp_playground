@@ -250,38 +250,29 @@ int main(void)
 
     std::cout << "Starting " << MemPoolLib::applicationName << std::endl;
 
-    MemPoolLib::calibratable<std::uint16_t> a("main.a");
-    MemPoolLib::calibratable<std::uint8_t> b("main.b");
-    MemPoolLib::calibratable<std::uint8_t> c("main.c");
-    MemPoolLib::calibratable<std::uint32_t> d("moduleA.d");
-    MemPoolLib::calibratable<std::uint64_t> e("modulB.e");
-    MemPoolLib::calibratable<bool> f("classC.f");
-    MemPoolLib::calibratable<std::float_t> g("func1.g");
-    MemPoolLib::calibratable<std::double_t> h("func2.h");
-
-    a.set(16);
-    b.set(8);
-    c.set(8);
-    d.set(32);
-    e.set(64);
-    f.set(true);
-    g.set(98765);
-    h.set(67843);
+    MemPoolLib::calibratable<std::int8_t> a(16, "main.a");
+    MemPoolLib::calibratable<std::int8_t> b(8, "main.b");
+    MemPoolLib::calibratable<std::int8_t> c(8, "main.c");
+    MemPoolLib::calibratable<std::int32_t> d(32, "moduleA.d");
+    MemPoolLib::calibratable<std::int64_t> e(64, "modulB.e");
+    MemPoolLib::calibratable<bool> f(true, "classC.f");
+    MemPoolLib::calibratable<std::float_t> g(98765, "func1.g");
+    MemPoolLib::calibratable<std::double_t> h(67843, "func2.h");
 
     MemPoolLib::measurable<std::uint16_t> ma("main.ma");
-    MemPoolLib::measurable<std::uint8_t> mb("main.b");
-    MemPoolLib::measurable<std::uint8_t> mc("main.c");
-    MemPoolLib::measurable<std::uint32_t> md("moduleA.d");
-    MemPoolLib::measurable<std::uint64_t> me("modulB.e");
-    MemPoolLib::measurable<bool> mf("classC.f");
-    MemPoolLib::measurable<std::float_t> mg("func1.g");
-    MemPoolLib::measurable<std::double_t> mh("func2.h");
+    MemPoolLib::measurable<std::uint8_t> mb("main.mb");
+    MemPoolLib::measurable<std::uint8_t> mc("main.mc");
+    MemPoolLib::measurable<std::uint32_t> md("moduleA.md");
+    MemPoolLib::measurable<std::uint64_t> me("modulB.me");
+    MemPoolLib::measurable<bool> mf("classC.mf");
+    MemPoolLib::measurable<std::float_t> mg("func1.mg");
+    MemPoolLib::measurable<std::double_t> mh("func2.mh");
 
-    ma.set(16);
-    mb.set(8);
-    mc.set(8);
-    md.set(32);
-    me.set(64);
+    ma.set(32);
+    mb.set(16);
+    mc.set(16);
+    md.set(64);
+    me.set(128);
     mf.set(true);
     mg.set(98765);
     mh.set(67843);
@@ -293,7 +284,7 @@ int main(void)
 
     MemPoolLib::CalibrationObject->dumpPoolMemory();
 
-    // std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
+    std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << " " << +g.get() << " " << +h.get() << std::endl;
 
     std::cout << std::endl;
     std::cout << "Ref-Page list of variables" << std::endl;

@@ -188,8 +188,13 @@ public:
      * @return false Memory is not used, i.e. it is empty
      */
     bool dumpPoolMemory();
+
     /**
-     * @brief
+     * @brief Adds a variable to the memory pool.
+     *
+     * @details In case a variable with the specified label already exists,
+     *          it is not added any further. Instead the address of the
+     *          existing one is returned.
      *
      * @tparam T The type of the variable
      * @param testVar the variable to be added
@@ -288,22 +293,32 @@ protected:
      */
     T* valPtr;
 
+    /**
+     * @brief A human readible identifier / name for the variable
+     *
+     */
+    std::string label;
+
+    /**
+     * @brief The default constructor
+     *
+     */
     memPoolVariable();
 
 public:
-    /**
-     * @brief Set the value of a memory pool variable
-     *
-     * @param value The value to be set
-     */
-    void set(T value);
-
     /**
      * @brief Return the current value of a memory pool variable
      *
      * @return The value of the memory pool variable
      */
     T get();
+
+    /**
+     * @brief Retrieves the label of the variable
+     *
+     * @return std::string the label
+     */
+    std::string getLabel();
 };
 
 /**
@@ -319,9 +334,10 @@ public:
     /**
      * @brief Constructs a new calibration variable
      *
+     * @param value The value of the calibration variable object, cannot be altered any more
      * @param label A human readible identifier / name for the variable
      */
-    calibratable(std::string label);
+    calibratable(T value, std::string label);
 
     /**
      * @brief The default destructor
@@ -339,6 +355,11 @@ template <class T>
 class measurable : public memPoolVariable<T>
 {
 private:
+    /**
+     * @brief The default value the measurable object gets when not set or when destructed
+     *
+     */
+
 public:
     /**
      * @brief Constructs a new measurement variable
@@ -352,6 +373,13 @@ public:
      *
      */
     ~measurable();
+
+    /**
+     * @brief Set the value of a measurement pool variable
+     *
+     * @param value The value to be set
+     */
+    void set(T value);
 };
 
 #include "MemoryPool.tpp"
