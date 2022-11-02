@@ -41,7 +41,7 @@ std::uint32_t MemoryPool::getPoolCurrentSize()
     return this->usedMemPoolSize;
 }
 
-bool MemoryPool::dumpListOfvariables()
+bool MemoryPool::dumpPoolListOfvariables()
 {
     if (this->variableList.empty())
     {
@@ -106,7 +106,7 @@ bool MemoryPool::dumpPoolMemory()
 }
 
 template <class T>
-T* MemoryPool::addVariable(T testVar, std::string label, CategoryType category)
+T* MemoryPool::addPoolVariable(T testVar, std::string label, CategoryType category)
 {
     if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
     {
@@ -138,6 +138,20 @@ T* MemoryPool::addVariable(T testVar, std::string label, CategoryType category)
         }
 
         return ptrToPoolMemory;
+    }
+}
+
+VariableIdentifier* MemoryPool::getPoolVariable(const std::string label)
+{
+    std::map<std::string, VariableIdentifier>::iterator search = this->variableList.find(label);
+
+    if (search == this->variableList.end())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &(search->second);
     }
 }
 
@@ -209,7 +223,7 @@ calibratable<T>::calibratable(T value, std::string label)
     }
 
     this->label = label;
-    this->valPtr = CalibrationObject->addVariable(value, label, CategoryType::calibration);
+    this->valPtr = CalibrationObject->addPoolVariable(value, label, CategoryType::calibration);
     *(this->valPtr) = value;
 }
 
@@ -229,7 +243,7 @@ measurable<T>::measurable(std::string label)
 
     this->label = label;
     T temp(0);
-    this->valPtr = MeasurementObject->addVariable(temp, label, CategoryType::measurement);
+    this->valPtr = MeasurementObject->addPoolVariable(temp, label, CategoryType::measurement);
     *(this->valPtr) = 0;
 }
 

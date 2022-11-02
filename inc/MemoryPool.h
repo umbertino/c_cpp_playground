@@ -216,7 +216,7 @@ public:
      * @return true The list could be dumped successfully
      * @return false The list is empty
      */
-    bool dumpListOfvariables();
+    bool dumpPoolListOfvariables();
 
     /**
      * @brief Dump a hex-output of the used pool memory
@@ -240,7 +240,16 @@ public:
      * @return T* The address of the variable in the pool's memory, a nullptr on failure
      */
     template <typename T>
-    T* addVariable(T testVar, std::string label, CategoryType category);
+    T* addPoolVariable(T testVar, std::string label, CategoryType category);
+
+    /**
+     * @brief Retrieves the variable identification object assosiated to a label
+     *
+     * @param label The name of the variable to be queried
+     * @return A pointer to a VariableIdentifier object in case the variable exists
+     * @return nullptr in case the name/label is not existent in the memory pool
+     */
+    VariableIdentifier* getPoolVariable(const std::string label);
 };
 
 /**

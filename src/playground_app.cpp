@@ -289,7 +289,7 @@ int main(void)
     std::cout << std::endl;
     std::cout << "Ref-Page list of variables" << std::endl;
 
-    MemPoolLib::CalibrationObject->dumpListOfvariables();
+    MemPoolLib::CalibrationObject->dumpPoolListOfvariables();
 
     std::cout << std::endl;
 
@@ -305,7 +305,12 @@ int main(void)
     std::cout << std::endl;
     std::cout << "Measurement list of variables" << std::endl;
 
-    MemPoolLib::MeasurementObject->dumpListOfvariables();
+    MemPoolLib::MeasurementObject->dumpPoolListOfvariables();
+
+    MemPoolLib::VariableIdentifier* varId = MemPoolLib::MeasurementObject->getPoolVariable("SuperApplication.modulB.me");
+
+    std::cout << "ID: " << ((varId->category == MemPoolLib::CategoryType::calibration) ? "calibration" : "measurement")
+                        << " " << +varId->relativeAddressOffset << " " << +varId->size << " " << varId->type << std::endl;
 
 #endif
 
