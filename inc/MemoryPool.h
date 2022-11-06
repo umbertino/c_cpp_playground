@@ -115,7 +115,7 @@ public:
 };
 
 /**
- * @brief A memory pool class
+ * @brief A memory pool base class
  *
  * @details This is the base class for memory pools. It cannot be instatiated and thus must be inherited.
  *          It monitors its used size comaring against total size and maintains a list of all
