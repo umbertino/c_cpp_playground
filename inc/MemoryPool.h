@@ -319,10 +319,10 @@ static MemoryPool* CalibrationObject = nullptr;
 static MemoryPool* MeasurementObject = nullptr;
 
 /**
- * @brief A base class representing a variable located in a memory pool. This class
- *        cannot be instatiated and thus needs to be derived
+ * @brief A base class representing a variable located in a memory pool.
  *
- * @details The type of allowed variables (template type) is restricted to arithmetic types
+ * @details The type of allowed variables (template type) is restricted to arithmetic types. This class
+ *          cannot be instatiated and thus needs to be derived
  *
  * @tparam T The type of the variable (template type)
  */
