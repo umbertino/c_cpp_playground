@@ -251,7 +251,15 @@ calibratable<T>::calibratable(T value, std::string label)
 
     this->label = label;
     this->valPtr = CalibrationObject->addPoolVariable(value, label, CategoryType::calibration);
-    *(this->valPtr) = value;
+
+    if (this->valPtr == nullptr)
+    {
+        std::raise(SIGSEGV);
+    }
+    else
+    {
+        *(this->valPtr) = value;
+    }
 }
 
 template <class T>
@@ -271,7 +279,15 @@ measurable<T>::measurable(std::string label)
     this->label = label;
     T temp(0);
     this->valPtr = MeasurementObject->addPoolVariable(temp, label, CategoryType::measurement);
-    *(this->valPtr) = 0;
+
+    if (this->valPtr == nullptr)
+    {
+        std::raise(SIGSEGV);
+    }
+    else
+    {
+        *(this->valPtr) = 0;
+    }
 }
 
 template <class T>
