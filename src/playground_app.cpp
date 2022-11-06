@@ -43,8 +43,6 @@ std::ostream& print()
     return *logOutChannel;
 }
 
-const std::string MemPoolLib::applicationName = "SuperApplication";
-
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl

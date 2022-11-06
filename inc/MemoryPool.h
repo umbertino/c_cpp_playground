@@ -15,22 +15,15 @@
 
 #include <typeinfo>
 #include <cstdint>
+#include <csignal>
 #include <string>
 #include <map>
 
+// Own Includes
+#include "MemoryPoolUserConfig.h"
+
 namespace MemPoolLib
 {
-/**
- * @brief The name of the application. Needs to be defined by user
- *
- */
-extern const std::string applicationName;
-
-/**
- * @brief The size of the calibration memory in Bytes
- *
- */
-static constexpr std::uint16_t CAL_MEM_POOL_SIZE = 8192;
 
 /**
  * @brief The rteference page memory
@@ -43,12 +36,6 @@ static std::uint8_t referencePageMemory[CAL_MEM_POOL_SIZE];
  *
  */
 static std::uint8_t workingPageMemory[CAL_MEM_POOL_SIZE];
-
-/**
- * @brief The size of the memory foe measurement data in Bytes
- *
- */
-static constexpr std::uint16_t MEAS_MEM_POOL_SIZE = 8192;
 
 /**
  * @brief The memory for the measurement data
@@ -170,6 +157,12 @@ protected:
     std::map<std::string, VariableIdentifier> variableList;
 
     /**
+     * @brief Keeps the signal state
+     *
+     */
+    volatile static std::sig_atomic_t gSignalStatus;
+
+    /**
      * @brief The default constructor
      *
      */
@@ -180,6 +173,13 @@ protected:
      *
      */
     ~MemoryPool();
+
+    /**
+     * @brief A signal handler
+     *
+     * @param signal The signel to be handled
+     */
+    void static signalHandler(int signal);
 
 public:
     /**
@@ -329,6 +329,10 @@ static MemoryPool* MeasurementObject = nullptr;
 template <class T>
 class memPoolVariable
 {
+    /**
+     * @brief Ensure that only numeric template types are accepted!
+     *
+     */
     static_assert(std::is_arithmetic<T>::value, "Type must be numeric");
 
 private:

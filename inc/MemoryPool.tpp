@@ -13,12 +13,37 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <cstdlib>
 
 // Own Includes
 
 // implementation of MemoryPool
+volatile std::sig_atomic_t MemoryPool::gSignalStatus = 0;
+
 MemoryPool::MemoryPool() : usedMemPoolSize(0), numVariablesInMemPool(0), poolMemoryStartAddress(nullptr)
 {
+    // Initialize/register a signal handler for memory access violation
+    std::signal(SIGSEGV, this->signalHandler);
+}
+
+MemoryPool::~MemoryPool()
+{
+}
+
+void MemoryPool::signalHandler(int signal)
+{
+    MemoryPool::gSignalStatus = signal;
+
+    if (MemoryPool::gSignalStatus == SIGSEGV)
+    {
+        std::cerr << "SIGSEGV received. Memory-Pool too small. Please resize." << std::endl;
+    }
+    else
+    {
+        std::cerr << "Unexpected signal " << signal << " received\n";
+    }
+
+    std::_Exit(MemoryPool::gSignalStatus);
 }
 
 std::uint8_t* MemoryPool::getPoolStartAddress()
@@ -110,6 +135,8 @@ T* MemoryPool::addPoolVariable(T testVar, std::string label, CategoryType catego
 {
     if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
     {
+        std::raise(SIGSEGV);
+
         return nullptr;
     }
     else
