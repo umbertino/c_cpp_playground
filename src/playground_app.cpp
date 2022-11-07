@@ -308,7 +308,7 @@ int main(void)
     MemPoolLib::VariableIdentifier* varId = MemPoolLib::MeasurementObject->getPoolVariable("SuperApplication.modulB.me");
 
     std::cout << "ID: " << ((varId->category == MemPoolLib::CategoryType::calibration) ? "calibration" : "measurement")
-                        << " " << +varId->relativeAddressOffset << " " << +varId->size << " " << varId->type << std::endl;
+              << " " << +varId->relativeAddressOffset << " " << +varId->size << " " << varId->type << std::endl;
 
 #endif
 

@@ -18,6 +18,7 @@
 #include <csignal>
 #include <string>
 #include <map>
+#include <iomanip>
 
 // Own Includes
 #include "MemoryPoolUserConfig.h"
@@ -157,12 +158,6 @@ protected:
     std::map<std::string, VariableIdentifier> variableList;
 
     /**
-     * @brief Keeps the signal state
-     *
-     */
-    volatile static std::sig_atomic_t gSignalStatus;
-
-    /**
      * @brief The default constructor
      *
      */
@@ -173,13 +168,6 @@ protected:
      *
      */
     ~MemoryPool();
-
-    /**
-     * @brief A signal handler
-     *
-     * @param signal The signel to be handled
-     */
-    void static signalHandler(int signal);
 
 public:
     /**
@@ -209,6 +197,13 @@ public:
      * @return The size of this pool's memory in use in Bytes
      */
     std::uint32_t getPoolCurrentSize();
+
+    /**
+     * @brief Gets all pool variables
+     *
+     * @return A pointer to the map containing the variables infotmation
+     */
+    const std::map<std::string, VariableIdentifier>* getPoolVariables();
 
     /**
      * @brief Dump a list of all variables handled by this memory pool
@@ -350,10 +345,29 @@ protected:
     std::string label;
 
     /**
+     * @brief Keeps the signal state
+     *
+     */
+    volatile static std::sig_atomic_t gSignalStatus;
+
+    /**
      * @brief The default constructor
      *
      */
     memPoolVariable();
+
+    /**
+     * @brief The default destructor
+     *
+     */
+    ~memPoolVariable();
+
+    /**
+     * @brief A signal handler
+     *
+     * @param signal The signel to be handled
+     */
+    void static signalHandler(int signal);
 
 public:
     /**

@@ -11,39 +11,19 @@
 
 // Std-Includes
 #include <iostream>
-#include <iomanip>
 #include <limits>
 #include <cstdlib>
 
 // Own Includes
 
 // implementation of MemoryPool
-volatile std::sig_atomic_t MemoryPool::gSignalStatus = 0;
 
 MemoryPool::MemoryPool() : usedMemPoolSize(0), numVariablesInMemPool(0), poolMemoryStartAddress(nullptr)
 {
-    // Initialize/register a signal handler for memory access violation
-    std::signal(SIGSEGV, this->signalHandler);
 }
 
 MemoryPool::~MemoryPool()
 {
-}
-
-void MemoryPool::signalHandler(int signal)
-{
-    MemoryPool::gSignalStatus = signal;
-
-    if (MemoryPool::gSignalStatus == SIGSEGV)
-    {
-        std::cerr << "SIGSEGV received. Memory-Pool too small. Please resize." << std::endl;
-    }
-    else
-    {
-        std::cerr << "Unexpected signal " << signal << " received\n";
-    }
-
-    std::_Exit(MemoryPool::gSignalStatus);
 }
 
 std::uint8_t* MemoryPool::getPoolStartAddress()
@@ -64,6 +44,11 @@ std::uint32_t MemoryPool::getPoolTotalSize()
 std::uint32_t MemoryPool::getPoolCurrentSize()
 {
     return this->usedMemPoolSize;
+}
+
+const std::map<std::string, VariableIdentifier>* MemoryPool::getPoolVariables()
+{
+    return &(this->variableList);
 }
 
 bool MemoryPool::dumpPoolListOfvariables()
@@ -115,7 +100,7 @@ bool MemoryPool::dumpPoolMemory()
                 std::cout << " ";
             }
 
-            std::cout << std::setw(2) << +poolMemoryStartAddress[i] << " ";
+            std::cout << std::setw(2) << +this->poolMemoryStartAddress[i] << " ";
 
             if (i == (lineCounter * elementsPerLine - 1))
             {
@@ -133,10 +118,9 @@ bool MemoryPool::dumpPoolMemory()
 template <class T>
 T* MemoryPool::addPoolVariable(T testVar, std::string label, CategoryType category)
 {
+    // memory pool resource check
     if ((this->usedMemPoolSize + sizeof(testVar)) > this->totalMemPoolSize)
     {
-        std::raise(SIGSEGV);
-
         return nullptr;
     }
     else
@@ -161,7 +145,17 @@ T* MemoryPool::addPoolVariable(T testVar, std::string label, CategoryType catego
         }
         else
         {
-            ptrToPoolMemory = reinterpret_cast<T*>(this->getPoolStartAddress() + search->second.relativeAddressOffset);
+            // the variable exists in the pool, check if it is also the same type
+            if (search->second.type == typeid(T).name())
+            {
+                // name/label and type match so return the address of the existing variable
+                ptrToPoolMemory = reinterpret_cast<T*>(this->getPoolStartAddress() + search->second.relativeAddressOffset);
+            }
+            else
+            {
+                // name/label and type do not match so return a nullptr to prevent a memory desaster
+                ptrToPoolMemory = nullptr;
+            }
         }
 
         return ptrToPoolMemory;
@@ -224,8 +218,35 @@ MeasurementMemoryPool::MeasurementMemoryPool()
 
 // implementation of memPoolVariable
 template <class T>
+volatile std::sig_atomic_t memPoolVariable<T>::gSignalStatus = 0;
+
+template <class T>
 memPoolVariable<T>::memPoolVariable()
 {
+    // Initialize/register a signal handler for memory access violation
+    std::signal(SIGSEGV, this->signalHandler);
+}
+
+template <class T>
+memPoolVariable<T>::~memPoolVariable()
+{
+}
+
+template <class T>
+void memPoolVariable<T>::signalHandler(int signal)
+{
+    memPoolVariable::gSignalStatus = signal;
+
+    if (memPoolVariable::gSignalStatus == SIGSEGV)
+    {
+        std::cerr << "SIGSEGV received. Memory access violation." << std::endl;
+    }
+    else
+    {
+        std::cerr << "Unexpected signal " << signal << " received\n";
+    }
+
+    std::_Exit(memPoolVariable::gSignalStatus);
 }
 
 template <class T>
