@@ -20,19 +20,21 @@
 #include <queue>
 #include <thread>
 #include <future>
+#include <array>
 
 // Own Includes
 #include "Prime.h"
 #include "ScopeGuard.h"
 #include "CustomErrorCodes.h"
 #include "MemoryPool.h"
+#include "playground_app.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 0
+#define SCRATCH_PAD 1
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
 #define FUTURE_PROMISE_EXAMPLE 0
-#define MEMORY_POOL_EXAMPLE 1
+#define MEMORY_POOL_EXAMPLE 0
 
 std::ostream* logOutChannel;
 
@@ -43,6 +45,19 @@ std::ostream& print()
     return *logOutChannel;
 }
 
+
+template <size_t N>
+void myFunc(std::array<std::uint8_t, N>& p)
+{
+    std::array<std::uint8_t, N>& localArray = p;
+
+    p[0] = 9;
+    std::cout << "array contains " << p.size() << "elements " << +p[0];
+    std::cout << std::endl;
+    std::cout << "array contains " << localArray.size() << "elements " << +localArray[0];
+    std::cout << std::endl;
+}
+
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl
@@ -50,50 +65,20 @@ int main(void)
 
 #if SCRATCH_PAD
 
-    std::ostringstream myStream;
+    std::array<std::uint8_t, 128> myArray;
 
-    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
+    myArray[0] = 42;
 
-    if (myStream.str().empty())
-    {
-        std::cout << "myStream is empty" << std::endl;
-    }
+    std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
+    std::cout << std::endl;
+    std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
+    std::cout << std::endl;
+    myClass thatClass(myArray);
+    thatClass.myFunc();
+    std::cout << std::endl;
+    std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
 
-    myStream << "Hello";
-
-    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
-
-    if (!myStream.str().empty())
-    {
-        std::cout << "myStream is not empty" << std::endl;
-    }
-
-    myStream.flush();
-
-    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
-
-    if (!myStream.str().empty())
-    {
-        std::cout << "myStream is not empty" << std::endl;
-    }
-
-    myStream.str("");
-
-    std::cout << "stream size is: " << myStream.rdbuf()->in_avail() << std::endl;
-
-    if (myStream.str().empty())
-    {
-        std::cout << "myStream is empty" << std::endl;
-    }
-
-    std::error_code ec = FlightsErrc::InvertedDates;
-
-    std::cout << "Error-Category: " << ec.category().name() << std::endl;
-    std::cout << "Error-message : " << ec.message() << std::endl;
-    std::cout << "Error-Value   : " << ec.value() << std::endl;
-
-    print() << "Hello" << std::endl;
-    print() << "Du da!" << std::endl;
+    std::cout << std::endl;
 #endif
 
 #if PRIME_EXAMPLE
@@ -274,6 +259,11 @@ int main(void)
     mf.set(true);
     mg.set(98765);
     mh.set(67843);
+
+    std::uint16_t& maRef = ma.getVarRef();
+
+    maRef = 128;
+    maRef++;
 
     std::cout << std::endl;
 
