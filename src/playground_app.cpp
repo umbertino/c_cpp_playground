@@ -45,7 +45,6 @@ std::ostream& print()
     return *logOutChannel;
 }
 
-
 template <size_t N>
 void myFunc(std::array<std::uint8_t, N>& p)
 {
@@ -65,7 +64,7 @@ int main(void)
 
 #if SCRATCH_PAD
 
-    std::array<std::uint8_t, 128> myArray;
+    std::array<std::uint8_t, 8> myArray;
 
     myArray[0] = 42;
 
@@ -77,6 +76,16 @@ int main(void)
     thatClass.myFunc();
     std::cout << std::endl;
     std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
+
+    std::cout << std::endl;
+
+    std::cout << "start address of array: " << std::hex << static_cast<void*>(&myArray[0]) << std::endl;
+
+    for (int i = 0; i < myArray.size(); i++)
+    {
+        std::cout << "Value of array element: " << +myArray[i] ;
+        std::cout << "\tAddress of array element: " << std::hex << static_cast<void*>(&myArray[i]) << std::endl;
+    }
 
     std::cout << std::endl;
 #endif
