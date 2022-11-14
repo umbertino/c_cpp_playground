@@ -15,6 +15,7 @@
 #include <string>
 #include <chrono>
 #include <ctime>
+#include <cstddef>
 #include <iomanip>
 #include <memory>
 #include <queue>
@@ -45,7 +46,7 @@ std::ostream& print()
     return *logOutChannel;
 }
 
-template <size_t N>
+template <std::size_t N>
 void myFunc(std::array<std::uint8_t, N>& p)
 {
     std::array<std::uint8_t, N>& localArray = p;
@@ -57,6 +58,10 @@ void myFunc(std::array<std::uint8_t, N>& p)
     std::cout << std::endl;
 }
 
+std::array<std::uint8_t, 8> myArray;
+
+myDeClass thatClass(myArray);
+
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl
@@ -64,7 +69,6 @@ int main(void)
 
 #if SCRATCH_PAD
 
-    std::array<std::uint8_t, 8> myArray;
 
     myArray[0] = 42;
 
@@ -72,8 +76,8 @@ int main(void)
     std::cout << std::endl;
     std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
     std::cout << std::endl;
-    myClass thatClass(myArray);
-    thatClass.myFunc();
+
+    thatClass.myDeFunc<bool>();
     std::cout << std::endl;
     std::cout << "array contains " << myArray.size() << "elements " << +myArray[0];
 
@@ -83,7 +87,7 @@ int main(void)
 
     for (int i = 0; i < myArray.size(); i++)
     {
-        std::cout << "Value of array element: " << +myArray[i] ;
+        std::cout << "Value of array element: " << std::dec << +myArray[i] ;
         std::cout << "\tAddress of array element: " << std::hex << static_cast<void*>(&myArray[i]) << std::endl;
     }
 

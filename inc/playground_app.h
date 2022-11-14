@@ -1,24 +1,35 @@
 
 #pragma once
 
+#include <iostream>
 #include <iomanip>
 #include <array>
+#include <cstddef>
 
-template <size_t N>
+template <std::size_t N>
 class myClass
 {
 private:
-    std::array<std::uint8_t, N>& localArray;
+    //std::array<std::uint8_t, N>& localArray;
 
 public:
-    myClass(std::array<std::uint8_t, N>& p) : localArray(p)
-    {
-    }
+    myClass();
 
-    void myFunc()
-    {
-        this->localArray[0] = 9;
-        std::cout << "array contains " << this->localArray.size() << "elements " << +this->localArray[0];
-        std::cout << std::endl;
-    }
+    template <typename T>
+    void myFunc();
 };
+
+template <std::size_t N>
+class myDeClass : public myClass<N>
+{
+private:
+    //std::array<std::uint8_t, N>& localArray;
+
+public:
+    myDeClass(std::array<std::uint8_t, N>& p);
+
+    template <typename T>
+    void myDeFunc();
+};
+
+#include "playground_app.tpp"
