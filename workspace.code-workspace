@@ -124,7 +124,8 @@
 			"coroutine": "cpp",
 			"resumable": "cpp",
 			"future": "cpp",
-			"source_location": "cpp"
+			"source_location": "cpp",
+			"ranges": "cpp"
 		},
 		"cSpell.words": [
 			"myvector"
