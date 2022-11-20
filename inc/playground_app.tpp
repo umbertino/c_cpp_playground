@@ -16,7 +16,7 @@ void myClass<N>::myFunc()
 }
 
 template <std::size_t N>
-myDeClass<N>::myDeClass(std::array<std::uint8_t, N>& p)// : localArray(p)
+myDeClass<N>::myDeClass(std::array<std::uint8_t, N>& p) // : localArray(p)
 {
     //this->localArray.fill(0);
 }

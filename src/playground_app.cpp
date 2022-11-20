@@ -22,20 +22,22 @@
 #include <thread>
 #include <future>
 #include <array>
+#include <condition_variable>
+#include <thread>
+#include <pthread.h>
 
 // Own Includes
 #include "Prime.h"
 #include "ScopeGuard.h"
 #include "CustomErrorCodes.h"
-#include "MemoryPool.h"
 #include "playground_app.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 1
+#define SCRATCH_PAD 0
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
 #define FUTURE_PROMISE_EXAMPLE 0
-#define MEMORY_POOL_EXAMPLE 0
+#define CONDVAR_EXAMPLE 1
 
 std::ostream* logOutChannel;
 
@@ -62,13 +64,58 @@ std::array<std::uint8_t, 8> myArray;
 
 myDeClass thatClass(myArray);
 
+std::mutex mtx;
+std::condition_variable cv;
+bool ready = false;
+
+void slaveThread1()
+{
+    while (true)
+    {
+        {
+            std::unique_lock<std::mutex> lck(mtx);
+            cv.wait(lck);
+            std::cout << "1" << std::flush;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+}
+
+void slaveThread2()
+{
+    while (true)
+    {
+        {
+            std::unique_lock<std::mutex> lck(mtx);
+            cv.wait(lck);
+            std::cout << "2" << std::flush;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+}
+
+void masterThread()
+{
+    while (true)
+    {
+        {
+            std::unique_lock<std::mutex> lck(mtx);
+            std::cout << " M" << std::flush;
+            cv.notify_all();
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 int main(void)
 {
     std::cout << "Hello, this is a C++ playground" << std::endl
               << std::endl;
 
 #if SCRATCH_PAD
-
 
     myArray[0] = 42;
 
@@ -87,7 +134,7 @@ int main(void)
 
     for (int i = 0; i < myArray.size(); i++)
     {
-        std::cout << "Value of array element: " << std::dec << +myArray[i] ;
+        std::cout << "Value of array element: " << std::dec << +myArray[i];
         std::cout << "\tAddress of array element: " << std::hex << static_cast<void*>(&myArray[i]) << std::endl;
     }
 
@@ -242,76 +289,18 @@ int main(void)
 
 #endif
 
-#if MEMORY_POOL_EXAMPLE
-
-    std::cout << "Starting " << MemPoolLib::applicationName << std::endl;
-
-    MemPoolLib::calibratable<std::int8_t> a(16, "main.a");
-    MemPoolLib::calibratable<std::int8_t> b(8, "main.b");
-    MemPoolLib::calibratable<std::int8_t> c(8, "main.c");
-    MemPoolLib::calibratable<std::int32_t> d(32, "moduleA.d");
-    MemPoolLib::calibratable<std::int64_t> e(64, "modulB.e");
-    MemPoolLib::calibratable<bool> f(true, "classC.f");
-    MemPoolLib::calibratable<std::float_t> g(98765, "func1.g");
-    MemPoolLib::calibratable<std::double_t> h(67843, "func2.h");
-
-    MemPoolLib::measurable<std::uint16_t> ma("main.ma");
-    MemPoolLib::measurable<std::uint8_t> mb("main.mb");
-    MemPoolLib::measurable<std::uint8_t> mc("main.mc");
-    MemPoolLib::measurable<std::uint32_t> md("moduleA.md");
-    MemPoolLib::measurable<std::uint64_t> me("modulB.me");
-    MemPoolLib::measurable<bool> mf("classC.mf");
-    MemPoolLib::measurable<std::float_t> mg("func1.mg");
-    MemPoolLib::measurable<std::double_t> mh("func2.mh");
-
-    ma.set(32);
-    mb.set(16);
-    mc.set(16);
-    md.set(64);
-    me.set(128);
-    mf.set(true);
-    mg.set(98765);
-    mh.set(67843);
-
-    std::uint16_t& maRef = ma.getVarRef();
-
-    maRef = 128;
-    maRef++;
-
+#if CONDVAR_EXAMPLE
     std::cout << std::endl;
 
-    std::uint8_t* pageStartAddress = MemPoolLib::CalibrationObject->getPoolStartAddress();
-    std::cout << "Hexdump for " << MemPoolLib::CalibrationObject->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
+    std::thread t1(masterThread);
+    std::thread t2(slaveThread1);
+    std::thread t3(slaveThread2);
 
-    MemPoolLib::CalibrationObject->dumpPoolMemory();
-
-    std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << " " << +g.get() << " " << +h.get() << std::endl;
-
-    std::cout << std::endl;
-    std::cout << "Ref-Page list of variables" << std::endl;
-
-    MemPoolLib::CalibrationObject->dumpPoolListOfvariables();
+    t1.join();
+    t2.join();
+    t3.join();
 
     std::cout << std::endl;
-
-    ///////
-
-    pageStartAddress = MemPoolLib::MeasurementObject->getPoolStartAddress();
-    std::cout << "Hexdump for " << MemPoolLib::MeasurementObject->getPoolNumVariables() << " Variables starting @ 0x" << std::hex << static_cast<void*>(pageStartAddress) << std::endl;
-
-    MemPoolLib::MeasurementObject->dumpPoolMemory();
-
-    // std::cout << std::dec << +a.get() << " " << +b.get() << " " << +c.get() << " " << +d.get() << " " << +e.get() << " " << +f.get() << std::endl;
-
-    std::cout << std::endl;
-    std::cout << "Measurement list of variables" << std::endl;
-
-    MemPoolLib::MeasurementObject->dumpPoolListOfvariables();
-
-    MemPoolLib::VariableIdentifier* varId = MemPoolLib::MeasurementObject->getPoolVariable("SuperApplication.modulB.me");
-
-    std::cout << "ID: " << ((varId->category == MemPoolLib::CategoryType::calibration) ? "calibration" : "measurement")
-              << " " << +varId->relativeAddressOffset << " " << +varId->size << " " << varId->type << std::endl;
 
 #endif
 

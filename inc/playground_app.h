@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <array>
 #include <cstddef>
+#include <string>
 
 template <std::size_t N>
 class myClass
