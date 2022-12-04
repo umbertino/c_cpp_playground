@@ -5,6 +5,8 @@
 #include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/core/typeinfo.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 // Std-Includes
 #include <algorithm>
@@ -27,17 +29,13 @@
 #include <pthread.h>
 
 // Own Includes
-#include "Prime.h"
-#include "ScopeGuard.h"
-#include "CustomErrorCodes.h"
-#include "playground_app.h"
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 0
+#define SCRATCH_PAD 1
 #define PRIME_EXAMPLE 0
 #define SCOPE_GUARD_EXAMPLE 0
 #define FUTURE_PROMISE_EXAMPLE 0
-#define CONDVAR_EXAMPLE 1
+#define CONDVAR_EXAMPLE 0
 
 std::ostream* logOutChannel;
 
@@ -64,8 +62,8 @@ std::array<std::uint8_t, 8> myArray;
 
 myDeClass thatClass(myArray);
 
-std::mutex mtx;
-std::condition_variable cv;
+boost::mutex mtx;
+boost::condition_variable cv;
 bool ready = false;
 
 void slaveThread1()
@@ -73,7 +71,7 @@ void slaveThread1()
     while (true)
     {
         {
-            std::unique_lock<std::mutex> lck(mtx);
+            boost::unique_lock<boost::mutex> lck(mtx);
             cv.wait(lck);
             std::cout << "1" << std::flush;
         }
@@ -87,7 +85,7 @@ void slaveThread2()
     while (true)
     {
         {
-            std::unique_lock<std::mutex> lck(mtx);
+            boost::unique_lock<boost::mutex> lck(mtx);
             cv.wait(lck);
             std::cout << "2" << std::flush;
         }
@@ -101,7 +99,7 @@ void masterThread()
     while (true)
     {
         {
-            std::unique_lock<std::mutex> lck(mtx);
+            boost::unique_lock<boost::mutex> lck(mtx);
             std::cout << " M" << std::flush;
             cv.notify_all();
         }
@@ -292,9 +290,12 @@ int main(void)
 #if CONDVAR_EXAMPLE
     std::cout << std::endl;
 
-    std::thread t1(masterThread);
+
+
     std::thread t2(slaveThread1);
     std::thread t3(slaveThread2);
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::thread t1(masterThread);
 
     t1.join();
     t2.join();

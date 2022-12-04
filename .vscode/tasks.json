@@ -6,7 +6,7 @@
         {
             "label": "Build Release",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Release --target application -v",
+            "command": "cmake --build ${workspaceFolder}/build --config Release --target prime_tgt --target playground_tgt --target customErroCodes_tgt -v",
             "problemMatcher": [
                 "$gcc"
             ],

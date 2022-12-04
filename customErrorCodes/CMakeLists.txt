@@ -1,9 +1,9 @@
-cmake_minimum_required (VERSION 3.22)
+project (customErroCodes VERSION 1.0.0)
 
-project (top VERSION 1.0.0)
-
+set(APP_TGT_NAME ${PROJECT_NAME}_tgt)
 set(APP_BIN_NAME ${PROJECT_NAME}_app)
 set(TST_BIN_NAME ${PROJECT_NAME}_tst)
+set(LIB_NAME ${PROJECT_NAME})
 
 set(GTEST_INCLUDE_DIR $ENV{GTEST_ROOT}/include)
 set(GTEST_LIBRARY_DIR $ENV{GTEST_ROOT}/lib)
@@ -27,28 +27,16 @@ find_package(Threads REQUIRED)
 find_package(GTest 1.11.0 REQUIRED)
 find_package(Boost 1.78.0 COMPONENTS chrono filesystem thread REQUIRED)
 
-# build Prime-Library
-# add_library(prime STATIC ${SRC_DIR}/Prime.cpp)
-# target_link_libraries(prime ${Boost_LIBRARIES})
-
-# build Scopeguard-Library
-# add_library(scopeguard STATIC ${SRC_DIR}/ScopeGuard.cpp)
-# target_link_libraries(scopeguard ${Boost_LIBRARIES})
-
 # build CustomErrorCodes-Library
-# add_library(customErrorCodes STATIC ${SRC_DIR}/CustomErrorCodes.cpp)
-# target_link_libraries(customErrorCodes ${Boost_LIBRARIES})
+add_library(${LIB_NAME} STATIC ${SRC_DIR}/CustomErrorCodes.cpp)
+target_link_libraries(${LIB_NAME} ${Boost_LIBRARIES})
 
-add_subdirectory(playground)
-add_subdirectory(primeNumbers)
-add_subdirectory(customErrorCodes)
-
-# The main playground executable
-# add_executable(${APP_BIN_NAME} ${SRC_DIR}/playground_app.cpp)
-# add_custom_target(application DEPENDS ${APP_BIN_NAME})
-# add_dependencies(${APP_BIN_NAME} scopeguard customErrorCodes)
-# include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
-# target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} scopeguard customErrorCodes)
+# The main executable
+add_executable(${APP_BIN_NAME} ${SRC_DIR}/main.cpp)
+add_custom_target(${APP_TGT_NAME} DEPENDS ${APP_BIN_NAME})
+add_dependencies(${APP_TGT_NAME} ${LIB_NAME})
+include_directories(${Boost_INCLUDE_DIRS} ${INC_DIR})
+target_link_libraries(${APP_BIN_NAME} ${Boost_LIBRARIES} ${LIB_NAME})
 # create a dedicated map-file for each configuration, too
 #target_link_options(${APP_BIN_NAME} PRIVATE "/MAP:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>/${APP_BIN_NAME}.map")
 
