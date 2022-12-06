@@ -20,7 +20,7 @@
           "ignoreFailures": true
         }
       ],
-      "program": "${workspaceFolder}/build/bin/Debug/playground_app",
+      "program": "${workspaceFolder}/build/${input:target}/bin/Debug/${input:target}_app",
       "windows": {
         "type": "cppvsdbg",
         "targetArchitecture": "x86_64",
@@ -36,37 +36,49 @@
       },
       "preLaunchTask": "Build Debug"
     },
+    // {
+    //   "type": "cppdbg",
+    //   "name": "Debug UnitTests",
+    //   "request": "launch",
+    //   "args": [],
+    //   "stopAtEntry": true,
+    //   "cwd": "${workspaceFolder}",
+    //   "environment": [],
+    //   "externalConsole": false,
+    //   "setupCommands": [
+    //     {
+    //       "description": "Enable pretty-printing",
+    //       "text": "-enable-pretty-printing",
+    //       "ignoreFailures": true
+    //     }
+    //   ],
+    //   "program": "${workspaceFolder}/utest/bin/playground_tst",
+    //   "windows": {
+    //     "type": "cppvsdbg",
+    //     "targetArchitecture": "x86_64",
+    //   },
+    //   "linux": {
+    //     "targetArchitecture": "x86_64",
+    //     "MIMode": "gdb",
+    //     "miDebuggerPath": "/usr/bin/gdb"
+    //   },
+    //   "osx": {
+    //     "targetArchitecture": "x64",
+    //     "MIMode": "lldb",
+    //   },
+    //   "preLaunchTask": "Build UnitTests"
+    // },
+  ],
+  "inputs": [
     {
-      "type": "cppdbg",
-      "name": "Debug UnitTests",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": true,
-      "cwd": "${workspaceFolder}",
-      "environment": [],
-      "externalConsole": false,
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
+      "id": "target",
+      "type": "pickString",
+      "description": "Binary to debug: ",
+      "options": [
+        "playground",
+        "prime",
+        "customErroCodes"
       ],
-      "program": "${workspaceFolder}/utest/bin/playground_tst",
-      "windows": {
-        "type": "cppvsdbg",
-        "targetArchitecture": "x86_64",
-      },
-      "linux": {
-        "targetArchitecture": "x86_64",
-        "MIMode": "gdb",
-        "miDebuggerPath": "/usr/bin/gdb"
-      },
-      "osx": {
-        "targetArchitecture": "x64",
-        "MIMode": "lldb",
-      },
-      "preLaunchTask": "Build UnitTests"
-    },
+    }
   ]
 }

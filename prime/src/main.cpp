@@ -26,7 +26,6 @@
 #include <array>
 #include <condition_variable>
 #include <thread>
-#include <pthread.h>
 
 // Own Includes
 #include "Prime.h"
