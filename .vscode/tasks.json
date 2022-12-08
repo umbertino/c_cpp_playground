@@ -36,51 +36,11 @@
         {
             "label": "Clean App",
             "type": "shell",
-            //"command": "cmake --build ${workspaceFolder}/build --config Release --target clean -v",
             "command": "rm -r ${workspaceFolder}/build/bin/* && rm -r ${workspaceFolder}/build/lib/*",
             "presentation": {
                 "focus": true
             },
         },
-        // {
-        //     "label": "Build UnitTests",
-        //     "type": "shell",
-        //     "command": "cmake --build ${workspaceFolder}/utest --config Debug --target tests -v",
-        //     "problemMatcher": [
-        //         "$gcc"
-        //     ],
-        //     "dependsOrder": "sequence",
-        //     "dependsOn": [
-        //         "Setup UnitTest Environment"
-        //     ],
-        //     "presentation": {
-        //         "focus": true
-        //     },
-        // },
-        // {
-        //     "label": "Run UnitTests",
-        //     "type": "shell",
-        //     "command": "ctest --test-dir ${workspaceFolder}/utest",
-        //     "problemMatcher": [
-        //         "$gcc"
-        //     ],
-        //     "dependsOrder": "sequence",
-        //     "dependsOn": [
-        //         "Build UnitTests"
-        //     ],
-        //     "presentation": {
-        //         "focus": true
-        //     },
-        // },
-        // {
-        //     "label": "Clean UnitTests",
-        //     "type": "shell",
-        //     //"command": "cmake --build ${workspaceFolder}/build/ --config Debug --target clean -v",
-        //     "command": "rm -r ${workspaceFolder}/utest/*",
-        //     "presentation": {
-        //         "focus": true
-        //     },
-        // },
         {
             "label": "Setup Build Environment",
             "type": "shell",
@@ -123,48 +83,6 @@
                 ]
             }
         },
-        // {
-        //     "label": "Setup UnitTest Environment",
-        //     "type": "shell",
-        //     "presentation": {
-        //         "echo": false,
-        //         "revealProblems": "onProblem",
-        //         "showReuseMessage": true,
-        //         "focus": true,
-        //         "clear": true,
-        //     },
-        //     "command": "cmake",
-        //     "windows": {
-        //         "args": [
-        //             "-G",
-        //             "Ninja",
-        //             ".",
-        //             "-B",
-        //             "utest",
-        //             "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64WinMSVC.cmake"
-        //         ]
-        //     },
-        //     "linux": {
-        //         "args": [
-        //             "-G",
-        //             "Ninja",
-        //             ".",
-        //             "-B",
-        //             "utest",
-        //             "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
-        //         ]
-        //     },
-        //     "osx": {
-        //         "args": [
-        //             "-G",
-        //             "Ninja",
-        //             ".",
-        //             "-B",
-        //             "utest",
-        //             "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
-        //         ]
-        //     }
-        // },
         {
             "label": "Cleanup Build Environment",
             "type": "shell",
@@ -177,18 +95,6 @@
                 "close": true
             },
         },
-        // {
-        //     "label": "Cleanup UnitTest Environment",
-        //     "type": "shell",
-        //     "command": "rm -r ${workspaceFolder}/utest",
-        //     "presentation": {
-        //         "focus": false,
-        //         "echo": true,
-        //         "reveal": "always",
-        //         "showReuseMessage": false,
-        //         "close": true
-        //     },
-        // },
     ],
     "inputs": [
         {
