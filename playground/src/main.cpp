@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <iomanip>
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <thread>
 #include <future>
@@ -31,10 +32,10 @@
 #include <ScopeGuard.h>
 
 // switches to activate / deactivate examples
-#define SCRATCH_PAD 1
+#define SCRATCH_PAD 0
 #define SCOPE_GUARD_EXAMPLE 0
 #define FUTURE_PROMISE_EXAMPLE 0
-#define CONDVAR_EXAMPLE 0
+#define CONDVAR_EXAMPLE 1
 
 std::ostream* logOutChannel;
 
@@ -45,7 +46,7 @@ std::ostream& print()
     return *logOutChannel;
 }
 
-template <std::size_t N>
+template<std::size_t N>
 void myFunc(std::array<std::uint8_t, N>& p)
 {
     std::array<std::uint8_t, N>& localArray = p;
@@ -57,23 +58,47 @@ void myFunc(std::array<std::uint8_t, N>& p)
     std::cout << std::endl;
 }
 
+template<typename T, std::size_t X>
+using vector = std::array<T, X>;
+
+template<typename T, std::size_t X, std::size_t Y>
+using matrix = std::array<std::array<T, Y>, X>;
+
+template<typename T, std::size_t X, std::size_t Y, std::size_t Z>
+using cube = std::array<std::array<std::array<T, Z>, Y>, X>;
+
 std::array<std::uint8_t, 8> myArray;
 
-boost::mutex mtx;
-boost::condition_variable cv;
-bool ready = false;
+std::mutex mtx;
+std::condition_variable cv;
+std::atomic<bool> ready1 = false;
+std::atomic<bool> ready2 = false;
+
+bool getPermission(void)
+{
+    return ready1 && ready2;
+}
+
+// a non-optimized way of checking for prime numbers:
+bool is_prime(int x)
+{
+    for (int i = 2; i < x; ++i)
+        if (x % i == 0)
+            return false;
+    return true;
+}
 
 void slaveThread1()
 {
     while (true)
     {
         {
-            boost::unique_lock<boost::mutex> lck(mtx);
-            cv.wait(lck);
+            std::unique_lock<std::mutex> lck(mtx);
+            cv.wait(lck, getPermission);
             std::cout << "1" << std::flush;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 }
 
@@ -82,12 +107,12 @@ void slaveThread2()
     while (true)
     {
         {
-            boost::unique_lock<boost::mutex> lck(mtx);
-            cv.wait(lck);
+            std::unique_lock<std::mutex> lck(mtx);
+            cv.wait(lck, getPermission);
             std::cout << "2" << std::flush;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(4));
     }
 }
 
@@ -96,10 +121,13 @@ void masterThread()
     while (true)
     {
         {
-            boost::unique_lock<boost::mutex> lck(mtx);
-            std::cout << " M" << std::flush;
-            cv.notify_all();
+            std::lock_guard<std::mutex> lck(mtx);
+            ready1 = true;
+            ready2 = true;
         }
+
+        std::cout << " M" << std::flush;
+        cv.notify_all();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -107,14 +135,87 @@ void masterThread()
 
 int main(void)
 {
-    std::cout << "Hello, this is a C++ playground" << std::endl
-              << std::endl;
+    std::cout << "Hello, this is a C++ playground" << std::endl << std::endl;
 
 #if SCRATCH_PAD
 
     std::cout << std::endl;
-#endif
 
+    const std::uint8_t X = 2;
+    const std::uint8_t Y = 3;
+    const std::uint8_t Z = 4;
+
+    vector<std::uint16_t, X> vec{1, 2};
+    matrix<std::uint16_t, X, Y> mat{{{1, 2, 3}, {11, 12, 13}}};
+
+    std::array<std::uint8_t, Z> zInner{1, 2, 3, 4};
+
+    std::array<std::array<std::uint8_t, Z>, Y> yInner{zInner, zInner, zInner};
+
+    cube<std::uint8_t, X, Y, Z> cub{
+        {{{{111, 112, 113, 114}, {121, 122, 123, 124}, {131, 132, 133, 134}}},
+         {{{211, 212, 213, 214}, {221, 222, 223, 224}, {231, 232, 233, 234}}}}};
+
+    //std::uint8_t cub{
+    // {{1, 2, 3}, {11, 12, 13}},  {{21, 22, 23},  {31, 32, 33}}, {{41, 42, 43}, {51, 52, 53}}, {{61, 62, 63}, {71, 72, 73}}
+    // };
+
+    std::cout << std::endl;
+
+    // for (int j = 0; j < Y; j++)
+    // {
+    //     for (int i = 0; i < X; i++)
+    //     {
+    //         mat[i][j] = 1 + j + i * 10;
+    //         //std::cout << "mat[" << +i << "][" << +j << "] = " << +mat[i][j] << std::endl;
+    //     }
+
+    //     std::cout << std::endl;
+    // }
+
+    // for (int j = 0; j < Y; j++)
+    // {
+    //     for (int i = 0; i < X; i++)
+    //     {
+    //         std::cout << "mat[" << +i << "][" << +j << "] = " << +mat[i][j] << std::endl;
+    //     }
+
+    //     std::cout << std::endl;
+    // }
+
+    std::cout << std::endl;
+
+    // for (int k = 0; k < Z; k++)
+    // {
+    //     for (int j = 0; j < Y; j++)
+    //     {
+    //         for (int i = 0; i < X; i++)
+    //         {
+    //             std::uint16_t val = i + j * 10 + k * 100;
+
+    //             cub[i][j][k] = val;
+    //         }
+    //     }
+    // }
+
+    for (int k = 0; k < Z; k++)
+    {
+        for (int j = 0; j < Y; j++)
+        {
+            for (int i = 0; i < X; i++)
+            {
+                std::cout << "cub[" << +i << "][" << +j << "][" << +k << "] = " << +cub[i][j][k] << std::endl;
+            }
+
+            std::cout << std::endl;
+        }
+
+        std::cout << std::endl;
+    }
+
+    // std::cout << std::endl;
+
+#endif
 
 #if SCOPE_GUARD_EXAMPLE
     std::cout << "RAII example, exception safe scope guard" << std::endl;
@@ -122,11 +223,10 @@ int main(void)
     try
     {
         // usage with helper macro (scope is created by macro)
-        SUPPRESS_LOGGING(true, false, true,
-                         {
-                             std::cout << "Scoped output V1" << std::endl;
-                             throw std::invalid_argument("received negative value");
-                         })
+        SUPPRESS_LOGGING(true, false, true, {
+            std::cout << "Scoped output V1" << std::endl;
+            throw std::invalid_argument("received negative value");
+        })
     }
     catch (const std::invalid_argument& e)
     {
@@ -156,57 +256,27 @@ int main(void)
 #endif
 
 #if FUTURE_PROMISE_EXAMPLE
-    std::atomic<bool> magic1Ready(false);
-    std::atomic<bool> magic2Ready(false);
-    std::promise<int> prom;
-    std::future<int> fut = prom.get_future();
+    // call function asynchronously:
+    std::future<bool> fut = std::async(is_prime, 444444443);
 
-    auto magic1 = std::async(std::launch::async, [&]()
-                             {
-                                 std::this_thread::sleep_for(std::chrono::seconds(5));
-                                 magic1Ready.store(true);
-                                 return 42; });
+    // do something while waiting for function to set future:
+    std::cout << "checking, please wait" << std::flush;
+    std::chrono::milliseconds span(100);
+    // while (fut.wait_for(span) == std::future_status::timeout)
+    //     std::cout << '.' << std::flush;
 
-    auto magic2 = std::async(std::launch::async, [&]()
-                             {
-                                 std::this_thread::sleep_for(std::chrono::seconds(8));
-                                 prom.set_value(10);
-                                 magic2Ready.store(true); });
+    bool x = fut.get(); // retrieve return value
 
-    std::cout << "Waiting";
-
-    while (!magic1Ready.load() || !magic2Ready.load())
-    {
-        std::cout << ".";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-
-    std::cout << std::endl;
-
-    try
-    {
-        std::cout << magic1.get() << std::endl;
-        std::cout << fut.get() << std::endl;
-
-        if (fut.valid() && magic1.valid())
-        { // cannot consume any more, raises exception
-            std::cout << magic1.get() << std::endl;
-            std::cout << fut.get() << std::endl;
-        }
-    }
-    catch (std::exception& ex)
-    {
-        std::cout << "Exception caught: " << ex.what();
-    }
+    std::cout << "\n44444894443 " << (x ? "is" : "is not") << " prime.\n";
 
 #endif
 
 #if CONDVAR_EXAMPLE
     std::cout << std::endl;
-
     std::thread t2(slaveThread1);
     std::thread t3(slaveThread2);
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    //std::this_thread::sleep_for(std::chrono::seconds(5));
     std::thread t1(masterThread);
 
     t1.join();
