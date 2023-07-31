@@ -121,7 +121,7 @@ void masterThread()
     while (true)
     {
         {
-            std::lock_guard<std::mutex> lck(mtx);
+            std::scoped_lock<std::mutex> lck(mtx);
             ready1 = true;
             ready2 = true;
         }
