@@ -34,8 +34,8 @@
 // switches to activate / deactivate examples
 #define SCRATCH_PAD 0
 #define SCOPE_GUARD_EXAMPLE 0
-#define FUTURE_PROMISE_EXAMPLE 0
-#define CONDVAR_EXAMPLE 1
+#define FUTURE_PROMISE_EXAMPLE 1
+#define CONDVAR_EXAMPLE 0
 
 std::ostream* logOutChannel;
 
@@ -80,12 +80,20 @@ bool getPermission(void)
 }
 
 // a non-optimized way of checking for prime numbers:
-bool is_prime(int x)
+void is_prime(std::promise<bool>&& boolPromise, std::uint64_t x)
 {
-    for (int i = 2; i < x; ++i)
+    bool isPrime = true;
+
+    for (std::uint64_t i = 2; i < x; ++i)
+    {
         if (x % i == 0)
-            return false;
-    return true;
+        {
+            isPrime = false;
+            break;
+        }
+    }
+
+    boolPromise.set_value(isPrime);
 }
 
 void slaveThread1()
@@ -256,18 +264,25 @@ int main(void)
 #endif
 
 #if FUTURE_PROMISE_EXAMPLE
-    // call function asynchronously:
-    std::future<bool> fut = std::async(is_prime, 444444443);
+    std::uint64_t testNum = 1234575371;
+
+    std::promise<bool> primePromise;
+    std::future<bool> primeResult = primePromise.get_future();
+
+    std::thread primeThread(is_prime, std::move(primePromise), testNum);
 
     // do something while waiting for function to set future:
-    std::cout << "checking, please wait" << std::flush;
-    std::chrono::milliseconds span(100);
-    // while (fut.wait_for(span) == std::future_status::timeout)
-    //     std::cout << '.' << std::flush;
+    std::cout << "checking, please wait " << std::flush;
+    std::chrono::milliseconds span(250);
 
-    bool x = fut.get(); // retrieve return value
+    while (primeResult.wait_for(span) == std::future_status::timeout)
+    {
+        std::cout << "." << std::flush;
+    }
 
-    std::cout << "\n44444894443 " << (x ? "is" : "is not") << " prime.\n";
+    bool x = primeResult.get(); // retrieve return value
+
+    std::cout << "\n" << testNum << (x ? " is" : " is not") << " prime.\n";
 
 #endif
 
