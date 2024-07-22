@@ -20,33 +20,37 @@
           "ignoreFailures": true
         }
       ],
-      "program": "${workspaceFolder}/build/${input:target}/bin/Debug/${input:target}_app",
-      "windows": {
-        "type": "cppvsdbg",
-        "targetArchitecture": "x86_64",
-      },
+      "program": "${workspaceFolder}/build/Debug/logservice/bin/logger_app",
       "linux": {
         "targetArchitecture": "x86_64",
         "MIMode": "gdb",
         "miDebuggerPath": "/usr/bin/gdb"
       },
-      "osx": {
-        "targetArchitecture": "x64",
-        "MIMode": "lldb",
-      },
-      "preLaunchTask": "Build Debug"
+      // "preLaunchTask": "Build Debug"
     },
-  ],
-  "inputs": [
-    {
-      "id": "target",
-      "type": "pickString",
-      "description": "Binary to debug: ",
-      "options": [
-        "playground",
-        "prime",
-        "customErroCodes"
-      ],
-    }
+    // {
+    //   "type": "cppdbg",
+    //   "name": "Debug UnitTests",
+    //   "request": "launch",
+    //   "args": [],
+    //   "stopAtEntry": true,
+    //   "cwd": "${workspaceFolder}",
+    //   "environment": [],
+    //   "externalConsole": false,
+    //   "setupCommands": [
+    //     {
+    //       "description": "Enable pretty-printing",
+    //       "text": "-enable-pretty-printing",
+    //       "ignoreFailures": true
+    //     }
+    //   ],
+    //   "program": "${workspaceFolder}/utest/bin/playground_tst",
+    //   "linux": {
+    //     "targetArchitecture": "x86_64",
+    //     "MIMode": "gdb",
+    //     "miDebuggerPath": "/usr/bin/gdb"
+    //   },
+    //   "preLaunchTask": "Build UnitTests"
+    // },
   ]
 }

@@ -4,108 +4,71 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Release",
+            "label": "Build",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Release --target ${input:target} -v",
+            "command": "python ${workspaceFolder}/raise.py ${input:action} ${input:build_type}",
             "problemMatcher": [
                 "$gcc"
             ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Setup Build Environment"
-            ],
             "presentation": {
                 "focus": true
             },
         },
         {
-            "label": "Build Debug",
+            "label": "Run Unit-Tests",
             "type": "shell",
-            "command": "cmake --build ${workspaceFolder}/build --config Debug --target ${input:target} -v",
+            "command": "python ${workspaceFolder}/raise.py test -r",
             "problemMatcher": [
                 "$gcc"
             ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Setup Build Environment"
+            "presentation": {
+                "focus": true
+            },
+        },
+        {
+            "label": "Build documentation",
+            "type": "shell",
+            "command": "python ${workspaceFolder}/raise.py doc ${input:doc_type}",
+            "problemMatcher": [
+                "$gcc"
             ],
             "presentation": {
                 "focus": true
-            },
-        },
-        {
-            "label": "Clean App",
-            "type": "shell",
-            "command": "rm -r ${workspaceFolder}/build/bin/* && rm -r ${workspaceFolder}/build/lib/*",
-            "presentation": {
-                "focus": true
-            },
-        },
-        {
-            "label": "Setup Build Environment",
-            "type": "shell",
-            "presentation": {
-                "echo": false,
-                "revealProblems": "onProblem",
-                "showReuseMessage": true,
-                "focus": true,
-                "clear": true,
-            },
-            "command": "cmake",
-            "windows": {
-                "args": [
-                    "-G",
-                    "Ninja Multi-Config",
-                    ".",
-                    "-B",
-                    "build",
-                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64WinMSVC.cmake"
-                ]
-            },
-            "linux": {
-                "args": [
-                    "-G",
-                    "Ninja Multi-Config",
-                    ".",
-                    "-B",
-                    "build",
-                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64LinuxGnuGCC.cmake"
-                ]
-            },
-            "osx": {
-                "args": [
-                    "-G",
-                    "Ninja Multi-Config",
-                    ".",
-                    "-B",
-                    "build",
-                    "-DCMAKE_TOOLCHAIN_FILE:PATH=toolchains/x86_64MacOSLLVM.cmake"
-                ]
-            }
-        },
-        {
-            "label": "Cleanup Build Environment",
-            "type": "shell",
-            "command": "rm -r ${workspaceFolder}/build",
-            "presentation": {
-                "focus": false,
-                "echo": true,
-                "reveal": "always",
-                "showReuseMessage": false,
-                "close": true
             },
         },
     ],
     "inputs": [
         {
-            "id": "target",
+            "id": "build_type",
             "type": "pickString",
-            "description": "Target to build: ",
+            "description": "Build Type",
             "options": [
-                "playground_tgt",
-                "prime_tgt",
-                "customErroCodes_tgt"
+                "-r",
+                "-d",
+                "-a"
             ],
+            "default": "-r"
+        },
+        {
+            "id": "doc_type",
+            "type": "pickString",
+            "description": "Documentation Type",
+            "options": [
+                "-i",
+                "-o",
+                "-c"
+            ],
+            "default": "-r"
+        },
+        {
+            "id": "action",
+            "type": "pickString",
+            "description": "Raise action",
+            "options": [
+                "build",
+                "rebuild",
+                "clean"
+            ]
         }
     ]
 }

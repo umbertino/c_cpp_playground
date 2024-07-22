@@ -54,17 +54,17 @@ int main(void)
     }
 
     // determine all prime numbers in a specified range
-    unsigned long start = 0, end = 1000;
+    unsigned long start = 0, end = 10000000;
     boost::container::vector<unsigned long> primeList;
 
     if (Prime::getRangeOfPrimes(start, end, primeList))
     {
         std::cout << "Found " << primeList.size() << " prime numbers in the range [" << start << "," << end << "]: ";
 
-        for (const unsigned long& i : primeList)
-        {
-            std::cout << i << " ";
-        }
+        // for (const unsigned long& i : primeList)
+        // {
+        //     std::cout << i << " ";
+        // }
     }
     else
     {

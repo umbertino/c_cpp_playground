@@ -1,4 +1,9 @@
 build
+conan
 utest
-*.log
 doc
+*.log
+*.bak
+CMakeUserPresets.json
+__pycache__
+Testing

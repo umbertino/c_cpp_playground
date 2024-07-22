@@ -1,0 +1,14 @@
+[requires]
+boost/1.84.0
+gtest/1.14.0
+
+[tool_requires]
+cmake/3.28.1
+ninja/1.11.1
+make/4.4.1
+doxygen/1.9.4
+
+[generators]
+CMakeDeps
+CMakeToolchain
+

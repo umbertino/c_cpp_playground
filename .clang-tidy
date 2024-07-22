@@ -1,0 +1,154 @@
+---
+# File Description
+# Do not enable any project-specific checks (like google-*, fuchsia-*) by default, as these usually enforce project-specific guidelines. We might want to enable some of them on a case-by-case basis.
+
+# Disable bugprone-easily-swappable-parameters: heuristics which generates a lot of noise.
+# Disable bugprone-reserved-identifier: We compile with -Werror -Wreserved-identifier, so there should be no occurrences. This is a very expensive check.
+# Disable bugprone-signed-char-misuse: many false positives when working with int8_t, which are not suppressed with the "CharTypdefsToIgnore" option due to template instantiation always using the underlying type instead of the typedef
+# Disable bugprone-unchecked-optional-access: very resource intensive due to usage of a flow-sensitive static analysis.
+# Disable bugprone-branch-clone: too many false positives
+# Disable cert-err58-cpp: too many warnings with BOOST_AUTO_TEST_CASE and similar macros
+# Disable cppcoreguidelines-avoid-non-const-global-variables: too many warnings with BOOST_AUTO_TEST_CASE and similar macros
+# Disable cppcoreguidelines-macro-usage: too many false positives
+# Disable cppcoreguidelines-owning-memory: refers to gsl::owner, which we do not use in our codebase (yet)
+# Disable cppcoreguidelines-pro-bounds-array-to-pointer-decay: false positives with range for loops over arrays and with __PRETTY_FUNCTION__ used in assert()
+# Disable cppcoreguidelines-pro-bounds-constant-array-index: refers to gsl::at, which we do not use in our codebase (yet)
+# Disable cppcoreguidelines-pro-type-union-access: Unions can be used for type punning in low-level code
+# Disable cppcoreguidelines-pro-type-vararg: many Boost.Test functions are vararg functions
+# Disable cppcoreguidelines-pro-type-reinterpret-cast: too many false positives
+# Disable cppcoreguidelines-pro-type-const-cast: too many false positives
+# Disable misc-confusable-identifiers: not very useful in its present form, since it will e.g. say that a variable "l" is confusable with a template type name "I" in some third-party header
+# Disable misc-no-recursion: we do not disallow recursion in our code
+# Disable misc-non-private-member-variables-in-classes: the corresponding QAC++ warning has been suppressed in our code base in many places
+# Disable modernize-use-nodiscard: generates a lot of noise, e.g. for getter functions
+# Disable modernize-use-override as it does not provide an option to turn off "virtual is redundant when using override" separately. Compiler warnings like -Wsuggest-override may be used instead.
+# Disable modernize-use-trailing-return-type: does not match our code style
+# Disable modernize-avoid-c-arrays: does not match our code style
+# Disable performance-noexcept-move-constructor: false positives with explicitly defaulted move constructors/assignment operators of class templates
+# Disable readability-duplicate-include: it is crash-prone in LLVM 14
+# Disable readability-else-after-return: in many cases not a good idea, see e.g. https://dmerej.info/blog/post/else-after-return-yea-or-nay/
+# Disable readability-identifier-length: too many false positives (e.g. "from" and "to" are reasonable parameter names)
+# Disable readability-identifier-naming: we currently have no naming rules that we check
+# Disable readability-magic-numbers: too many false positives
+# Disable readability-misleading-indentation: As we do automated formatting with clang-format, all possible issues are false positives.
+# Disable readability-named-parameter: flags unused parameters which do not need to be named
+# Disable readability-qualified-auto: a matter of taste, produces too much noise at the moment
+# Disable readability-simplify-boolean-expr: being explicit is not a code smell per se
+# Disable readability-suspicious-call-argument: heuristics which generates a lot of false positives.
+# Disable readability-avoid-const-params-in-decls: too many finsings, produces too much noise at the moment
+# Disable readability-function-cognitive-complexity: we want evaluate complexitiy by code review at the moment
+#
+# The rest are aliases of other checks and disabled to avoid duplicate issues (in the clang-tidy source code, look for "CheckFactories.registerCheck<foo::bar>" where "foo" is a namespace outside the current clang-tidy module)
+
+Checks: "-*,\
+bugprone-*,\
+cert-*,\
+clang-analyzer-*,\
+clang-diagnostic-*,\
+concurrency-*,\
+cppcoreguidelines-*,\
+misc-*,\
+modernize-*,\
+performance-*,\
+portability-*,\
+readability-*,\
+\
+-bugprone-easily-swappable-parameters,\
+-bugprone-reserved-identifier,\
+-bugprone-signed-char-misuse,\
+-bugprone-unchecked-optional-access,\
+-bugprone-branch-clone,\
+-cert-err58-cpp,\
+-cppcoreguidelines-avoid-non-const-global-variables,\
+-cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
+-cppcoreguidelines-pro-type-vararg,\
+-cppcoreguidelines-pro-type-reinterpret-cast,\
+-cppcoreguidelines-pro-type-const-cast,\
+-misc-confusable-identifiers,\
+-misc-no-recursion,\
+-misc-non-private-member-variables-in-classes,\
+-modernize-use-nodiscard,\
+-modernize-use-override,\
+-modernize-use-trailing-return-type,\
+-modernize-avoid-c-arrays,\
+-performance-noexcept-move-constructor,\
+-readability-duplicate-include,\
+-readability-else-after-return,\
+-readability-identifier-length,\
+-readability-identifier-naming,\
+-readability-magic-numbers,\
+-readability-misleading-indentation,\
+-readability-named-parameter,\
+-readability-qualified-auto,\
+-readability-simplify-boolean-expr,\
+-readability-suspicious-call-argument,\
+-readability-avoid-const-params-in-decls,\
+-readability-function-cognitive-complexity,\
+\
+\
+\
+-bugprone-narrowing-conversions,\
+-cert-con36-c,\
+-cert-con54-cpp,\
+-cert-dcl03-c,\
+-cert-dcl16-c,\
+-cert-dcl37-c,\
+-cert-dcl51-cpp,\
+-cert-dcl54-cpp,\
+-cert-dcl59-cpp,\
+-cert-err09-cpp,\
+-cert-err61-cpp,\
+-cert-fio38-c,\
+-cert-msc30-c,\
+-cert-msc32-c,\
+-cert-oop11-cpp,\
+-cert-oop54-cpp,\
+-cert-pos44-c,\
+-cert-pos47-c,\
+-cert-sig30-c,\
+-cert-str34-c,\
+-cppcoreguidelines-avoid-c-arrays,\
+-cppcoreguidelines-avoid-magic-numbers,\
+-cppcoreguidelines-c-copy-assignment-signature,\
+-cppcoreguidelines-explicit-virtual-functions,\
+-cppcoreguidelines-non-private-member-variables-in-classes,\
+-cppcoreguidelines-macro-usage,\
+-cppcoreguidelines-owning-memory,\
+-cppcoreguidelines-pro-bounds-constant-array-index,\
+-cppcoreguidelines-pro-type-union-access,\
+\
+"
+
+CheckOptions:
+
+# Suppress: "std::move of the variable of a trivially-copyable type has no effect"
+
+- { key: performance-move-const-arg.CheckTriviallyCopyableMove, value: false }
+
+# Do not flag missing copy/move operations on:   struct A { virtual ~A() = default; }
+
+# i.e. if the destructor is only declared to make it virtual because A is intended
+
+# to be used as a base class
+
+- { key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor, value: true }
+
+# Do not flag missing move operations if copy operations are already deleted
+
+# This means the move operations are implicitly deleted as well
+
+- { key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted, value: true }
+
+# Only suggest converting 42l/42ul/42ull to 42L/42UL/42ULL (due to confusion of lowercase L with digit 1)
+
+# leave other suffixes like 42.0f and 42u alone because there is no chance of confusion
+
+- { key: readability-uppercase-literal-suffix.NewSuffixes, value: "L;UL;ULL" }
+
+# Do not expand macros when calculating cognitive complexity
+
+# Else Boost tests will get an unreasonably high complexity value
+
+# In our own code, we use macros sparingly anyway
+
+- { key: readability-function-cognitive-complexity.IgnoreMacros, value: true }
