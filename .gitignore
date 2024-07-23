@@ -7,3 +7,5 @@ doc
 CMakeUserPresets.json
 __pycache__
 Testing
+*.er
+
