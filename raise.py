@@ -25,7 +25,7 @@ this_target = this_os + "/" + this_arch
 
 action_dict = {
     "build": ["Building", "Built"],
-    "rebuild": ["Re-Building", "Re-Build"],
+    "rebuild": ["Re-Building", "Re-Built"],
     "clean": ["Cleaning", "Cleaned"]
 }
 
