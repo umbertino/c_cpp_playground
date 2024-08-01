@@ -7,6 +7,7 @@ set(INC_DIR inc)
 set(SRC_DIR src)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 find_package(Boost 1.78.0 COMPONENTS chrono filesystem thread REQUIRED)
