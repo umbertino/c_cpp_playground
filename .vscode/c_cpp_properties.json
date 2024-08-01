@@ -40,9 +40,9 @@
             ],
             "browse": {
                 "path": [
-                    "${workspaceFolder}/**",
-                    "/usr/include/**",
-                    "~/.conan2/**"
+                    "${workspaceFolder}",
+                    "/usr/include",
+                    "~/.conan2"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
