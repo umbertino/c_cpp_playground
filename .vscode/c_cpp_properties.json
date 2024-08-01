@@ -36,15 +36,15 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/**",
-                "/home/umberto/Development/boost/**"
+                "~/.conan2/**"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/**",
                     "/usr/include/**",
-                    "/home/umberto/Development/boost/**"
+                    "~/.conan2/**"
                 ],
-                "limitSymbolsToIncludedHeaders": false,
+                "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
             "defines": [

@@ -29,6 +29,15 @@ action_dict = {
     "clean": ["Cleaning", "Cleaned"]
 }
 
+build_modes = {"release", "debug", "all"}
+
+doc_action_dict = {
+    "build": ["Building Doc", "Doc built"],
+    "clean": ["Cleaning Doc", "Doc built"]
+}
+
+doc_build_modes = {"internal", "official"}
+
 
 def main():
     """!
@@ -217,7 +226,7 @@ def main():
     return ret
 
 
-def build(mode='release'):
+def build(build_mode='release'):
     """!
     @brief The generic build-function.
     @details This function calls the specific function to perform the build task
@@ -231,16 +240,24 @@ def build(mode='release'):
 
     ret = 1
 
+    if build_mode not in build_modes:
+        print("Build-mode " + build_mode + " not supported or unknown")
+        return ret
 
-    if mode in ('release', 'all'):
+    if build_mode == "release":
         ret = rcmd.build_cmd('release')
-    if mode in ('debug', 'all'):
+
+    if build_mode == "debug":
         ret = rcmd.build_cmd('debug')
+
+    if build_mode == "all":
+        ret = rcmd.build_cmd('release')
+        ret = ret or rcmd.build_cmd('debug')
 
     return ret
 
 
-def rebuild(mode='release'):
+def rebuild(build_mode='release'):
     """!
     @brief The generic rebuild-function.
     @details This function calls the specific function to perform the re-build task
@@ -254,17 +271,28 @@ def rebuild(mode='release'):
 
     ret = 1
 
-    if mode in ('release', 'all'):
+    if build_mode not in build_modes:
+        print("Build-mode " + build_mode + " not supported or unknown")
+        return ret
+
+    if build_mode == "release":
         ret = rcmd.clean_cmd('release')
         ret = ret or rcmd.build_cmd('release')
-    if mode in ('debug', 'all'):
+
+    if build_mode == "debug":
         ret = rcmd.clean_cmd('debug')
+        ret = ret or rcmd.build_cmd('debug')
+
+    if build_mode == "all":
+        ret = rcmd.clean_cmd('release')
+        ret = ret or rcmd.clean_cmd('debug')
+        ret = ret or rcmd.build_cmd('release')
         ret = ret or rcmd.build_cmd('debug')
 
     return ret
 
 
-def clean(mode='release'):
+def clean(build_mode='release'):
     """!
     @brief The generic clean-function.
     @details This function calls the specific function to perform the clean task
@@ -276,15 +304,26 @@ def clean(mode='release'):
     @retval 1 operation failed
     """
 
-    if mode in ('release', 'all'):
+    ret = 1
+
+    if build_mode not in build_modes:
+        print("Build-mode " + build_mode + " not supported or unknown")
+        return ret
+
+    if build_mode == "release":
         ret = rcmd.clean_cmd('release')
-    if mode in ('debug', 'all'):
+
+    if build_mode == "debug":
         ret = rcmd.clean_cmd('debug')
+
+    if build_mode == "all":
+        ret = rcmd.clean_cmd('release')
+        ret = ret or rcmd.clean_cmd('debug')
 
     return ret
 
 
-def test(mode='release'):
+def test(build_mode='release'):
     """!
     @brief The generic test-function.
     @details This function calls the specific function to perform the test task
@@ -296,12 +335,23 @@ def test(mode='release'):
     @retval 1 operation failed
     """
 
-    ret = ret = rcmd.test_cmd(mode)
+    ret = 1
+
+    if build_mode not in build_modes:
+        print("Build-mode " + build_mode + " not supported or unknown")
+        return ret
+
+    if build_mode == "all":
+        print("Build-mode " + build_mode +
+              " not supported for testing. Choose 'release' or 'debug'.")
+        return ret
+
+    ret = rcmd.test_cmd(build_mode)
 
     return ret
 
 
-def doc(mode='internal'):
+def doc(doc_build_mode='internal'):
     """!
     @brief The generic documentation-function.
     @details This function calls the specific function to perform the documentation task
@@ -312,7 +362,8 @@ def doc(mode='internal'):
     @retval 0 operation succeeded
     @retval 1 operation failed
     """
-    ret = rcmd.doc_cmd(mode)
+
+    ret = rcmd.doc_cmd(doc_build_mode)
 
     return ret
 
