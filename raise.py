@@ -105,7 +105,7 @@ def main():
                                    const='debug',
                                    help='Re-Builds Debug build-type')
     rebuild_parser_ex.add_argument('-r', '--release',
-                                   dest='ibuild_type',
+                                   dest='build_type',
                                    action='store_const',
                                    const='release',
                                    default='release',
@@ -189,7 +189,7 @@ def main():
     # we always need one sub-command and a sub-command argument
     # however, this should not happen
     if len(arg_list) != 2:
-        return 1
+        sys.exit(1)
 
     # get current sub-command and sub-command's argumant
     sub_command = list(arg_list.values())[0]
