@@ -12,3 +12,6 @@ doxygen/1.9.4
 CMakeDeps
 CMakeToolchain
 
+[layout]
+cmake_layout
+
