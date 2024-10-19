@@ -8,5 +8,5 @@ set(ASIO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asio/include)
 
 message("Building with CMake version: ${CMAKE_VERSION}")
 
-add_subdirectory(prime)
+#add_subdirectory(prime)
 add_subdirectory(networking)

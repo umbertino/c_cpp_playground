@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
-find_package(asio REQUIRED)
-# find_package(Boost 1.78.0 COMPONENTS asio REQUIRED)
+#find_package(asio REQUIRED)
+# find_package(Boost 1.78.0 COMPONENTS asio REQUIRED)#
 
 
 # The main executable
